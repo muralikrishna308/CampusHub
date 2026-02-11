@@ -6,7 +6,7 @@ app.use(express.json());
 
 const SECRET = "mysecretkey"; 
 
-// Home 
+// home
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
@@ -75,3 +75,4 @@ app.get("/admin-dashboard", verifyToken, (req, res) => {
 
   res.json({ message: "Welcome Admin🙏!" });
 });
+
