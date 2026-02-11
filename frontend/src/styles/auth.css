@@ -1,11 +1,13 @@
 * {
   box-sizing: border-box;
   font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
   background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  min-height: 100vh;
 }
 
 .auth-container {
@@ -13,74 +15,97 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
 .auth-card {
-  width: 380px;
+  width: 100%;
+  max-width: 400px;
   background: #fff;
-  padding: 28px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 .auth-icon {
-  font-size: 38px;
+  font-size: 42px;
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 h2 {
   text-align: center;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  color: #1a1a1a;
 }
 
 p {
   text-align: center;
   color: #666;
   font-size: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
 }
 
 label {
   font-size: 13px;
-  margin-bottom: 6px;
+  font-weight: 600;
+  margin-bottom: 8px;
   display: block;
+  color: #333;
 }
 
-input, select {
+input,
+select {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 14px;
+  padding: 12px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   border-color: #6366f1;
-  outline: none;
 }
 
 button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
+  margin-top: 8px;
   background: linear-gradient(to right, #6366f1, #8b5cf6);
   color: #fff;
   border: none;
   border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 button:hover {
-  opacity: 0.95;
+  opacity: 0.9;
 }
 
 .auth-switch {
-  margin-top: 15px;
+  margin-top: 20px;
+  text-align: center;
   font-size: 13px;
+  color: #666;
 }
 
 .auth-switch a {
   color: #6366f1;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
 }

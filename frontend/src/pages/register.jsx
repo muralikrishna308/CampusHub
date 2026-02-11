@@ -1,7 +1,15 @@
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/auth.css";
 
 export default function Register() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // After registration, redirect to login
+    navigate("/");
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -9,27 +17,39 @@ export default function Register() {
         <h2>Create Account</h2>
         <p>Join CampusEventHub today</p>
 
-        <form>
-          <label>Full Name</label>
-          <input type="text" placeholder="Enter your full name" />
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Full Name</label>
+            <input type="text" placeholder="Enter your full name" required />
+          </div>
 
-          <label>Email Address</label>
-          <input type="email" placeholder="Enter your email" />
+          <div className="form-group">
+            <label>Email Address</label>
+            <input type="email" placeholder="Enter your email" required />
+          </div>
 
-          <label>College / University</label>
-          <input type="text" placeholder="Enter college name" />
+          <div className="form-group">
+            <label>College / University</label>
+            <input type="text" placeholder="Enter college name" required />
+          </div>
 
-          <label>Role</label>
-          <select>
-            <option>Student</option>
-            <option>College Admin</option>
-          </select>
+          <div className="form-group">
+            <label>Role</label>
+            <select>
+              <option>Student</option>
+              <option>College Admin</option>
+            </select>
+          </div>
 
-          <label>Password</label>
-          <input type="password" placeholder="Create a password" />
+          <div className="form-group">
+            <label>Password</label>
+            <input type="password" placeholder="Create a password" required />
+          </div>
 
-          <label>Confirm Password</label>
-          <input type="password" placeholder="Confirm your password" />
+          <div className="form-group">
+            <label>Confirm Password</label>
+            <input type="password" placeholder="Confirm your password" required />
+          </div>
 
           <button type="submit">Create Account</button>
         </form>
