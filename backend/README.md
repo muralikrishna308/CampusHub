@@ -6,7 +6,6 @@
 - **User Schema** (Student / College Admin / Super Admin)
 - **AdminLog Schema** (Admin action tracking)
 - **MongoDB Connection** using Mongoose
-
 ---
 
 ## 📌 Database Schema
