@@ -1,7 +1,7 @@
+import React, { useState, useContext } from 'react';
 import { Link } from "react-router-dom";
-import "../styles/auth.css";
-import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import "../styles/auth.css";
 
 export default function Register() {
   const { register } = useContext(AuthContext);
@@ -26,42 +26,59 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-container">
+    <main className="auth-container">
       <div className="auth-card">
-        <div className="auth-icon">👤</div>
-        <h2>Create Account</h2>
-        <p>Join CampusEventHub today</p>
+        <header className="auth-header">
+          <span className="auth-logo">CampusEventHub</span>
+          <h2>Create Account</h2>
+          <p>Join your campus community today.</p>
+        </header>
 
-        <form onSubmit={handleSubmit}>
-          <label>Full Name</label>
-          <input value={name} onChange={e=>setName(e.target.value)} type="text" placeholder="Enter your full name" required />
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label>Full Name</label>
+            <input value={name} onChange={e=>setName(e.target.value)} type="text" placeholder="John Doe" required />
+          </div>
 
-          <label>Email Address</label>
-          <input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="Enter your email" required />
+          <div className="input-group">
+            <label>Email Address</label>
+            <input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="name@college.edu" required />
+          </div>
 
-          <label>College / University</label>
-          <input value={college} onChange={e=>setCollege(e.target.value)} type="text" placeholder="Enter college name" />
+          <div className="input-row">
+            <div className="input-group">
+              <label>College</label>
+              <input value={college} onChange={e=>setCollege(e.target.value)} type="text" placeholder="University Name" />
+            </div>
+            <div className="input-group">
+              <label>Role</label>
+              <select value={role} onChange={e=>setRole(e.target.value)}>
+                <option value="student">Student</option>
+                <option value="admin">College Admin</option>
+              </select>
+            </div>
+          </div>
 
-          <label>Role</label>
-          <select value={role} onChange={e=>setRole(e.target.value)}>
-            <option value="student">Student</option>
-            <option value="admin">College Admin</option>
-          </select>
+          <div className="input-row">
+            <div className="input-group">
+              <label>Password</label>
+              <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Create a password" required />
+            </div>
+            <div className="input-group">
+              <label>Confirm</label>
+              <input value={confirm} onChange={e=>setConfirm(e.target.value)} type="password" placeholder="Confirm password" required />
+            </div>
+          </div>
 
-          <label>Password</label>
-          <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Create a password" required />
-
-          <label>Confirm Password</label>
-          <input value={confirm} onChange={e=>setConfirm(e.target.value)} type="password" placeholder="Confirm your password" required />
-
-          <button type="submit">Create Account</button>
+          <button type="submit" className="auth-button">Create Account</button>
         </form>
-        {error && <p style={{color:'red', marginTop:10}}>{error}</p>}
 
-        <p className="auth-switch">
+        {error && <div className="error-message">{error}</div>}
+
+        <footer className="auth-switch">
           Already have an account? <Link to="/">Sign in</Link>
-        </p>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }

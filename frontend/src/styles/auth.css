@@ -1,86 +1,115 @@
-* {
-  box-sizing: border-box;
-  font-family: "Segoe UI", sans-serif;
-}
-
-body {
-  margin: 0;
-  background: linear-gradient(135deg, #eef2ff, #f8fafc);
-}
+/* auth.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 .auth-container {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+  
+  /* MESH BACKGROUND */
+  background: radial-gradient(at 0% 0%, #f5f3ff 0, transparent 50%), 
+              radial-gradient(at 50% 0%, #ede9fe 0, transparent 50%), 
+              radial-gradient(at 100% 0%, #fdf4ff 0, transparent 50%), 
+              #ffffff;
+  background-attachment: fixed;
+  overflow-x: hidden;
 }
 
 .auth-card {
-  width: 380px;
-  background: #fff;
-  padding: 28px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  padding: 48px 40px;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 460px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.1);
+  animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.auth-icon {
-  font-size: 38px;
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.auth-header {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 32px;
 }
 
-h2 {
-  text-align: center;
-  margin-bottom: 5px;
-}
-
-p {
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-label {
-  font-size: 13px;
-  margin-bottom: 6px;
+.auth-logo {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
   display: block;
 }
 
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 14px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+/* FIELD NAMES (LABELS): Returned to the earlier Soft Purple/Indigo */
+.input-group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f46e5; /* The soft purple/indigo you liked earlier */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 4px;
+  margin-bottom: 4px;
 }
 
-input:focus, select:focus {
-  border-color: #6366f1;
+.input-group input, 
+.input-group select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  border-radius: 14px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #1e293b;
+  transition: all 0.3s ease;
+}
+
+.input-group input:focus {
   outline: none;
+  background: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+  transform: translateY(-1px);
 }
 
-button {
+.auth-button {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(to right, #6366f1, #8b5cf6);
-  color: #fff;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  padding: 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.95;
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+  transition: all 0.3s ease;
+  margin-top: 10px;
 }
 
 .auth-switch {
-  margin-top: 15px;
-  font-size: 13px;
+  margin-top: 32px;
+  padding-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .auth-switch a {
-  color: #6366f1;
+  color: #4f46e5;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 700;
 }
