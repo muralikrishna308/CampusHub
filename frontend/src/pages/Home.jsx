@@ -50,7 +50,7 @@ const Home = () => {
       <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
         <div className="header-content">
           <div className="logo">CampusEventHub</div>
-          
+
           <nav className="nav-menu">
             <a href="/">Home</a>
             <a href="/events">Events</a>
@@ -77,8 +77,8 @@ const Home = () => {
               <span className="gradient-text">CampusEventHub</span>
             </h1>
             <p className="hero-description">
-              Discover and participate in inter-college events — from hackathons 
-              to sports tournaments and cultural festivals. Connect with 50,000+ 
+              Discover and participate in inter-college events — from hackathons
+              to sports tournaments and cultural festivals. Connect with 50,000+
               students across 100+ colleges.
             </p>
             <div className="hero-buttons">
@@ -112,6 +112,7 @@ const Home = () => {
         </div>
         <div className="hero-bg-shape"></div>
         <div className="hero-bg-shape-2"></div>
+        <div className="hero-bg-shape-3"></div>
       </section>
 
       {/* Features Section */}
@@ -123,22 +124,22 @@ const Home = () => {
         </div>
         <div className="features-grid">
           <div className="feature-card">
-            <div className="feature-icon-wrapper" style={{background: '#eef2ff'}}>
-              <span className="feature-icon" style={{color: '#4f46e5'}}>👥</span>
+            <div className="feature-icon-wrapper" style={{ background: '#eef2ff' }}>
+              <span className="feature-icon" style={{ color: '#4f46e5' }}>👥</span>
             </div>
             <h3>Connect & Network</h3>
             <p>Meet students from different colleges and build your professional network.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon-wrapper" style={{background: '#fef3c7'}}>
-              <span className="feature-icon" style={{color: '#d97706'}}>🏆</span>
+            <div className="feature-icon-wrapper" style={{ background: '#fef3c7' }}>
+              <span className="feature-icon" style={{ color: '#d97706' }}>🏆</span>
             </div>
             <h3>Win Prizes</h3>
             <p>Compete for exciting prizes, certificates, and recognition.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon-wrapper" style={{background: '#e0f2fe'}}>
-              <span className="feature-icon" style={{color: '#0284c7'}}>💡</span>
+            <div className="feature-icon-wrapper" style={{ background: '#e0f2fe' }}>
+              <span className="feature-icon" style={{ color: '#0284c7' }}>💡</span>
             </div>
             <h3>Learn & Grow</h3>
             <p>Participate in workshops, seminars, and hands-on sessions.</p>
@@ -156,7 +157,7 @@ const Home = () => {
         <div className="events-grid">
           {events.map((event, index) => (
             <div key={index} className="event-card">
-              <div className="event-icon" style={{background: event.color + '15', color: event.color}}>
+              <div className="event-icon" style={{ background: event.color + '15', color: event.color }}>
                 {event.icon}
               </div>
               <div className="event-date">
@@ -170,7 +171,7 @@ const Home = () => {
               <h3 className="event-title">{event.title}</h3>
               <p className="event-description">{event.description}</p>
               <div className="event-footer">
-                <span className="event-category" style={{background: event.color + '20', color: event.color}}>
+                <span className="event-category" style={{ background: event.color + '20', color: event.color }}>
                   {event.category}
                 </span>
                 <button className="event-link" onClick={() => navigate('/login')}>
@@ -234,22 +235,22 @@ const Home = () => {
             </div>
           </div>
           <div className="social-grid">
-            <a href="https://instagram.com" className="social-card" style={{background: 'linear-gradient(45deg, #f09433, #d62976, #962fbf)'}}>
+            <a href="https://instagram.com" className="social-card" style={{ background: 'linear-gradient(45deg, #f09433, #d62976, #962fbf)' }}>
               <span className="social-icon">📷</span>
               <span className="social-name">Instagram</span>
               <span className="social-handle">@campuseventhub</span>
             </a>
-            <a href="https://linkedin.com" className="social-card" style={{background: '#0077b5'}}>
+            <a href="https://linkedin.com" className="social-card" style={{ background: '#0077b5' }}>
               <span className="social-icon">🔗</span>
               <span className="social-name">LinkedIn</span>
               <span className="social-handle">CampusEventHub</span>
             </a>
-            <a href="https://twitter.com" className="social-card" style={{background: '#1DA1F2'}}>
+            <a href="https://twitter.com" className="social-card" style={{ background: '#1DA1F2' }}>
               <span className="social-icon">🐦</span>
               <span className="social-name">Twitter</span>
               <span className="social-handle">@campuseventhub</span>
             </a>
-            <a href="https://github.com" className="social-card" style={{background: '#24292e'}}>
+            <a href="https://github.com" className="social-card" style={{ background: '#24292e' }}>
               <span className="social-icon">🐙</span>
               <span className="social-name">GitHub</span>
               <span className="social-handle">campuseventhub</span>
