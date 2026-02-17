@@ -55,6 +55,7 @@ export default function Register() {
               <select value={role} onChange={e=>setRole(e.target.value)}>
                 <option value="student">Student</option>
                 <option value="admin">College Admin</option>
+                <option value="superadmin">Super Admin</option>
               </select>
             </div>
           </div>
