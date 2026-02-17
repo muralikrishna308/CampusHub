@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
+import Chatbot from '../components/chatbot';
 
 const Home = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -250,6 +251,7 @@ const Home = () => {
           <p>© 2026 CampusEventHub | All rights reserved.</p>
         </div>
       </footer>
+      <Chatbot />
     </div>
   );
 };

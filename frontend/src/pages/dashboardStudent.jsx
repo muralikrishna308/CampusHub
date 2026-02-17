@@ -2,6 +2,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import './StudentDashboard.css'; // Using the same CSS but with minor additions
+import Chatbot from '../components/chatbot';
 
 // Same image imports as admin
 const eventImages = {
@@ -553,6 +554,7 @@ export default function StudentDashboard() {
           </div>
         </div>
       )}
+      < Chatbot />
     </div>
   );
 }

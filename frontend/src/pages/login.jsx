@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import "../styles/auth.css";
+import Chatbot from '../components/chatbot';
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -21,6 +22,7 @@ export default function Login() {
   };
 
   return (
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
     <main className="auth-container">
       <div className="auth-card">
         <header className="auth-header">
@@ -62,5 +64,7 @@ export default function Login() {
         </footer>
       </div>
     </main>
+    <Chatbot />
+    </div>
   );
 }

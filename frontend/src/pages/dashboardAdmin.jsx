@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import './AdminDashboard.css'; // We'll create this CSS file
+import Chatbot from '../components/chatbot';
 
 // Import actual images (you can replace these URLs with your actual image paths)
 const eventImages = {
@@ -422,6 +423,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      <Chatbot />
     </div>
   );
 }
