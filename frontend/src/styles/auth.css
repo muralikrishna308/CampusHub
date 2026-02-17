@@ -1,86 +1,208 @@
-* {
-  box-sizing: border-box;
-  font-family: "Segoe UI", sans-serif;
-}
+/* auth.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-body {
-  margin: 0;
-  background: linear-gradient(135deg, #eef2ff, #f8fafc);
-}
-
+/* 1. Main Container with Animated Mesh Background */
 .auth-container {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 60px 20px;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  position: relative;
+  perspective: 1500px;
+  
+  /* ANIMATED MESH BACKGROUND */
+  background: #ffffff;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(124, 58, 237, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(192, 132, 252, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(245, 243, 255, 1) 0px, transparent 50%);
+  background-size: 200% 200%;
+  animation: meshGradient 15s ease infinite alternate;
 }
 
+@keyframes meshGradient {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* 3D Floating Elements with Parallax Effect */
+.auth-container::before, .auth-container::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  z-index: 0;
+  animation: floatOrb 20s infinite alternate ease-in-out;
+}
+
+.auth-container::before {
+  width: 600px;
+  height: 600px;
+  background: rgba(79, 70, 229, 0.12);
+  top: -20%;
+  left: -10%;
+}
+
+.auth-container::after {
+  width: 700px;
+  height: 700px;
+  background: rgba(167, 139, 250, 0.1);
+  bottom: -20%;
+  right: -10%;
+  animation-delay: -5s;
+}
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { transform: translate(100px, 150px) rotate(20deg) scale(1.2); }
+}
+
+/* 2. Professional Card Styling with Depth */
 .auth-card {
-  width: 380px;
-  background: #fff;
-  padding: 28px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  padding: 54px 45px;
+  border-radius: 36px;
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 1;
+  
+  /* Complex Layered Shadow */
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 30px 60px -12px rgba(79, 70, 229, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+
+  /* SMOOTH ENTRANCE: Blur to Clarity */
+  animation: cardEntrance 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.6s ease;
 }
 
-.auth-icon {
-  font-size: 38px;
+.auth-card:hover {
+  transform: translateY(-10px) rotateX(2deg) rotateY(1deg);
+  box-shadow: 0 45px 80px -20px rgba(79, 70, 229, 0.25);
+}
+
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(60px) scale(0.9); filter: blur(20px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* 3. Typography Staggering */
+.auth-header {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 40px;
+  animation: slideFadeUp 0.8s ease backwards;
+  animation-delay: 0.2s;
 }
 
-h2 {
-  text-align: center;
-  margin-bottom: 5px;
+@keyframes slideFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-p {
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-label {
-  font-size: 13px;
-  margin-bottom: 6px;
+.auth-logo {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.05em;
   display: block;
 }
 
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 14px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+/* 4. Form Layout - Staggered Field Appearance */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-input:focus, select:focus {
-  border-color: #6366f1;
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slideFadeUp 0.6s ease backwards;
+}
+
+/* Waterfall delay for each field */
+.input-group:nth-child(1) { animation-delay: 0.3s; }
+.input-group:nth-child(2) { animation-delay: 0.4s; }
+.input-group:nth-child(3) { animation-delay: 0.5s; }
+.input-group:nth-child(4) { animation-delay: 0.6s; }
+
+.input-group label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #4f46e5;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-left: 4px;
+}
+
+.input-group input, 
+.input-group select {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid rgba(226, 232, 240, 0.6);
+  border-radius: 18px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.input-group input:focus {
   outline: none;
+  background: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 15px 30px -10px rgba(79, 70, 229, 0.2);
+  transform: scale(1.02) translateY(-2px);
 }
 
-button {
+/* 5. Primary Brand Button - Magnetic Feel */
+.auth-button {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(to right, #6366f1, #8b5cf6);
-  color: #fff;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  padding: 18px;
   border: none;
-  border-radius: 10px;
+  border-radius: 18px;
+  font-size: 16px;
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.4);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  margin-top: 10px;
+  animation: slideFadeUp 0.6s ease backwards;
+  animation-delay: 0.7s;
 }
 
-button:hover {
-  opacity: 0.95;
+.auth-button:hover {
+  transform: translateY(-4px) scale(1.01);
+  filter: brightness(1.1);
+  box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.5);
 }
 
+.auth-button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* 6. Footer Links */
 .auth-switch {
-  margin-top: 15px;
-  font-size: 13px;
-}
-
-.auth-switch a {
-  color: #6366f1;
-  text-decoration: none;
-  font-weight: 500;
+  margin-top: 35px;
+  padding-top: 25px;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  animation: slideFadeUp 0.6s ease backwards;
+  animation-delay: 0.8s;
 }
