@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link } from "react-router-dom";
 import { AuthContext } from '../context/AuthContext';
 import "../styles/auth.css";
+import Chatbot from '../components/chatbot';
 
 export default function Register() {
   const { register } = useContext(AuthContext);
@@ -26,6 +27,7 @@ export default function Register() {
   };
 
   return (
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
     <main className="auth-container">
       <div className="auth-card">
         <header className="auth-header">
@@ -55,6 +57,7 @@ export default function Register() {
               <select value={role} onChange={e=>setRole(e.target.value)}>
                 <option value="student">Student</option>
                 <option value="admin">College Admin</option>
+                <option value="superadmin">Super Admin</option>
               </select>
             </div>
           </div>
@@ -80,5 +83,7 @@ export default function Register() {
         </footer>
       </div>
     </main>
+    <Chatbot />
+    </div>
   );
 }
