@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/login";
-import Register from "./pages/register";
+import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import StudentDashboard from "./pages/dashboardStudent";
 import AdminDashboard from "./pages/dashboardAdmin";
@@ -12,9 +11,10 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Home/>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Auth />} />
+          <Route path="/register" element={<Auth />} />
+
           <Route
             path="/student"
             element={
