@@ -1,18 +1,47 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/login";
-import Register from "./pages/register";
-import StudentDashboard from "./pages/StudentDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import Auth from "./pages/Auth";
+import Home from "./pages/Home";
+import StudentDashboard from "./pages/dashboardStudent";
+import AdminDashboard from "./pages/dashboardAdmin";
+import Events from "./pages/Events";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Auth />} />
+          <Route path="/register" element={<Auth />} />
+
+          <Route
+            path="/student"
+            element={
+              <ProtectedRoute role={"student"}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role={"admin"}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              <ProtectedRoute role={"student"}>
+                <Events />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

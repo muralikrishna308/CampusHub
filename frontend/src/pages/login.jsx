@@ -1,53 +1,70 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useContext, useState } from "react";
+import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import "../styles/auth.css";
+import Chatbot from '../components/chatbot';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Simulation: determine dashboard based on email contents
-    if (email.toLowerCase().includes("admin")) {
-      navigate("/admin/dashboard");
-    } else {
-      navigate("/student/dashboard");
+    setError(null);
+    try {
+      await login(email, password);
+    } catch (err) {
+      const msg = await (err.json ? err.json().then(j => j.msg).catch(() => null) : null) || 'Login failed';
+      setError(msg);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-icon">🔐</div>
-        <h2>Welcome Back</h2>
-        <p>Sign in to your CampusEventHub account</p>
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
+      <main className="auth-container">
+        <div className="auth-card">
+          <header className="auth-header">
+            <span className="auth-logo">CampusEventHub</span>
+            <h2>Welcome back</h2>
+            <p>Sign in to manage your campus events.</p>
+          </header>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label>Email Address</label>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder="name@college.edu"
+                required
+              />
+            </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <input type="password" placeholder="Enter your password" required />
-          </div>
+            <div className="input-group">
+              <label>Password</label>
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
 
-          <button type="submit">Sign In</button>
-        </form>
+            <button type="submit" className="auth-button">Sign In</button>
+          </form>
 
-        <p className="auth-switch">
-          Don’t have an account? <Link to="/register">Sign up</Link>
-        </p>
-      </div>
+          {error && <div className="error-message">{error}</div>}
+
+          <footer className="auth-switch">
+            Don't have an account? <Link to="/register">Create one for free</Link>
+          </footer>
+        </div>
+      </main>
+      <Chatbot />
     </div>
   );
 }

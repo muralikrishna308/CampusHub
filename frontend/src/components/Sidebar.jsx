@@ -1,45 +1,50 @@
+import React, { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
-export default function Sidebar({ role }) {
+const Sidebar = ({ role }) => {
     const location = useLocation();
+    const { logout } = useContext(AuthContext);
 
-    const studentMenu = [
-        { title: "Events", icon: "📅", path: "/student/dashboard" },
-        { title: "My Registrations", icon: "📋", path: "/student/registrations" },
-        { title: "Settings", icon: "⚙️", path: "/student/settings" },
+    const menuItems = [
+        { name: "Dashboard", path: role === "admin" ? "/admin/dashboard" : "/student/dashboard", icon: "📊" },
+        { name: "All Events", path: "/events", icon: "📅" },
+        { name: "My Registrations", path: "/registrations", icon: "📝" },
+        { name: "Profile", path: "/profile", icon: "👤" },
+        { name: "Settings", path: "/settings", icon: "⚙️" },
     ];
-
-    const adminMenu = [
-        { title: "Events Management", icon: "📅", path: "/admin/dashboard" },
-        { title: "User Analytics", icon: "📊", path: "/admin/analytics" },
-        { title: "System Settings", icon: "⚙️", path: "/admin/settings" },
-    ];
-
-    const menu = role === "admin" ? adminMenu : studentMenu;
 
     return (
-        <div className="sidebar">
+        <aside className="sidebar">
             <div className="sidebar-logo">
-                <span>✨</span> CampusHub
+                <span className="logo-icon">🎓</span>
+                <span>CampusHub</span>
             </div>
-            <ul className="sidebar-menu">
-                {menu.map((item) => (
-                    <li key={item.title}>
-                        <Link
-                            to={item.path}
-                            className={`menu-item ${location.pathname === item.path ? "active" : ""}`}
-                        >
-                            <span className="icon">{item.icon}</span>
-                            {item.title}
-                        </Link>
-                    </li>
-                ))}
-            </ul>
+
+            <nav>
+                <ul className="sidebar-menu">
+                    {menuItems.map((item, index) => (
+                        <li key={index}>
+                            <Link
+                                to={item.path}
+                                className={`menu-item ${location.pathname === item.path ? 'active' : ''}`}
+                            >
+                                <span className="menu-icon">{item.icon}</span>
+                                <span>{item.name}</span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+
             <div className="sidebar-footer">
-                <Link to="/" className="menu-item" style={{ marginTop: "40px" }}>
-                    <span className="icon">🚪</span> Logout
-                </Link>
+                <div className="menu-item logout-btn" onClick={logout} style={{ cursor: 'pointer' }}>
+                    <span className="menu-icon">🚪</span>
+                    <span>Sign Out</span>
+                </div>
             </div>
-        </div>
+        </aside>
     );
-}
+};
+
+export default Sidebar;

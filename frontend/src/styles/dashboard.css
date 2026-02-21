@@ -75,6 +75,13 @@ body {
 
 .sidebar-footer {
   margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid #EFEFEF;
+}
+
+.logout-btn:hover {
+  background-color: #FFECEE !important;
+  color: #FF4D4F !important;
 }
 
 /* Main Content */
