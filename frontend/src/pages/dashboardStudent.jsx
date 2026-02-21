@@ -25,7 +25,7 @@ export default function StudentDashboard() {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  
+
   // Browse events state
   const [showBrowseEvents, setShowBrowseEvents] = useState(false);
   const [browseEvents, setBrowseEvents] = useState([]);
@@ -131,7 +131,7 @@ export default function StudentDashboard() {
   // Fetch browse events
   const fetchBrowseEvents = useCallback(() => {
     setBrowseLoading(true);
-    
+
     setTimeout(() => {
       const mockEvents = [
         {
@@ -219,7 +219,7 @@ export default function StudentDashboard() {
           price: 'Free'
         }
       ];
-      
+
       setBrowseEvents(mockEvents);
       setFilteredEvents(mockEvents);
       setBrowseLoading(false);
@@ -343,7 +343,7 @@ export default function StudentDashboard() {
 
   const markNotificationAsRead = async (notificationId) => {
     try {
-      setNotifications(notifications.map(n => 
+      setNotifications(notifications.map(n =>
         n.id === notificationId ? { ...n, read: true } : n
       ));
     } catch (err) {
@@ -398,8 +398,8 @@ export default function StudentDashboard() {
 
         <div className="header-right">
           <div className="notification-wrapper">
-            <button 
-              className="btn-icon" 
+            <button
+              className="btn-icon"
               onClick={() => setShowNotifications(!showNotifications)}
             >
               🔔
@@ -409,7 +409,7 @@ export default function StudentDashboard() {
                 </span>
               )}
             </button>
-            
+
             {showNotifications && (
               <div className="notification-dropdown">
                 <h4>Notifications</h4>
@@ -417,8 +417,8 @@ export default function StudentDashboard() {
                   <p>No notifications</p>
                 ) : (
                   notifications.map(notification => (
-                    <div 
-                      key={notification.id} 
+                    <div
+                      key={notification.id}
                       className={`notification-item ${notification.read ? 'read' : 'unread'}`}
                       onClick={() => markNotificationAsRead(notification.id)}
                     >
@@ -430,10 +430,20 @@ export default function StudentDashboard() {
               </div>
             )}
           </div>
-          
+
           <button onClick={handleLogout} className="btn-logout">Sign out</button>
         </div>
       </header>
+
+      {/* Nav Tabs */}
+      <nav className="dashboard-nav-tabs">
+        <button className="nav-tab active">
+          🏠 Dashboard
+        </button>
+        <button className="nav-tab" onClick={() => navigate('/events')}>
+          📅 All Events
+        </button>
+      </nav>
 
       {/* Main Content */}
       <main className="dashboard-main">
@@ -446,27 +456,27 @@ export default function StudentDashboard() {
           <>
             {/* Stats Grid */}
             <div className="stats-grid">
-              <StatCard 
-                title="Enrolled Events" 
-                value={dashboard.enrolledEvents} 
+              <StatCard
+                title="Enrolled Events"
+                value={dashboard.enrolledEvents}
                 icon="📚"
                 onClick={() => document.getElementById('your-events')?.scrollIntoView({ behavior: 'smooth' })}
               />
-              <StatCard 
-                title="Upcoming Events" 
-                value={dashboard.upcomingEvents} 
+              <StatCard
+                title="Upcoming Events"
+                value={dashboard.upcomingEvents}
                 icon="⏳"
                 onClick={() => document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' })}
               />
-              <StatCard 
-                title="Certificates" 
-                value={dashboard.certificates} 
+              <StatCard
+                title="Certificates"
+                value={dashboard.certificates}
                 icon="🏆"
                 onClick={() => setShowCertificateModal(true)}
               />
-              <StatCard 
-                title="Total Hours" 
-                value={dashboard.totalHours || 0} 
+              <StatCard
+                title="Total Hours"
+                value={dashboard.totalHours || 0}
                 icon="📊"
               />
             </div>
@@ -477,9 +487,9 @@ export default function StudentDashboard() {
               <section id="your-events" className="events-section">
                 <div className="section-header">
                   <h2>Your Events</h2>
-                  <button 
+                  <button
                     className="btn-secondary"
-                    onClick={handleOpenBrowseEvents}
+                    onClick={() => navigate('/events')}
                   >
                     Browse More Events
                   </button>
@@ -508,7 +518,7 @@ export default function StudentDashboard() {
                         <h4>{cert.title}</h4>
                         <p>Issued: {new Date(cert.issueDate).toLocaleDateString()}</p>
                       </div>
-                      <button 
+                      <button
                         className="btn-download"
                         onClick={() => handleDownloadCertificate(cert)}
                       >
@@ -524,21 +534,21 @@ export default function StudentDashboard() {
             <div className="sidebar">
               <h3>Quick Actions</h3>
 
-              <button 
+              <button
                 className="sidebar-btn"
-                onClick={handleOpenBrowseEvents}
+                onClick={() => navigate('/events')}
               >
                 Browse Events
               </button>
-              
-              <button 
+
+              <button
                 className="sidebar-btn"
                 onClick={() => setShowCertificateModal(true)}
               >
                 My Certificates
               </button>
-              
-              <button 
+
+              <button
                 className="sidebar-btn"
                 onClick={() => setShowProfileModal(true)}
               >
@@ -551,9 +561,9 @@ export default function StudentDashboard() {
                   <div style={{ width: `${dashboard.profileCompletion}%` }}></div>
                 </div>
                 <small>{dashboard.profileCompletion}% completed</small>
-                
+
                 {dashboard.profileCompletion < 100 && (
-                  <button 
+                  <button
                     className="btn-improve"
                     onClick={() => setShowProfileModal(true)}
                   >
@@ -634,7 +644,7 @@ export default function StudentDashboard() {
                         <div className="browse-event-footer">
                           <span className="event-price">{event.price}</span>
                           <span className="event-capacity">👥 {event.registered}/{event.capacity}</span>
-                          <button 
+                          <button
                             className="register-small"
                             onClick={() => {
                               setSelectedEvent(event);
@@ -665,17 +675,17 @@ export default function StudentDashboard() {
             <div className="modal-details">
               <h2>{selectedEvent.title}</h2>
               <p className="event-description">{selectedEvent.description}</p>
-              
+
               <div className="event-info">
-                <p><strong>📅 Date:</strong> {new Date(selectedEvent.date).toLocaleDateString('en-IN', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                <p><strong>📅 Date:</strong> {new Date(selectedEvent.date).toLocaleDateString('en-IN', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}</p>
                 <p><strong>📍 Location:</strong> {selectedEvent.location}</p>
                 <p><strong>🎤 Speaker:</strong> {selectedEvent.speaker}</p>
-                <p><strong>📊 Status:</strong> 
+                <p><strong>📊 Status:</strong>
                   <span className={`event-status ${selectedEvent.status?.toLowerCase() || 'upcoming'}`}>
                     {selectedEvent.status || 'Upcoming'}
                   </span>
@@ -685,7 +695,7 @@ export default function StudentDashboard() {
               <div className="modal-actions">
                 {selectedEvent.status === 'Upcoming' && (
                   <>
-                    <button 
+                    <button
                       className="btn-primary"
                       onClick={() => {
                         handleRegisterEvent(selectedEvent._id);
@@ -694,7 +704,7 @@ export default function StudentDashboard() {
                     >
                       Register
                     </button>
-                    <button 
+                    <button
                       className="btn-danger"
                       onClick={() => {
                         handleUnregisterEvent(selectedEvent._id);
@@ -716,13 +726,13 @@ export default function StudentDashboard() {
         <div className="modal-overlay" onClick={() => setShowRegisterModal(false)}>
           <div className="modal-content register-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowRegisterModal(false)}>×</button>
-            
+
             <div className="register-icon">🎟️</div>
             <h2>Confirm Registration</h2>
-            
+
             <p>You are about to register for:</p>
             <h3>{selectedEvent.title}</h3>
-            
+
             <div className="register-details">
               <p>📅 {new Date(selectedEvent.date).toLocaleDateString()}</p>
               <p>📍 {selectedEvent.location}</p>
@@ -730,13 +740,13 @@ export default function StudentDashboard() {
             </div>
 
             <div className="modal-actions">
-              <button 
+              <button
                 className="btn-primary"
                 onClick={() => handleRegisterEvent(selectedEvent._id)}
               >
                 Confirm Registration
               </button>
-              <button 
+              <button
                 className="btn-secondary"
                 onClick={() => setShowRegisterModal(false)}
               >
@@ -752,16 +762,16 @@ export default function StudentDashboard() {
         <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
           <div className="modal-content profile-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowProfileModal(false)}>×</button>
-            
+
             <h2>Edit Profile</h2>
-            
+
             <form onSubmit={handleUpdateProfile} className="profile-form">
               <div className="form-group">
                 <label>Full Name</label>
                 <input
                   type="text"
                   value={profileForm.name}
-                  onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                   required
                 />
               </div>
@@ -771,7 +781,7 @@ export default function StudentDashboard() {
                 <input
                   type="tel"
                   value={profileForm.phone}
-                  onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                 />
               </div>
 
@@ -779,7 +789,7 @@ export default function StudentDashboard() {
                 <label>Department</label>
                 <select
                   value={profileForm.department}
-                  onChange={(e) => setProfileForm({...profileForm, department: e.target.value})}
+                  onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })}
                 >
                   <option value="">Select Department</option>
                   <option value="CSE">Computer Science</option>
@@ -793,7 +803,7 @@ export default function StudentDashboard() {
                 <label>Year</label>
                 <select
                   value={profileForm.year}
-                  onChange={(e) => setProfileForm({...profileForm, year: e.target.value})}
+                  onChange={(e) => setProfileForm({ ...profileForm, year: e.target.value })}
                 >
                   <option value="">Select Year</option>
                   <option value="1">1st Year</option>
@@ -819,9 +829,9 @@ export default function StudentDashboard() {
         <div className="modal-overlay" onClick={() => setShowCertificateModal(false)}>
           <div className="modal-content certificates-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowCertificateModal(false)}>×</button>
-            
+
             <h2>My Certificates</h2>
-            
+
             <div className="certificates-grid">
               {dashboard?.certificatesList?.map(cert => (
                 <div key={cert.id} className="certificate-card">
@@ -829,14 +839,14 @@ export default function StudentDashboard() {
                     <span className="cert-icon-large">🏆</span>
                     <h3>{cert.title}</h3>
                   </div>
-                  
+
                   <div className="certificate-details">
                     <p><strong>Issue Date:</strong> {new Date(cert.issueDate).toLocaleDateString()}</p>
                     <p><strong>Grade:</strong> {cert.grade}</p>
                     <p><strong>Certificate ID:</strong> {cert.id}</p>
                   </div>
-                  
-                  <button 
+
+                  <button
                     className="btn-download-full"
                     onClick={() => handleDownloadCertificate(cert)}
                   >
@@ -868,13 +878,13 @@ function EventCard({ event, onClick, onUnregister }) {
   return (
     <div className="event-card" onClick={onClick}>
       <img src={event.image} alt={event.title} />
-      
+
       <div className="event-details">
         <h3>{event.title}</h3>
-        <p>📅 {new Date(event.date).toLocaleDateString('en-IN', { 
-          day: 'numeric', 
-          month: 'short', 
-          year: 'numeric' 
+        <p>📅 {new Date(event.date).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
         })}</p>
         <p>📍 {event.location}</p>
 
@@ -882,9 +892,9 @@ function EventCard({ event, onClick, onUnregister }) {
           <span className={`event-status ${event.status.toLowerCase()}`}>
             {event.status}
           </span>
-          
+
           {onUnregister && (
-            <button 
+            <button
               className="btn-unregister"
               onClick={(e) => {
                 e.stopPropagation();
