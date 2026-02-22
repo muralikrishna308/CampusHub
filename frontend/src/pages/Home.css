@@ -23,7 +23,7 @@
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Reset */
+
 *,
 *::before,
 *::after {
@@ -32,10 +32,10 @@
   box-sizing: border-box;
 }
 
-/*Google Font (Inter) */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-/* Root */
+
 .lp-root {
   font-family: var(--font);
   background: var(--c-dark);
@@ -44,7 +44,75 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Scrollbar */
+
+.lp-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children — each reads --stagger CSS var */
+.lp-stagger {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: calc(var(--stagger, 0) * 110ms);
+}
+
+.lp-stagger--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Per-element named animations used in hero */
+.lp-anim {
+  opacity: 0;
+  animation-fill-mode: both;
+  animation-duration: 0.75s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-delay: var(--delay, 0ms);
+}
+
+.lp-anim--fade-up {
+  animation-name: lpFadeUp;
+}
+
+.lp-anim--fade-right {
+  animation-name: lpFadeRight;
+}
+
+@keyframes lpFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lpFadeRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Custom Scrollbar*/
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -94,21 +162,24 @@
   text-decoration: none;
 }
 
+/* Shimmer sweep overlay */
 .lp-btn::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.15);
-  opacity: 0;
-  transition: opacity 0.3s;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%);
+  background-size: 200% 100%;
+  background-position: 200% 0;
+  transition: background-position 0.55s ease;
 }
 
 .lp-btn:hover::before {
-  opacity: 1;
+  background-position: -200% 0;
 }
 
 .lp-btn:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  box-shadow: none !important;
 }
 
 .lp-btn--primary {
@@ -184,7 +255,7 @@
   color: #fff;
 }
 
-/* pill label */
+/* pill label with subtle entrance pulse */
 .lp-pill {
   display: inline-block;
   background: rgba(102, 126, 234, 0.15);
@@ -197,6 +268,38 @@
   padding: 0.3rem 1rem;
   border-radius: 50px;
   margin-bottom: 1rem;
+  position: relative;
+  overflow: visible;
+  animation: pillPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes pillPop {
+  from {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Ping ring around pill on hover */
+.lp-pill::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid rgba(102, 126, 234, 0.5);
+  border-radius: 50px;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.35s, transform 0.35s;
+}
+
+.lp-pill:hover::after {
+  opacity: 1;
+  transform: scale(1.08);
 }
 
 /* shared section wrapper */
@@ -234,9 +337,7 @@
   line-height: 1.7;
 }
 
-/* ════════════════════════════════════════════════════
-   NAVBAR
-   ════════════════════════════════════════════════════ */
+/*NAVBAR*/
 .lp-nav {
   position: fixed;
   inset: 0 0 auto;
@@ -280,6 +381,7 @@
 
 .lp-nav__logo:hover {
   opacity: 0.85;
+  transform: scale(1.03);
 }
 
 .lp-nav__logomark {
@@ -312,11 +414,31 @@
   border-radius: 8px;
   transition: var(--transition);
   text-transform: capitalize;
+  position: relative;
+}
+
+/* Sliding underline on nav links */
+.lp-nav__link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0.85rem;
+  right: 0.85rem;
+  height: 2px;
+  background: var(--grad-text);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lp-nav__link:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lp-nav__link:hover::after {
+  transform: scaleX(1);
 }
 
 .lp-nav__cta {
@@ -614,11 +736,15 @@
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   backdrop-filter: blur(20px);
-  transition: var(--transition);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s, box-shadow 0.4s;
   position: relative;
   overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
+/* Inner gradient sweep */
 .lp-mosaic-card::before {
   content: '';
   position: absolute;
@@ -626,15 +752,35 @@
   background: var(--grad-main);
   opacity: 0;
   transition: opacity 0.4s;
+  z-index: 0;
+}
+
+/* Corner shimmer */
+.lp-mosaic-card::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 80px;
+  height: 160%;
+  background: rgba(255, 255, 255, 0.06);
+  transform: rotate(25deg) translateX(-100%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
 }
 
 .lp-mosaic-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(102, 126, 234, 0.4);
+  transform: translateY(-6px) scale(1.02);
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 20px 50px rgba(102, 126, 234, 0.2);
 }
 
 .lp-mosaic-card:hover::before {
-  opacity: 0.06;
+  opacity: 0.08;
+}
+
+.lp-mosaic-card:hover::after {
+  transform: rotate(25deg) translateX(340%);
 }
 
 /* main card spans two rows on left */
@@ -835,7 +981,7 @@
   letter-spacing: 0.03em;
 }
 
-/*FEATURES — BENTO GRID*/
+/*FEATURES */
 .lp-features {
   background:
     radial-gradient(ellipse 60% 50% at 80% 30%, rgba(118, 75, 162, 0.12) 0%, transparent 60%),
@@ -858,14 +1004,33 @@
   padding: 2.25rem;
   position: relative;
   overflow: hidden;
-  transition: var(--transition);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s, box-shadow 0.4s;
   cursor: default;
 }
 
+/* Diagonal light sweep across bento cell */
+.lp-bento__cell::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 60px;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.05);
+  transform: rotate(30deg) translateX(-120%);
+  transition: transform 0.65s ease;
+  pointer-events: none;
+}
+
 .lp-bento__cell:hover {
-  transform: translateY(-5px);
-  border-color: rgba(102, 126, 234, 0.4);
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(102, 126, 234, 0.45);
   box-shadow: var(--shadow-lg);
+}
+
+.lp-bento__cell:hover::after {
+  transform: rotate(30deg) translateX(400%);
 }
 
 .lp-bento__cell--wide {
@@ -901,11 +1066,13 @@
   font-size: 2.2rem;
   margin-bottom: 1rem;
   display: inline-block;
-  transition: transform 0.4s ease;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.4s ease;
 }
 
 .lp-bento__cell:hover .lp-bento__icon {
-  transform: scale(1.15) rotate(-5deg);
+  transform: scale(1.2) rotate(-8deg);
+  filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
 }
 
 .lp-bento__title {
@@ -921,9 +1088,7 @@
   line-height: 1.65;
 }
 
-/* ════════════════════════════════════════════════════
-   EVENTS — HORIZONTAL SCROLL CARDS
-   ════════════════════════════════════════════════════ */
+/*EVENTS */
 .lp-events {
   background: var(--c-dark2);
   overflow: hidden;
@@ -964,17 +1129,37 @@
   padding: 1.75rem;
   position: relative;
   overflow: hidden;
-  transition: var(--transition);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s, box-shadow 0.4s;
   cursor: pointer;
 }
 
-.lp-event-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--accent, var(--c-primary));
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+/* Top gradient highlight line */
+.lp-event-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent, var(--c-primary));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* animated colour bar at bottom */
+.lp-event-card:hover {
+  transform: translateY(-8px) scale(1.015);
+  border-color: var(--accent, var(--c-primary));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--accent, var(--c-primary));
+}
+
+.lp-event-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* animated colour bar at bottom — grows wider on hover */
 .lp-event-card__bar {
   position: absolute;
   bottom: 0;
@@ -984,7 +1169,8 @@
   background: var(--accent, var(--c-primary));
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.4s ease;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0 2px 0 0;
 }
 
 .lp-event-card:hover .lp-event-card__bar {
@@ -1049,12 +1235,16 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--accent, var(--c-primary));
-  transition: var(--transition);
+  transition: letter-spacing 0.3s, transform 0.3s;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .lp-event-card__btn:hover {
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  transform: translateX(4px);
 }
 
 .lp-events__cta {
@@ -1093,6 +1283,11 @@
   text-align: center;
   padding: 2rem 2rem;
   position: relative;
+  transition: transform 0.35s ease;
+}
+
+.lp-step:hover {
+  transform: translateY(-4px);
 }
 
 .lp-step__num {
@@ -1114,13 +1309,32 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 1.25rem;
-  transition: var(--transition);
+  transition: background 0.35s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.35s;
+  position: relative;
+}
+
+/* Ripple ring on step icon hover */
+.lp-step__icon::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px solid rgba(102, 126, 234, 0.4);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.4s, transform 0.4s;
 }
 
 .lp-step:hover .lp-step__icon {
-  background: rgba(102, 126, 234, 0.2);
-  transform: scale(1.1);
-  box-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+  background: rgba(102, 126, 234, 0.22);
+  transform: scale(1.12) rotate(-6deg);
+  box-shadow: 0 0 35px rgba(102, 126, 234, 0.35);
+}
+
+.lp-step:hover .lp-step__icon::after {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .lp-step__title {
@@ -1171,15 +1385,19 @@
   align-items: center;
   gap: 1rem;
   opacity: 0;
-  transform: scale(0.96) translateY(10px);
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  transform: scale(0.93) translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.6s;
   pointer-events: none;
+  backdrop-filter: blur(8px);
 }
 
 .lp-testi__card--active {
   opacity: 1;
   transform: scale(1) translateY(0);
   pointer-events: auto;
+  border-color: rgba(102, 126, 234, 0.25);
 }
 
 .lp-testi__avatar {
@@ -1192,6 +1410,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s;
+  animation: avatarFloatIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes avatarFloatIn {
+  from {
+    transform: scale(0.5) rotate(-20deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.lp-testi__card--active .lp-testi__avatar {
+  animation: avatarFloatIn 0.5s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.lp-testi__card--active .lp-testi__avatar:hover {
+  transform: scale(1.12) rotate(5deg);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
 }
 
 .lp-testi__quote {
@@ -1226,16 +1468,22 @@
   background: var(--c-border);
   border: none;
   cursor: pointer;
-  transition: var(--transition);
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.35s, transform 0.2s;
+}
+
+.lp-testi__dot:hover {
+  transform: scale(1.3);
+  background: rgba(102, 126, 234, 0.5);
 }
 
 .lp-testi__dot--active {
-  width: 24px;
+  width: 28px;
   border-radius: 4px;
   background: var(--grad-main);
 }
 
-/*CTA BANNER*/
+/* CTA BANNER*/
 .lp-cta-banner {
   background: var(--grad-main);
   padding: 6rem 2rem;
@@ -1296,7 +1544,7 @@
   flex-wrap: wrap;
 }
 
-/*CONTACT*/
+/* CONTACT*/
 .lp-contact {
   background: var(--c-dark2);
 }
@@ -1323,12 +1571,35 @@
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
   padding: 1.25rem 1.5rem;
-  transition: var(--transition);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.35s, box-shadow 0.35s;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left accent bar reveal */
+.lp-contact__item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--grad-main);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.35s ease;
+  border-radius: 0 2px 2px 0;
 }
 
 .lp-contact__item:hover {
   border-color: rgba(102, 126, 234, 0.4);
-  transform: translateX(6px);
+  transform: translateX(8px);
+  box-shadow: -4px 0 20px rgba(102, 126, 234, 0.15);
+}
+
+.lp-contact__item:hover::before {
+  transform: scaleY(1);
 }
 
 .lp-contact__icon {
@@ -1421,6 +1692,20 @@
   padding: 4rem 2rem 2rem;
 }
 
+/* Footer slide-up reveal */
+.lp-footer--reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: footerReveal 0.8s 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes footerReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .lp-footer__inner {
   max-width: 1200px;
   margin: 0 auto 3rem;
@@ -1475,11 +1760,13 @@
   font-size: 0.875rem;
   color: var(--c-muted);
   text-decoration: none;
-  transition: color 0.25s;
+  transition: color 0.25s, transform 0.25s;
+  display: inline-block;
 }
 
 .lp-footer__link:hover {
   color: #fff;
+  transform: translateX(4px);
 }
 
 .lp-footer__bottom {
@@ -1495,7 +1782,7 @@
   color: var(--c-muted);
 }
 
-/*SHARED KEYFRAMES*/
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
@@ -1508,7 +1795,146 @@
   }
 }
 
-/* RESPONSIVE*/
+/
+.lp-stats {
+  position: relative;
+}
+
+.lp-stats::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--grad-main);
+  opacity: 0.6;
+  transition: opacity 0.5s;
+}
+
+.lp-stats.lp-reveal--visible::before {
+  opacity: 1;
+  animation: borderGlow 3s ease-in-out infinite;
+}
+
+@keyframes borderGlow {
+
+  0%,
+  100% {
+    box-shadow: none;
+  }
+
+  50% {
+    box-shadow: 0 0 18px rgba(102, 126, 234, 0.6);
+  }
+}
+
+/*Stat item hover sparkle*/
+.lp-stat-item {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-stat-item:hover {
+  transform: scale(1.05);
+}
+
+.lp-stat-item__value {
+  transition: filter 0.3s;
+}
+
+.lp-stat-item:hover .lp-stat-item__value {
+  filter: drop-shadow(0 0 12px rgba(102, 126, 234, 0.6));
+}
+
+/*CTA Banner parallax shimmer*/
+.lp-cta-banner__inner {
+  animation: bannerFloat 6s ease-in-out infinite;
+}
+
+@keyframes bannerFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/*Gradient text shimmer on hero heading*/
+.lp-hero__gradient-word {
+  background: var(--grad-text);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s linear infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% center;
+  }
+
+  50% {
+    background-position: 100% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/*Hero badge live dot ring */
+.lp-badge__dot {
+  position: relative;
+}
+
+.lp-badge__dot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-primary);
+  animation: dotRing 2s ease-out infinite;
+  opacity: 0;
+}
+
+@keyframes dotRing {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/*Scroll cue pulse*/
+.lp-hero__scroll-cue {
+  animation: scrollCuePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes scrollCuePulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-6px);
+  }
+}
+
+/*RESPONSIVE*/
 @media (max-width: 1024px) {
   .lp-bento {
     grid-template-columns: 1fr 1fr;
@@ -1588,7 +2014,7 @@
     max-width: 360px;
   }
 
-  /* bento */
+
   .lp-bento {
     grid-template-columns: 1fr;
   }
@@ -1685,13 +2111,13 @@
   }
 }
 
-/* Focus states (accessibility)  */
 .lp-btn:focus-visible,
 .lp-nav__link:focus-visible,
 .lp-social-card:focus-visible {
   outline: 2px solid var(--c-primary);
   outline-offset: 3px;
 }
+
 
 @media print {
 
