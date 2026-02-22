@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
     role: {
         type: String,
         enum: {
-          values: ["student", "college_admin", "super_admin"],
+          values: ["student", "admin", "super_admin"],
           message: "{VALUE} is not a valid role",
         },
         default: "student",
@@ -58,17 +58,14 @@ const userSchema = new mongoose.Schema(
     },
 
     // Optional Admin Info
-    adminPosition: {
-      type: String,
-      default: "Faculty Coordinator",
-    },
+   
   },
   {
     timestamps: true,
   }
 );
 
-userSchema.index({ email: 1 });
+
 userSchema.index({ college: 1 });
 userSchema.index({ role: 1 });
 
