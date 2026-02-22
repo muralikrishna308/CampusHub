@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
   {
@@ -30,13 +30,13 @@ const userSchema = new mongoose.Schema(
     },
 
     role: {
-      type: String,
-      enum: {
-        values: ["student", "college_admin", "super_admin","admin"],
-        message: "{VALUE} is not a valid role",
+        type: String,
+        enum: {
+          values: ["student", "college_admin", "super_admin"],
+          message: "{VALUE} is not a valid role",
+        },
+        default: "student",
       },
-      default: "student",
-    },
 
     college: {
       type: String,
@@ -68,7 +68,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Indexes
+userSchema.index({ email: 1 });
 userSchema.index({ college: 1 });
 userSchema.index({ role: 1 });
 
