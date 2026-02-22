@@ -57,14 +57,13 @@ const userSchema = new mongoose.Schema(
       type: Number,
     },
 
-    // Optional Admin Info
+   
    
   },
   {
     timestamps: true,
   }
 );
-
 
 userSchema.index({ college: 1 });
 userSchema.index({ role: 1 });
