@@ -30,17 +30,17 @@ export default function AdminDashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states
   const [eventForm, setEventForm] = useState({
     title: '',
-    category: 'Technology',
-    date: '',
-    location: '',
     description: '',
-    capacity: '',
-    price: '',
-    status: 'upcoming'
+    eventDate: '',
+    location: '',
+    registrationEndDate: '',
+    ticketPrice: '',
+    image: null
   });
 
   const [reportFilters, setReportFilters] = useState({
@@ -58,121 +58,31 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
 
-      // Simulated API call
-      setTimeout(() => {
-        setStats({
-          totalEvents: 24,
-          activeEvents: 8,
-          totalRegistrations: 1250,
-          avgParticipants: 52,
-          totalRevenue: 45800,
-          growth: 15.5,
-          
-          events: [
-            { 
-              _id: 1, 
-              title: 'Tech Conference 2024', 
-              participants: 245, 
-              registered: 245,
-              capacity: 300,
-              active: true,
-              image: eventImages.tech,
-              date: '2024-03-15',
-              location: 'Convention Center',
-              category: 'Technology',
-              revenue: 12500,
-              status: 'upcoming',
-              description: 'Annual technology conference featuring latest trends in AI and Web Development.',
-              speaker: 'Dr. Sarah Johnson',
-              time: '09:00 AM - 06:00 PM'
-            },
-            { 
-              _id: 2, 
-              title: 'Music Festival', 
-              participants: 189, 
-              registered: 189,
-              capacity: 200,
-              active: true,
-              image: eventImages.music,
-              date: '2024-03-20',
-              location: 'Central Park',
-              category: 'Music',
-              revenue: 8900,
-              status: 'upcoming',
-              description: 'A day filled with amazing performances from top artists.',
-              speaker: 'Various Artists',
-              time: '12:00 PM - 11:00 PM'
-            },
-            { 
-              _id: 3, 
-              title: 'Workshop: React Basics', 
-              participants: 78, 
-              registered: 78,
-              capacity: 100,
-              active: false,
-              image: eventImages.workshop,
-              date: '2024-02-28',
-              location: 'Online',
-              category: 'Education',
-              revenue: 3900,
-              status: 'completed',
-              description: 'Learn React fundamentals in this hands-on workshop.',
-              speaker: 'Mike Johnson',
-              time: '10:00 AM - 04:00 PM'
-            },
-            { 
-              _id: 4, 
-              title: 'Networking Mixer', 
-              participants: 156, 
-              registered: 156,
-              capacity: 200,
-              active: true,
-              image: eventImages.networking,
-              date: '2024-03-25',
-              location: 'Business Center',
-              category: 'Networking',
-              revenue: 6200,
-              status: 'upcoming',
-              description: 'Connect with professionals from various industries.',
-              speaker: 'Networking Hosts',
-              time: '06:00 PM - 09:00 PM'
-            },
-            { 
-              _id: 5, 
-              title: 'Charity Run', 
-              participants: 320, 
-              registered: 320,
-              capacity: 500,
-              active: true,
-              image: eventImages.charity,
-              date: '2024-04-01',
-              location: 'City Stadium',
-              category: 'Charity',
-              revenue: 15000,
-              status: 'upcoming',
-              description: 'Annual charity run to support local causes.',
-              speaker: 'Charity Organization',
-              time: '08:00 AM - 12:00 PM'
-            },
-          ],
-          
-          users: [
-            { id: 1, name: 'John Doe', email: 'john@example.com', role: 'student', events: 5, joined: '2024-01-15' },
-            { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'student', events: 3, joined: '2024-01-20' },
-            { id: 3, name: 'Bob Wilson', email: 'bob@example.com', role: 'organizer', events: 8, joined: '2023-12-10' },
-            { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'student', events: 2, joined: '2024-02-01' },
-            { id: 5, name: 'Charlie Davis', email: 'charlie@example.com', role: 'admin', events: 12, joined: '2023-11-05' },
-          ],
-          
-          recentActivity: [
-            { id: 1, action: 'New registration', user: 'John Doe', event: 'Tech Conference', time: '2 minutes ago' },
-            { id: 2, action: 'Event created', user: 'Admin', event: 'Music Festival', time: '1 hour ago' },
-            { id: 3, action: 'Payment received', user: 'Jane Smith', event: 'Workshop', time: '3 hours ago' },
-            { id: 4, action: 'Event completed', user: 'System', event: 'React Basics', time: '1 day ago' },
-          ]
-        });
-        setLoading(false);
-      }, 1000);
+      const response = await fetch(
+        "http://localhost:5000/api/dashboard/admin/events",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      const events = await response.json();
+      setStats({
+        totalEvents: events.length,
+        activeEvents: events.filter(e => e.status === 'active').length,
+        totalRegistrations: 0,
+        avgParticipants: 0,
+        totalRevenue: events.reduce(
+          (sum, event) => sum + (event.ticketPrice || 0),
+          0
+        ),
+        growth: 0,
+        events: events,
+        users: [],
+        recentActivity: []
+      });
+      setLoading(false);
+
     } catch (err) {
       setError('Failed to load dashboard data');
       setLoading(false);
@@ -195,36 +105,141 @@ export default function AdminDashboard() {
   }, [fetchDashboardData, fetchNotifications]);
 
   // Handle event creation
-  const handleCreateEvent = (e) => {
-    e.preventDefault();
+  const handleCreateEvent = async (e) => {
+  e.preventDefault();
+
+  if (isSubmitting) return;
+
+  try {
+    setIsSubmitting(true);
+
+    const formData = new FormData();
+    formData.append('title', eventForm.title);
+    formData.append('description', eventForm.description);
+    formData.append(
+      'eventDate',
+      new Date(eventForm.eventDate + 'T00:00:00').toISOString()
+    );
+    formData.append('location', eventForm.location);
+    formData.append(
+      'registrationEndDate',
+      new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString()
+    );
+    formData.append('ticketPrice', eventForm.ticketPrice || 0);
+
+    if (eventForm.image) {
+      formData.append('image', eventForm.image);
+    }
+
+    const response = await fetch(
+      'http://localhost:5000/api/dashboard/create-event',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText);
+    }
+
     alert('Event created successfully!');
+
     setShowCreateModal(false);
+
     setEventForm({
       title: '',
-      category: 'Technology',
-      date: '',
-      location: '',
       description: '',
-      capacity: '',
-      price: '',
-      status: 'upcoming'
+      eventDate: '',
+      location: '',
+      registrationEndDate: '',
+      ticketPrice: '',
+      image: null
     });
-  };
+
+    fetchDashboardData();
+
+  } catch (err) {
+    console.error('Error creating event:', err);
+    alert(`Failed to create event: ${err.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Handle event update
-  const handleUpdateEvent = (e) => {
+  const handleUpdateEvent = async (e) => {
     e.preventDefault();
-    alert('Event updated successfully!');
-    setShowEditModal(false);
+    
+    try {
+      const formData = new FormData();
+      formData.append('title', eventForm.title);
+      formData.append('description', eventForm.description);
+      formData.append('eventDate', new Date(eventForm.eventDate + 'T00:00:00').toISOString());
+      formData.append('location', eventForm.location);
+      formData.append('registrationEndDate', new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString());
+      formData.append('ticketPrice', eventForm.ticketPrice || 0);
+
+      const response = await fetch(`http://localhost:5000/api/events/${eventForm._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: eventForm.title,
+          description: eventForm.description,
+          eventDate: new Date(eventForm.eventDate + 'T00:00:00').toISOString(),
+          location: eventForm.location,
+          registrationEndDate: new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString(),
+          ticketPrice: Number(eventForm.ticketPrice) || 0
+        })
+      });
+
+      if (response.ok) {
+        alert('Event updated successfully!');
+        setShowEditModal(false);
+        fetchDashboardData();
+      } else {
+        const error = await response.text();
+        alert(`Failed to update event: ${error}`);
+      }
+    } catch (err) {
+      console.error('Error updating event:', err);
+      alert('Failed to update event. Please try again.');
+    }
   };
 
   // Handle event deletion
-  const handleDeleteEvent = (eventId) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      alert('Event deleted successfully!');
-      setSelectedEvent(null);
+  const handleDeleteEvent = async (eventId) => {
+  if (window.confirm('Are you sure you want to delete this event?')) {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/dashboard/admin/events/${eventId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        alert('Event deleted successfully!');
+        fetchDashboardData(); // refresh UI
+      } else {
+        alert('Failed to delete event');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting event');
     }
-  };
+  }
+};
 
   // Handle user actions
   const handleUserAction = (action, user) => {
@@ -432,10 +447,15 @@ export default function AdminDashboard() {
                         event={event}
                         onClick={() => setSelectedEvent(event)}
                         onEdit={() => {
-                          setEventForm(event);
+                          // Format dates for edit form
+                          const formattedEvent = {
+                            ...event,
+                            eventDate: event.eventDate ? event.eventDate.split('T')[0] : '',
+                            registrationEndDate: event.registrationEndDate ? event.registrationEndDate.split('T')[0] : ''
+                          };
+                          setEventForm(formattedEvent);
                           setShowEditModal(true);
                         }}
-                        getStatusColor={getStatusColor}
                       />
                     ))}
                   </div>
@@ -502,11 +522,14 @@ export default function AdminDashboard() {
                         <tr key={event._id}>
                           <td>
                             <div className="event-cell">
-                              <img src={event.image} alt={event.title} />
+                              <img
+                                src={`http://localhost:5000/uploads/${event.image}`}
+                                alt={event.title}
+                              />
                               <span>{event.title}</span>
                             </div>
                           </td>
-                          <td>{new Date(event.date).toLocaleDateString()}</td>
+                          <td>{new Date(event.eventDate).toLocaleDateString()}</td>
                           <td>{event.location}</td>
                           <td>{event.registered}/{event.capacity}</td>
                           <td>${event.revenue?.toLocaleString()}</td>
@@ -517,10 +540,20 @@ export default function AdminDashboard() {
                           </td>
                           <td>
                             <button className="action-btn" onClick={() => {
-                              setEventForm(event);
+                              const formattedEvent = {
+                                ...event,
+                                eventDate: event.eventDate ? event.eventDate.split('T')[0] : '',
+                                registrationEndDate: event.registrationEndDate ? event.registrationEndDate.split('T')[0] : ''
+                              };
+                              setEventForm(formattedEvent);
                               setShowEditModal(true);
                             }}>✏️</button>
-                            <button className="action-btn" onClick={() => handleDeleteEvent(event._id)}>🗑️</button>
+                            <button
+                            className="action-btn"
+                            onClick={() => handleDeleteEvent(event._id)}
+                            >
+                              🗑️
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -633,7 +666,7 @@ export default function AdminDashboard() {
               <div className="reports-tab">
                 <h2>Analytics & Reports</h2>
                 
-                {/* Quick Stats - White Cards */}
+                {/* Quick Stats */}
                 <div className="quick-stats">
                   <div className="quick-stat-card">
                     <span className="quick-stat-icon">📊</span>
@@ -665,7 +698,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Filters - Fixed Layout with 3 columns */}
+                {/* Filters */}
                 <div className="report-filters">
                   <div className="filter-group">
                     <label>DATE RANGE</label>
@@ -714,7 +747,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Stats - White Cards */}
+                {/* Stats */}
                 <div className="report-stats">
                   <div className="stat-box">
                     <span className="stat-label">Total Events</span>
@@ -734,7 +767,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Charts - White Cards */}
+                {/* Charts */}
                 <div className="report-charts">
                   <div className="chart-card">
                     <h3>Registration Trends</h3>
@@ -750,7 +783,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Report Table - White Background */}
+                {/* Report Table */}
                 <div className="report-table-section">
                   <div className="report-table-header">
                     <h3>Event Performance</h3>
@@ -773,7 +806,7 @@ export default function AdminDashboard() {
                       {stats.events?.map(event => (
                         <tr key={event._id}>
                           <td>{event.title}</td>
-                          <td>{new Date(event.date).toLocaleDateString()}</td>
+                          <td>{new Date(event.eventDate).toLocaleDateString()}</td>
                           <td>{event.registered}/{event.capacity}</td>
                           <td>${event.revenue?.toLocaleString()}</td>
                           <td>{Math.round((event.registered/event.capacity)*100)}%</td>
@@ -803,60 +836,45 @@ export default function AdminDashboard() {
             
             <form onSubmit={handleCreateEvent} className="modal-form">
               <div className="form-group">
-                <label>Event Title</label>
+                <label>Event Title *</label>
                 <input 
                   type="text" 
                   value={eventForm.title}
                   onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
+                  placeholder="Enter event title"
                   required
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <select 
-                    value={eventForm.category}
-                    onChange={(e) => setEventForm({...eventForm, category: e.target.value})}
-                  >
-                    <option>Technology</option>
-                    <option>Music</option>
-                    <option>Education</option>
-                    <option>Networking</option>
-                    <option>Charity</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label>Status</label>
-                  <select 
-                    value={eventForm.status}
-                    onChange={(e) => setEventForm({...eventForm, status: e.target.value})}
-                  >
-                    <option value="upcoming">Upcoming</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
+              <div className="form-group">
+                <label>Event Description *</label>
+                <textarea 
+                  rows="4"
+                  value={eventForm.description}
+                  onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+                  placeholder="Describe your event"
+                  required
+                ></textarea>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Date</label>
+                  <label>Event Date *</label>
                   <input 
                     type="date" 
-                    value={eventForm.date}
-                    onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
+                    value={eventForm.eventDate}
+                    onChange={(e) => setEventForm({...eventForm, eventDate: e.target.value})}
                     required
                   />
                 </div>
                 
                 <div className="form-group">
-                  <label>Location</label>
+                  <label>Location *</label>
                   <input 
                     type="text" 
                     value={eventForm.location}
                     onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
+                    placeholder="Event venue/location"
                     required
                   />
                 </div>
@@ -864,42 +882,56 @@ export default function AdminDashboard() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Capacity</label>
+                  <label>Registration End Date *</label>
                   <input 
-                    type="number" 
-                    value={eventForm.capacity}
-                    onChange={(e) => setEventForm({...eventForm, capacity: e.target.value})}
+                    type="date" 
+                    value={eventForm.registrationEndDate}
+                    onChange={(e) => setEventForm({...eventForm, registrationEndDate: e.target.value})}
                     required
                   />
                 </div>
                 
                 <div className="form-group">
-                  <label>Price ($)</label>
+                  <label>Ticket Price ($) *</label>
                   <input 
                     type="number" 
-                    value={eventForm.price}
-                    onChange={(e) => setEventForm({...eventForm, price: e.target.value})}
+                    value={eventForm.ticketPrice}
+                    onChange={(e) => setEventForm({...eventForm, ticketPrice: e.target.value})}
+                    placeholder="Enter ticket price (0 for free)"
+                    min="0"
+                    step="0.01"
                     required
                   />
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Description</label>
-                <textarea 
-                  rows="4"
-                  value={eventForm.description}
-                  onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
-                  required
-                ></textarea>
+                <label>Event Image</label>
+                <div className="image-upload-container">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setEventForm({...eventForm, image: file});
+                      }
+                    }}
+                  />
+                  <p className="image-upload-hint">Supported formats: JPG, PNG, GIF (Max size: 5MB)</p>
+                </div>
               </div>
 
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary">
-                  Create Event
+                <button 
+                  type="submit" 
+                  className="btn-primary" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Creating...' : 'Create Event'}
                 </button>
               </div>
             </form>
@@ -916,7 +948,7 @@ export default function AdminDashboard() {
             
             <form onSubmit={handleUpdateEvent} className="modal-form">
               <div className="form-group">
-                <label>Event Title</label>
+                <label>Event Title *</label>
                 <input 
                   type="text" 
                   value={eventForm.title}
@@ -925,51 +957,57 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <select 
-                    value={eventForm.category}
-                    onChange={(e) => setEventForm({...eventForm, category: e.target.value})}
-                  >
-                    <option>Technology</option>
-                    <option>Music</option>
-                    <option>Education</option>
-                    <option>Networking</option>
-                    <option>Charity</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label>Status</label>
-                  <select 
-                    value={eventForm.status}
-                    onChange={(e) => setEventForm({...eventForm, status: e.target.value})}
-                  >
-                    <option value="upcoming">Upcoming</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
+              <div className="form-group">
+                <label>Event Description *</label>
+                <textarea 
+                  rows="4"
+                  value={eventForm.description}
+                  onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+                  required
+                ></textarea>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Date</label>
+                  <label>Event Date *</label>
                   <input 
                     type="date" 
-                    value={eventForm.date}
-                    onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
+                    value={eventForm.eventDate}
+                    onChange={(e) => setEventForm({...eventForm, eventDate: e.target.value})}
                     required
                   />
                 </div>
                 
                 <div className="form-group">
-                  <label>Location</label>
+                  <label>Location *</label>
                   <input 
                     type="text" 
                     value={eventForm.location}
                     onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Registration End Date *</label>
+                  <input 
+                    type="date" 
+                    value={eventForm.registrationEndDate}
+                    onChange={(e) => setEventForm({...eventForm, registrationEndDate: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Ticket Price ($) *</label>
+                  <input 
+                    type="number" 
+                    value={eventForm.ticketPrice}
+                    onChange={(e) => setEventForm({...eventForm, ticketPrice: e.target.value})}
+                    min="0"
+                    step="0.01"
                     required
                   />
                 </div>
@@ -994,13 +1032,17 @@ export default function AdminDashboard() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setSelectedEvent(null)}>×</button>
             
-            <img src={selectedEvent.image} alt={selectedEvent.title} className="modal-image" />
+            <img
+             src={`http://localhost:5000/uploads/${selectedEvent.image}`}
+            alt={selectedEvent.title}
+            className="modal-image"
+            />
             
             <div className="modal-details">
               <h2>{selectedEvent.title}</h2>
               
               <div className="event-meta">
-                <span>📅 {new Date(selectedEvent.date).toLocaleDateString()}</span>
+                <span>📅 {new Date(selectedEvent.eventDate).toLocaleDateString()}</span>
                 <span>📍 {selectedEvent.location}</span>
                 <span>🏷️ {selectedEvent.category}</span>
               </div>
@@ -1017,6 +1059,10 @@ export default function AdminDashboard() {
                   <span>${selectedEvent.revenue?.toLocaleString()}</span>
                 </div>
                 <div className="stat-item">
+                  <label>Ticket Price</label>
+                  <span>${selectedEvent.ticketPrice}</span>
+                </div>
+                <div className="stat-item">
                   <label>Status</label>
                   <span className={`status-badge ${selectedEvent.status}`}>
                     {selectedEvent.status}
@@ -1026,7 +1072,12 @@ export default function AdminDashboard() {
               
               <div className="modal-actions">
                 <button className="btn-primary" onClick={() => {
-                  setEventForm(selectedEvent);
+                  const formattedEvent = {
+                    ...selectedEvent,
+                    eventDate: selectedEvent.eventDate ? selectedEvent.eventDate.split('T')[0] : '',
+                    registrationEndDate: selectedEvent.registrationEndDate ? selectedEvent.registrationEndDate.split('T')[0] : ''
+                  };
+                  setEventForm(formattedEvent);
                   setShowEditModal(true);
                   setSelectedEvent(null);
                 }}>
@@ -1109,7 +1160,11 @@ function EventCard({ event, onClick, onEdit }) {
   return (
     <div className="event-card" onClick={onClick}>
       <div className="event-image-container">
-        <img src={event.image} alt={event.title} className="event-image" />
+        <img
+        src={`http://localhost:5000/uploads/${event.image}`}
+        alt={event.title}
+        className="event-image"
+        />
         <span className={`event-status ${event.status}`}>{event.status}</span>
         <span className="event-category">{event.category}</span>
       </div>
@@ -1118,7 +1173,7 @@ function EventCard({ event, onClick, onEdit }) {
         <h3 className="event-title">{event.title}</h3>
         
         <div className="event-meta">
-          <span>📅 {new Date(event.date).toLocaleDateString()}</span>
+          <span>📅 {new Date(event.eventDate).toLocaleDateString()}</span>
           <span>📍 {event.location}</span>
         </div>
 
@@ -1128,8 +1183,8 @@ function EventCard({ event, onClick, onEdit }) {
             <span className="stat-value">{event.registered}/{event.capacity}</span>
           </div>
           <div className="stat">
-            <span className="stat-label">Revenue</span>
-            <span className="stat-value">${event.revenue?.toLocaleString()}</span>
+            <span className="stat-label">Price</span>
+            <span className="stat-value">${event.ticketPrice}</span>
           </div>
         </div>
 
