@@ -66,7 +66,7 @@ const userSchema = new mongoose.Schema(
 );
 
 // Indexes for faster queries
-userSchema.index({ email: 1 });
+
 userSchema.index({ college: 1 });
 userSchema.index({ role: 1 });
 
