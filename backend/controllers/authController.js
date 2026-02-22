@@ -5,7 +5,7 @@ const User = require('../models/User');
 exports.register = async (req, res) => {
   const { name, email, password, role, college } = req.body;
   try {
-    let user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
     if (user) return res.status(400).json({ msg: 'User already exists' });
 
     const salt = await bcrypt.genSalt(10);
