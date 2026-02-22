@@ -9,7 +9,7 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [college, setCollege] = useState('');
-  const [role, setRole] = useState('student');
+  const [role, setRole] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState(null);
@@ -57,7 +57,7 @@ export default function Register() {
                 <select value={role} onChange={e => setRole(e.target.value)}>
                   <option value="student">Student</option>
                   <option value="admin">College Admin</option>
-                  <option value="superadmin">Super Admin</option>
+                  <option value="super_admin">Super Admin</option>
                 </select>
               </div>
             </div>
