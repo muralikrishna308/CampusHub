@@ -39,15 +39,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', data.token);
     setUser(data.user);
     // redirect based on role
-   /* if (data.user.role === 'admin') navigate('/admin');
-    else navigate('/student');*/
-    if (data.user.role === 'superadmin') {
-  navigate('/superadmin/dashboard');
-} else if (data.user.role === 'admin') {
-  navigate('/admin');
-} else {
-  navigate('/student');
-}
+    if (data.user.role === 'admin') navigate('/admin');
+    else navigate('/student');
   };
 
   const register = async (payload) => {
@@ -61,15 +54,8 @@ export function AuthProvider({ children }) {
     setToken(data.token);
     localStorage.setItem('token', data.token);
     setUser(data.user);
-   /* if (data.user.role === 'admin') navigate('/admin');
-    else navigate('/student');*/
-    if (data.user.role === 'superadmin') {
-      navigate('/superadmindashboard');
-    } else if (data.user.role === 'admin') {
-      navigate('/admin');
-    } else {
-      navigate('/student');
-    }
+    if (data.user.role === 'admin') navigate('/admin');
+    else navigate('/student');
   };
 
   const logout = () => {

@@ -3,7 +3,7 @@ import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import StudentDashboard from "./pages/dashboardStudent";
 import AdminDashboard from "./pages/dashboardAdmin";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import Events from "./pages/Events";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -33,13 +33,13 @@ function App() {
             }
           />
           <Route
-           path="/superadmin/dashboard"
-          element={
-          <ProtectedRoute role={"superadmin"}>
-            <SuperAdminDashboard />
-          </ProtectedRoute>
-          }
-        />
+            path="/events"
+            element={
+              <ProtectedRoute role={"student"}>
+                <Events />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

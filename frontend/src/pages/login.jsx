@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import "../styles/auth.css";
-import Chatbot from '../components/chatbot';
+import Chatbot from '../components/Chatbot';
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -23,48 +23,48 @@ export default function Login() {
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
-    <main className="auth-container">
-      <div className="auth-card">
-        <header className="auth-header">
-          <span className="auth-logo">CampusEventHub</span>
-          <h2>Welcome back</h2>
-          <p>Sign in to manage your campus events.</p>
-        </header>
+      <main className="auth-container">
+        <div className="auth-card">
+          <header className="auth-header">
+            <span className="auth-logo">CampusEventHub</span>
+            <h2>Welcome back</h2>
+            <p>Sign in to manage your campus events.</p>
+          </header>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="input-group">
-            <label>Email Address</label>
-            <input 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              type="email" 
-              placeholder="name@college.edu" 
-              required 
-            />
-          </div>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label>Email Address</label>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder="name@college.edu"
+                required
+              />
+            </div>
 
-          <div className="input-group">
-            <label>Password</label>
-            <input 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              type="password" 
-              placeholder="Enter your password" 
-              required 
-            />
-          </div>
+            <div className="input-group">
+              <label>Password</label>
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
 
-          <button type="submit" className="auth-button">Sign In</button>
-        </form>
+            <button type="submit" className="auth-button">Sign In</button>
+          </form>
 
-        {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
 
-        <footer className="auth-switch">
-          Don't have an account? <Link to="/register">Create one for free</Link>
-        </footer>
-      </div>
-    </main>
-    <Chatbot />
+          <footer className="auth-switch">
+            Don't have an account? <Link to="/register">Create one for free</Link>
+          </footer>
+        </div>
+      </main>
+      <Chatbot />
     </div>
   );
 }
