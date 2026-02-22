@@ -19,7 +19,7 @@ exports.getAdminStats = async (req, res) => {
     res.json({ totalEvents, activeEvents, totalRegistrations, avgParticipants, recentEvents });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -35,5 +35,36 @@ exports.getUserDashboard = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Server error' });
+  }
+};
+exports.createEvent = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      eventDate,
+      location,
+      registrationEndDate,
+      ticketPrice
+    } = req.body;
+
+    const event = new Event({
+      title,
+      description,
+      eventDate,
+      location,
+      registrationEndDate,
+      ticketPrice: ticketPrice || null,
+      image: req.file ? req.file.filename : null,
+      admin: req.user.id
+    });
+
+    await event.save();
+
+    res.status(201).json(event);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
   }
 };
