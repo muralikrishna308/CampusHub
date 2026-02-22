@@ -34,13 +34,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-<<<<<<< HEAD
+
       enum: {
         values: ["student", "college_admin", "super_admin"],
         message: "{VALUE} is not a valid role",
       },
       default: "student",
-=======
+
       enum: ['student', 'admin', 'college admin'],
       required: true,
       default: 'student',
@@ -63,7 +63,7 @@ const userSchema = new mongoose.Schema(
     adminPosition: {
       type: String,
       default: "Faculty Coordinator",
->>>>>>> bb2950976088c85424fadfef3b6b5b7cfcecf3d3
+
     },
   },
   {
@@ -71,12 +71,10 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-<<<<<<< HEAD
+
 userSchema.index({ email: 1 });
 userSchema.index({ college: 1 });
 userSchema.index({ role: 1 });
 
 module.exports = mongoose.model("User", userSchema);
-=======
-module.exports = mongoose.model('User', userSchema);
->>>>>>> bb2950976088c85424fadfef3b6b5b7cfcecf3d3
+
