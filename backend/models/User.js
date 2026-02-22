@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
       minlength: [2, "Name must be at least 2 characters long"],
       maxlength: [100, "Name cannot exceed 100 characters"],
     },
+
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -20,6 +21,7 @@ const userSchema = new mongoose.Schema(
         "Please provide a valid email address",
       ],
     },
+
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -27,43 +29,38 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    college: {
-      type: String,
-      required: [true, "College is required"],
-      trim: true,
-    },
     role: {
       type: String,
-
       enum: {
         values: ["student", "college_admin", "super_admin"],
         message: "{VALUE} is not a valid role",
       },
       default: "student",
-
-      enum: ['student', 'admin', 'college admin'],
-      required: true,
-      default: 'student',
     },
+
     college: {
       type: String,
-      required: true,
+      required: [true, "College is required"],
+      trim: true,
     },
+
     collegeName: {
       type: String,
     },
+
     // Optional Student Info
     department: {
       type: String,
     },
+
     year: {
       type: Number,
     },
+
     // Optional Admin Info
     adminPosition: {
       type: String,
       default: "Faculty Coordinator",
-
     },
   },
   {
@@ -71,10 +68,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-
+// Indexes
 userSchema.index({ email: 1 });
 userSchema.index({ college: 1 });
 userSchema.index({ role: 1 });
 
 module.exports = mongoose.model("User", userSchema);
-
