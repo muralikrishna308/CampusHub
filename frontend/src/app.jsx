@@ -3,6 +3,7 @@ import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import StudentDashboard from "./pages/dashboardStudent";
 import AdminDashboard from "./pages/dashboardAdmin";
+import Events from "./pages/Events";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -28,6 +29,14 @@ function App() {
             element={
               <ProtectedRoute role={"admin"}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              <ProtectedRoute role={"student"}>
+                <Events />
               </ProtectedRoute>
             }
           />
