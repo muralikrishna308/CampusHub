@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './StudentDashboard.css';
+import Chatbot from '../components/Chatbot';
 
 const eventImages = {
   tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87',
