@@ -2,6 +2,7 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import axios from "axios";
 import './StudentDashboard.css';
 import Chatbot from '../components/Chatbot';
 
@@ -130,102 +131,30 @@ export default function StudentDashboard() {
   }, [token]);
 
   // Fetch browse events
-  const fetchBrowseEvents = useCallback(() => {
+  const fetchBrowseEvents = useCallback(async () => {
+  try {
     setBrowseLoading(true);
 
-    setTimeout(() => {
-      const mockEvents = [
-        {
-          _id: 1,
-          title: 'Tech Conference 2024',
-          description: 'Annual technology conference featuring latest trends in AI, Web Development, and Cloud Computing.',
-          date: '2024-03-15',
-          time: '09:00 AM - 06:00 PM',
-          location: 'Convention Center, Hall A',
-          category: 'tech',
-          image: eventImages.tech,
-          speaker: 'Dr. Sarah Johnson',
-          capacity: 500,
-          registered: 342,
-          price: 'Free'
-        },
-        {
-          _id: 2,
-          title: 'Summer Music Festival',
-          description: 'A day filled with amazing performances from top artists.',
-          date: '2024-03-20',
-          time: '12:00 PM - 11:00 PM',
-          location: 'Central Park, Main Stage',
-          category: 'music',
-          image: eventImages.music,
-          speaker: 'Various Artists',
-          capacity: 2000,
-          registered: 1450,
-          price: '$25'
-        },
-        {
-          _id: 3,
-          title: 'React Advanced Workshop',
-          description: 'Deep dive into React hooks, context API, and performance optimization.',
-          date: '2024-03-25',
-          time: '10:00 AM - 04:00 PM',
-          location: 'Online (Zoom)',
-          category: 'workshop',
-          image: eventImages.workshop,
-          speaker: 'Mike Chen',
-          capacity: 100,
-          registered: 78,
-          price: '$50'
-        },
-        {
-          _id: 4,
-          title: 'Cultural Night 2024',
-          description: 'Celebrate diversity with music, dance, and food from around the world.',
-          date: '2024-04-05',
-          time: '06:00 PM - 10:00 PM',
-          location: 'City Auditorium',
-          category: 'cultural',
-          image: eventImages.cultural,
-          speaker: 'Cultural Society',
-          capacity: 800,
-          registered: 320,
-          price: '$15'
-        },
-        {
-          _id: 5,
-          title: 'Basketball Tournament',
-          description: 'Annual inter-college basketball tournament.',
-          date: '2024-04-10',
-          time: '08:00 AM - 06:00 PM',
-          location: 'Sports Complex',
-          category: 'sports',
-          image: eventImages.sports,
-          speaker: 'Sports Department',
-          capacity: 16,
-          registered: 12,
-          price: '$100 per team'
-        },
-        {
-          _id: 6,
-          title: 'Startup Pitch Competition',
-          description: 'Showcase your startup idea to investors.',
-          date: '2024-03-18',
-          time: '02:00 PM - 06:00 PM',
-          location: 'Innovation Hub',
-          category: 'tech',
-          image: eventImages.tech,
-          speaker: 'Venture Capitalists',
-          capacity: 50,
-          registered: 35,
-          price: 'Free'
-        }
-      ];
+    const res = await axios.get("http://localhost:5000/api/events");
 
-      setBrowseEvents(mockEvents);
-      setFilteredEvents(mockEvents);
-      setBrowseLoading(false);
-    }, 500);
-  }, []);
+    // Add image based on category
+    const eventsWithImages = res.data.map(event => ({
+  ...event,
+  image: `http://localhost:5000/uploads/${event.image}`
+}));
+
+    setBrowseEvents(eventsWithImages);
+    setFilteredEvents(eventsWithImages);
+    setBrowseLoading(false);
+
+  } catch (error) {
+    console.error("Failed to fetch events:", error);
+    setBrowseLoading(false);
+  }
+}, []);
+   
+
+      
 
   // Handle browse events open
   const handleOpenBrowseEvents = () => {
@@ -639,12 +568,12 @@ export default function StudentDashboard() {
                         <h4>{event.title}</h4>
                         <p className="browse-event-desc">{event.description.substring(0, 80)}...</p>
                         <div className="browse-event-meta">
-                          <span>📅 {new Date(event.date).toLocaleDateString()}</span>
+                          <span>📅 {new Date(event.eventDate).toLocaleDateString()}</span>
                           <span>📍 {event.location}</span>
                         </div>
                         <div className="browse-event-footer">
-                          <span className="event-price">{event.price}</span>
-                          <span className="event-capacity">👥 {event.registered}/{event.capacity}</span>
+                          <span className="event-price">{event.ticketprice}</span>
+                          <span className="event-capacity">👥</span>
                           <button
                             className="register-small"
                             onClick={() => {
@@ -735,9 +664,9 @@ export default function StudentDashboard() {
             <h3>{selectedEvent.title}</h3>
 
             <div className="register-details">
-              <p>📅 {new Date(selectedEvent.date).toLocaleDateString()}</p>
+              <p>📅 {new Date(selectedEvent.eventDate).toLocaleDateString()}</p>
               <p>📍 {selectedEvent.location}</p>
-              <p>💰 {selectedEvent.price}</p>
+              <p>💰 {selectedEvent.ticketprice}</p>
             </div>
 
             <div className="modal-actions">
@@ -882,7 +811,7 @@ function EventCard({ event, onClick, onUnregister }) {
 
       <div className="event-details">
         <h3>{event.title}</h3>
-        <p>📅 {new Date(event.date).toLocaleDateString('en-IN', {
+        <p>📅 {new Date(event.eventDate).toLocaleDateString('en-IN', {
           day: 'numeric',
           month: 'short',
           year: 'numeric'
