@@ -35,6 +35,7 @@ export default function Events() {
     const [showModal, setShowModal] = useState(false);
     const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [registeredEvents, setRegisteredEvents] = useState([]);
+    const [registering, setRegistering] = useState(false);
 
     // Load events from API
     useEffect(() => {
@@ -104,22 +105,25 @@ export default function Events() {
         fetchRegistrations();
     }, [token]);
 
-    // Filter events
+    // Filter events based on search and category
     useEffect(() => {
         let result = events;
+        
         if (selectedCategory !== 'all') {
             result = result.filter(e => e.category === selectedCategory);
         }
+        
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             result = result.filter(
                 e =>
-                    e.title.toLowerCase().includes(term) ||
-                    e.description.toLowerCase().includes(term) ||
-                    e.location.toLowerCase().includes(term) ||
-                    e.speaker.toLowerCase().includes(term)
+                    e.title?.toLowerCase().includes(term) ||
+                    e.description?.toLowerCase().includes(term) ||
+                    e.location?.toLowerCase().includes(term) ||
+                    (e.speaker && e.speaker.toLowerCase().includes(term))
             );
         }
+        
         setFilteredEvents(result);
     }, [searchTerm, selectedCategory, events]);
 
@@ -268,7 +272,7 @@ export default function Events() {
                                 <div className="event-card-body">
                                     <h3 className="event-card-title">{event.title}</h3>
                                     <p className="event-card-desc">
-                                        {event.description.length > 90
+                                        {event.description?.length > 90
                                             ? event.description.substring(0, 90) + '…'
                                             : event.description}
                                     </p>
@@ -276,7 +280,7 @@ export default function Events() {
                                     <div className="event-card-meta">
                                         <span>📅 {new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                         <span>📍 {event.location}</span>
-                                        <span>🎤 {event.speaker}</span>
+                                        <span>🎤 {event.speaker || 'TBD'}</span>
                                     </div>
 
                                     <div className="event-card-footer">
@@ -347,12 +351,12 @@ export default function Events() {
                                     <div
                                         className="capacity-bar-fill"
                                         style={{
-                                            width: `${Math.min((selectedEvent.registered / selectedEvent.capacity) * 100, 100)}%`,
+                                            width: `${Math.min(((selectedEvent.registered || 0) / (selectedEvent.capacity || 100)) * 100, 100)}%`,
                                             background: getColor(selectedEvent.category),
                                         }}
                                     />
                                 </div>
-                                <small>{Math.round((selectedEvent.registered / selectedEvent.capacity) * 100)}% filled</small>
+                                <small>{Math.round(((selectedEvent.registered || 0) / (selectedEvent.capacity || 100)) * 100)}% filled</small>
                             </div>
 
                             <div className="ev-modal-actions">
@@ -364,6 +368,7 @@ export default function Events() {
                                     <button
                                         className="register-btn large"
                                         onClick={() => handleRegister(selectedEvent._id)}
+                                        disabled={registering}
                                     >
                                         Register for Event
                                     </button>

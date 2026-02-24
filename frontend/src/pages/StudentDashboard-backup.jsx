@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './StudentDashboard.css';
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-import Chatbot from '../components/Chatbot';
+import Chatbot from "../components/Chatbotdata";
 
 export default function StudentDashboard() {
   const { user, token, logout } = useContext(AuthContext);
