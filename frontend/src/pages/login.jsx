@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import "../styles/auth.css";
-import Chatbot from '../components/Chatbot';
+import Chatbot from '../components/chatbot';
 
 export default function Login() {
   const { login } = useContext(AuthContext);

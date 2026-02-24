@@ -2,7 +2,7 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import StatCard from "../components/StatCard";
 import "../styles/dashboard.css";
-import Chatbot from "../components/Chatbot";
+import Chatbot from "../components/chatbot";
 
 export default function AdminDashboard() {
     const stats = [
