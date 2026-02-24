@@ -1,20 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import axios from "axios";
-import "./Events.css";
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import EventRegistrationForm from '../components/EventRegistrationForm';
+import './Events.css';
 
-// Keep the beautiful event images from first code
-const eventImages = {
-    tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600',
-    music: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600',
-    workshop: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
-    cultural: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600',
-    sports: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600',
-    default: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600',
-};
-
-// Categories from first code
 const CATEGORIES = [
     { id: 'all', name: 'All Events', emoji: '🌟' },
     { id: 'tech', name: 'Technology', emoji: '💻' },
@@ -35,7 +24,7 @@ const categoryColors = {
 
 export default function Events() {
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    const { user, token } = useContext(AuthContext);
 
     const [events, setEvents] = useState([]);
     const [filteredEvents, setFilteredEvents] = useState([]);
@@ -44,57 +33,77 @@ export default function Events() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [registeredEvents, setRegisteredEvents] = useState([]);
     const [registering, setRegistering] = useState(false);
 
-    // 🔥 Fetch events from backend
+    // Load events from API
     useEffect(() => {
         const fetchEvents = async () => {
+            setLoading(true);
             try {
-                setLoading(true);
-                const res = await axios.get("http://localhost:5000/api/events");
-
-                // Map backend fields to frontend with proper formatting
-                const formattedEvents = res.data.map((event) => ({
-                    ...event,
-                    // Use category-based image from Unsplash instead of uploaded image
-                    // This keeps the beautiful UI consistent
-                    image: eventImages[event.category] || eventImages.default,
-                    date: event.eventDate || event.date,
-                    price: event.ticketPrice ? `₹${event.ticketPrice}` : 'Free',
-                    // Ensure these fields exist for the UI
-                    speaker: event.speaker || 'TBD',
-                    time: event.time || '10:00 AM – 06:00 PM',
-                    registered: event.registered || Math.floor(Math.random() * event.capacity),
-                }));
-
-                setEvents(formattedEvents);
+                const response = await fetch('http://localhost:5000/api/events/all', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 
-                // Also fetch user's registered events if logged in
-                if (user) {
-                    fetchUserRegistrations();
+                if (response.ok) {
+                    const data = await response.json();
+                    // Transform API data to match component format
+                    const transformedEvents = data.map(event => ({
+                        ...event,
+                        _id: event._id,
+                        date: event.eventDate,
+                        category: 'tech', // Default category - you can extract from title or description
+                        speaker: event.admin?.name || 'Admin',
+                        capacity: 100, // Default - update in API if needed
+                        registered: 0, // This should come from registrations count
+                        price: event.ticketPrice ? `$${event.ticketPrice}` : 'Free',
+                        time: new Date(event.eventDate).toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        }) + ' onwards'
+                    }));
+                    setEvents(transformedEvents);
+                } else {
+                    console.error('Failed to fetch events');
                 }
-            } catch (error) {
-                console.error("Error fetching events:", error);
+            } catch (err) {
+                console.error('Error fetching events:', err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchEvents();
-    }, [user]);
-
-    const fetchUserRegistrations = async () => {
-        try {
-            // You'll need to create this endpoint
-            const res = await axios.get("http://localhost:5000/api/events/my-registrations", {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
-            setRegisteredEvents(res.data.map(reg => reg.eventId));
-        } catch (error) {
-            console.error("Error fetching registrations:", error);
+        if (token) {
+            fetchEvents();
         }
-    };
+    }, [token]);
+
+    // Load user's registered events
+    useEffect(() => {
+        const fetchRegistrations = async () => {
+            if (!token) return;
+            try {
+                const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const registeredEventIds = data.map(reg => reg.event._id);
+                    setRegisteredEvents(registeredEventIds);
+                }
+            } catch (err) {
+                console.error('Error fetching registrations:', err);
+            }
+        };
+
+        fetchRegistrations();
+    }, [token]);
 
     // Filter events based on search and category
     useEffect(() => {
@@ -118,43 +127,18 @@ export default function Events() {
         setFilteredEvents(result);
     }, [searchTerm, selectedCategory, events]);
 
-    const handleRegister = async (eventId) => {
-        if (!user) {
-            alert('Please login to register for events');
-            navigate('/login');
-            return;
-        }
+    const handleRegister = (eventId) => {
+        const event = events.find(e => e._id === eventId);
+        setSelectedEvent(event);
+        setShowRegistrationForm(true);
+        setShowModal(false);
+    };
 
-        try {
-            setRegistering(true);
-            await axios.post(
-                `http://localhost:5000/api/events/${eventId}/register`,
-                {},
-                { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-            );
-            
-            setRegisteredEvents(prev => [...prev, eventId]);
-            
-            // Update registered count in local state
-            setEvents(prevEvents => 
-                prevEvents.map(event => 
-                    event._id === eventId 
-                        ? { ...event, registered: event.registered + 1 }
-                        : event
-                )
-            );
-            
-            alert('🎉 Successfully registered for the event!');
-            closeModal();
-        } catch (err) {
-            if (err.response?.status === 409) {
-                alert('You are already registered for this event.');
-            } else {
-                alert(err.response?.data?.message || 'Failed to register for event');
-            }
-        } finally {
-            setRegistering(false);
+    const handleRegistrationSuccess = () => {
+        if (selectedEvent) {
+            setRegisteredEvents(prev => [...prev, selectedEvent._id]);
         }
+        setShowRegistrationForm(false);
     };
 
     const openModal = (event) => {
@@ -167,19 +151,30 @@ export default function Events() {
         setSelectedEvent(null);
     };
 
+    const closeRegistrationForm = () => {
+        setShowRegistrationForm(false);
+        setSelectedEvent(null);
+    };
+
     const getColor = (category) => categoryColors[category] || categoryColors.default;
 
-    const spotsLeft = (event) => {
-        if (!event.capacity || !event.registered) return 0;
-        return event.capacity - event.registered;
-    };
+    const spotsLeft = (event) => Math.max(0, event.capacity - event.registered);
 
     return (
         <div className="events-page">
+            {/* Registration Form Modal */}
+            {showRegistrationForm && selectedEvent && (
+                <EventRegistrationForm
+                    event={selectedEvent}
+                    onClose={closeRegistrationForm}
+                    onSuccess={handleRegistrationSuccess}
+                />
+            )}
+
             {/* Top Bar — same glass style as dashboard */}
             <header className="events-topbar">
                 <div className="topbar-title">
-                    <h1>Student Dashboard</h1>
+                    <h1>All Events</h1>
                 </div>
                 <div className="topbar-user">
                     <span className="user-avatar-sm">{user?.name?.[0] || user?.email?.[0] || 'S'}</span>
@@ -283,21 +278,23 @@ export default function Events() {
                                     </p>
 
                                     <div className="event-card-meta">
-                                        <span>📅 {new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        <span>📅 {new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                         <span>📍 {event.location}</span>
                                         <span>🎤 {event.speaker || 'TBD'}</span>
                                     </div>
 
                                     <div className="event-card-footer">
                                         <div className="event-price-ticket">
-                                            <span className="price-tag">{event.price || 'Free'}</span>
-                                            <span className="spots-left">
-                                                {spotsLeft(event) > 0 ? `${spotsLeft(event)} spots left` : 'Full'}
-                                            </span>
+                                            <span className="price-tag">{event.price}</span>
+                                            {spotsLeft(event) > 0 && (
+                                                <span className="spots-left">
+                                                    {`${spotsLeft(event)} spots left`}
+                                                </span>
+                                            )}
                                         </div>
                                         <button
                                             className={`register-btn ${registeredEvents.includes(event._id) ? 'registered' : ''}`}
-                                            onClick={e => { e.stopPropagation(); openModal(event); }}
+                                            onClick={e => { e.stopPropagation(); handleRegister(event._id); }}
                                             disabled={spotsLeft(event) === 0}
                                         >
                                             {registeredEvents.includes(event._id)
@@ -338,14 +335,14 @@ export default function Events() {
                             <p className="ev-modal-desc">{selectedEvent.description}</p>
 
                             <div className="ev-modal-details">
-                                <div className="detail-row"><span>📅</span><span>{new Date(selectedEvent.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
-                                <div className="detail-row"><span>⏰</span><span>{selectedEvent.time || '10:00 AM – 06:00 PM'}</span></div>
+                                <div className="detail-row"><span>📅</span><span>{new Date(selectedEvent.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+                                <div className="detail-row"><span>⏰</span><span>{selectedEvent.time}</span></div>
                                 <div className="detail-row"><span>📍</span><span>{selectedEvent.location}</span></div>
-                                <div className="detail-row"><span>🎤</span><span>{selectedEvent.speaker || 'TBD'}</span></div>
-                                <div className="detail-row"><span>💰</span><span>{selectedEvent.price || 'Free'}</span></div>
+                                <div className="detail-row"><span>🎤</span><span>Organized by: {selectedEvent.speaker}</span></div>
+                                <div className="detail-row"><span>💰</span><span>{selectedEvent.price}</span></div>
                                 <div className="detail-row">
                                     <span>👥</span>
-                                    <span>{selectedEvent.registered || 0}/{selectedEvent.capacity || 100} registered &middot; {spotsLeft(selectedEvent)} spots left</span>
+                                    <span>{selectedEvent.registered}/{selectedEvent.capacity} registered</span>
                                 </div>
                             </div>
 
@@ -373,7 +370,7 @@ export default function Events() {
                                         onClick={() => handleRegister(selectedEvent._id)}
                                         disabled={registering}
                                     >
-                                        {registering ? 'Registering...' : 'Confirm Registration'}
+                                        Register for Event
                                     </button>
                                 )}
                                 <button className="cancel-btn" onClick={closeModal}>Cancel</button>
@@ -385,3 +382,4 @@ export default function Events() {
         </div>
     );
 }
+

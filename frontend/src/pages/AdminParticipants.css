@@ -1,0 +1,64 @@
+.admin-section {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.events-list {
+  background: white;
+  border: 1px solid #EFEFEF;
+  border-radius: 12px;
+  padding: 16px;
+  height: fit-content;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.events-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.events-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.events-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.events-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.participants-section {
+  background: white;
+  border: 1px solid #EFEFEF;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.participants-section table {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+table tbody tr:hover {
+  background: #f0f0f0 !important;
+}
+
+@media (max-width: 1200px) {
+  .admin-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-section > div {
+    width: 100%;
+  }
+
+  .events-list {
+    max-height: 200px;
+  }
+}
