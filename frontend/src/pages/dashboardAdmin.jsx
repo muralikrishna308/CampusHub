@@ -1128,6 +1128,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      <Chatbot />
     </div>
   );
 }

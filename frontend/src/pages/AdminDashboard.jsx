@@ -2,6 +2,7 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import StatCard from "../components/StatCard";
 import "../styles/dashboard.css";
+import Chatbot from "../components/Chatbot";
 
 export default function AdminDashboard() {
     const stats = [
@@ -60,6 +61,7 @@ export default function AdminDashboard() {
                     </div>
                 </section>
             </main>
+            <Chatbot />
         </div >
     );
 }
