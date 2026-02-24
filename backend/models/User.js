@@ -57,7 +57,41 @@ const userSchema = new mongoose.Schema(
       type: Number,
     },
 
-   
+    phone: {
+      type: String,
+      trim: true,
+    },
+
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other', ''],
+      default: '',
+    },
+
+    address: {
+      type: String,
+      trim: true,
+    },
+
+    city: {
+      type: String,
+      trim: true,
+    },
+
+    state: {
+      type: String,
+      trim: true,
+    },
+
+    zipcode: {
+      type: String,
+      trim: true,
+    },
+
+    profileComplete: {
+      type: Boolean,
+      default: false,
+    },
    
   },
   {

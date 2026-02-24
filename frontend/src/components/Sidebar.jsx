@@ -6,13 +6,23 @@ const Sidebar = ({ role }) => {
     const location = useLocation();
     const { logout } = useContext(AuthContext);
 
-    const menuItems = [
-        { name: "Dashboard", path: role === "admin" ? "/admin/dashboard" : "/student/dashboard", icon: "📊" },
+    const studentMenuItems = [
+        { name: "Dashboard", path: "/student", icon: "📊" },
         { name: "All Events", path: "/events", icon: "📅" },
         { name: "My Registrations", path: "/registrations", icon: "📝" },
         { name: "Profile", path: "/profile", icon: "👤" },
         { name: "Settings", path: "/settings", icon: "⚙️" },
     ];
+
+    const adminMenuItems = [
+        { name: "Dashboard", path: "/admin", icon: "📊" },
+        { name: "Participants", path: "/admin/participants", icon: "👥" },
+        { name: "Create Event", path: "/admin/create-event", icon: "➕" },
+        { name: "My Events", path: "/admin/events", icon: "📅" },
+        { name: "Settings", path: "/settings", icon: "⚙️" },
+    ];
+
+    const menuItems = role === "admin" ? adminMenuItems : studentMenuItems;
 
     return (
         <aside className="sidebar">

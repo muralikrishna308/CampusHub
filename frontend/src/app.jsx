@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
-import StudentDashboard from "./pages/dashboardStudent";
+import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/dashboardAdmin";
+import AdminParticipants from "./pages/AdminParticipants";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import Events from "./pages/Events";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -29,6 +31,22 @@ function App() {
             element={
               <ProtectedRoute role={"admin"}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/super-admin"
+            element={
+              <ProtectedRoute role={"super_admin"}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/participants"
+            element={
+              <ProtectedRoute role={"admin"}>
+                <AdminParticipants />
               </ProtectedRoute>
             }
           />

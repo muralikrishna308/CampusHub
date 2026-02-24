@@ -6,6 +6,7 @@ export const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [isLoading, setIsLoading] = useState(!!localStorage.getItem('token'));
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,12 +19,18 @@ export function AuthProvider({ children }) {
           if (!res.ok) throw new Error('not auth');
           return res.json();
         })
-        .then(data => setUser(data))
+        .then(data => {
+          setUser(data);
+          setIsLoading(false);
+        })
         .catch(() => {
           setUser(null);
           setToken(null);
           localStorage.removeItem('token');
+          setIsLoading(false);
         });
+    } else {
+      setIsLoading(false);
     }
   }, [token]);
 
@@ -39,7 +46,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', data.token);
     setUser(data.user);
     // redirect based on role
-    if (data.user.role === 'admin') navigate('/admin');
+    if (data.user.role === 'super_admin') navigate('/super-admin');
+    else if (data.user.role === 'admin') navigate('/admin');
     else navigate('/student');
   };
 
@@ -54,7 +62,8 @@ export function AuthProvider({ children }) {
     setToken(data.token);
     localStorage.setItem('token', data.token);
     setUser(data.user);
-    if (data.user.role === 'admin') navigate('/admin');
+    if (data.user.role === 'super_admin') navigate('/super-admin');
+    else if (data.user.role === 'admin') navigate('/admin');
     else navigate('/student');
   };
 
@@ -66,7 +75,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, register }}>
+    <AuthContext.Provider value={{ user, token, login, logout, register, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

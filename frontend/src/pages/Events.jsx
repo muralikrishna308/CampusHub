@@ -1,131 +1,8 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import EventRegistrationForm from '../components/EventRegistrationForm';
 import './Events.css';
-
-const eventImages = {
-    tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600',
-    music: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600',
-    workshop: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
-    cultural: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600',
-    sports: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600',
-    default: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600',
-};
-
-const MOCK_EVENTS = [
-    {
-        _id: 1,
-        title: 'Tech Conference 2024',
-        description: 'Annual technology conference featuring latest trends in AI, Web Development, and Cloud Computing. Join industry leaders and innovators for a day of knowledge sharing.',
-        date: '2024-03-15',
-        time: '09:00 AM – 06:00 PM',
-        location: 'Convention Center, Hall A',
-        category: 'tech',
-        image: eventImages.tech,
-        speaker: 'Dr. Sarah Johnson',
-        capacity: 500,
-        registered: 342,
-        price: 'Free',
-    },
-    {
-        _id: 2,
-        title: 'Summer Music Festival',
-        description: 'A day filled with amazing performances from top artists across genres. Experience live music like never before under the open sky.',
-        date: '2024-03-20',
-        time: '12:00 PM – 11:00 PM',
-        location: 'Central Park, Main Stage',
-        category: 'music',
-        image: eventImages.music,
-        speaker: 'Various Artists',
-        capacity: 2000,
-        registered: 1450,
-        price: '$25',
-    },
-    {
-        _id: 3,
-        title: 'React Advanced Workshop',
-        description: 'Deep dive into React hooks, context API, and performance optimization techniques. Hands-on coding sessions included.',
-        date: '2024-03-25',
-        time: '10:00 AM – 04:00 PM',
-        location: 'Online (Zoom)',
-        category: 'workshop',
-        image: eventImages.workshop,
-        speaker: 'Mike Chen',
-        capacity: 100,
-        registered: 78,
-        price: '$50',
-    },
-    {
-        _id: 4,
-        title: 'Cultural Night 2024',
-        description: 'Celebrate diversity with music, dance, and food from around the world. An evening of unity and cultural exchange.',
-        date: '2024-04-05',
-        time: '06:00 PM – 10:00 PM',
-        location: 'City Auditorium',
-        category: 'cultural',
-        image: eventImages.cultural,
-        speaker: 'Cultural Society',
-        capacity: 800,
-        registered: 320,
-        price: '$15',
-    },
-    {
-        _id: 5,
-        title: 'Basketball Tournament',
-        description: 'Annual inter-college basketball tournament. Form your team and compete for the championship trophy.',
-        date: '2024-04-10',
-        time: '08:00 AM – 06:00 PM',
-        location: 'Sports Complex',
-        category: 'sports',
-        image: eventImages.sports,
-        speaker: 'Sports Department',
-        capacity: 16,
-        registered: 12,
-        price: '$100 per team',
-    },
-    {
-        _id: 6,
-        title: 'Startup Pitch Competition',
-        description: 'Showcase your startup idea to seasoned investors and get a chance to win seed funding. Network with entrepreneurs and VCs.',
-        date: '2024-03-18',
-        time: '02:00 PM – 06:00 PM',
-        location: 'Innovation Hub',
-        category: 'tech',
-        image: eventImages.tech,
-        speaker: 'Venture Capitalists',
-        capacity: 50,
-        registered: 35,
-        price: 'Free',
-    },
-    {
-        _id: 7,
-        title: 'Photography Masterclass',
-        description: 'Learn the art of photography from award-winning photographers. Topics include composition, lighting, and post-processing.',
-        date: '2024-04-15',
-        time: '10:00 AM – 02:00 PM',
-        location: 'Art Studio, Block B',
-        category: 'workshop',
-        image: eventImages.workshop,
-        speaker: 'Emma Rodriguez',
-        capacity: 30,
-        registered: 22,
-        price: '$30',
-    },
-    {
-        _id: 8,
-        title: 'Folk Dance Evening',
-        description: 'A vibrant showcase of traditional folk dances from various states. Performances by award-winning dance troupes.',
-        date: '2024-04-20',
-        time: '05:00 PM – 08:00 PM',
-        location: 'Open Air Theatre',
-        category: 'cultural',
-        image: eventImages.cultural,
-        speaker: 'Dance Academy',
-        capacity: 1000,
-        registered: 650,
-        price: 'Free',
-    },
-];
 
 const CATEGORIES = [
     { id: 'all', name: 'All Events', emoji: '🌟' },
@@ -147,7 +24,7 @@ const categoryColors = {
 
 export default function Events() {
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    const { user, token } = useContext(AuthContext);
 
     const [events, setEvents] = useState([]);
     const [filteredEvents, setFilteredEvents] = useState([]);
@@ -156,17 +33,76 @@ export default function Events() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [registeredEvents, setRegisteredEvents] = useState([]);
 
-    // Load events
+    // Load events from API
     useEffect(() => {
-        setLoading(true);
-        setTimeout(() => {
-            setEvents(MOCK_EVENTS);
-            setFilteredEvents(MOCK_EVENTS);
-            setLoading(false);
-        }, 600);
-    }, []);
+        const fetchEvents = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch('http://localhost:5000/api/events/all', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    // Transform API data to match component format
+                    const transformedEvents = data.map(event => ({
+                        ...event,
+                        _id: event._id,
+                        date: event.eventDate,
+                        category: 'tech', // Default category - you can extract from title or description
+                        speaker: event.admin?.name || 'Admin',
+                        capacity: 100, // Default - update in API if needed
+                        registered: 0, // This should come from registrations count
+                        price: event.ticketPrice ? `$${event.ticketPrice}` : 'Free',
+                        time: new Date(event.eventDate).toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        }) + ' onwards'
+                    }));
+                    setEvents(transformedEvents);
+                } else {
+                    console.error('Failed to fetch events');
+                }
+            } catch (err) {
+                console.error('Error fetching events:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (token) {
+            fetchEvents();
+        }
+    }, [token]);
+
+    // Load user's registered events
+    useEffect(() => {
+        const fetchRegistrations = async () => {
+            if (!token) return;
+            try {
+                const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const registeredEventIds = data.map(reg => reg.event._id);
+                    setRegisteredEvents(registeredEventIds);
+                }
+            } catch (err) {
+                console.error('Error fetching registrations:', err);
+            }
+        };
+
+        fetchRegistrations();
+    }, [token]);
 
     // Filter events
     useEffect(() => {
@@ -188,14 +124,17 @@ export default function Events() {
     }, [searchTerm, selectedCategory, events]);
 
     const handleRegister = (eventId) => {
-        if (!registeredEvents.includes(eventId)) {
-            setRegisteredEvents(prev => [...prev, eventId]);
-            alert('🎉 Successfully registered for the event!');
-        } else {
-            alert('You are already registered for this event.');
-        }
+        const event = events.find(e => e._id === eventId);
+        setSelectedEvent(event);
+        setShowRegistrationForm(true);
         setShowModal(false);
-        setSelectedEvent(null);
+    };
+
+    const handleRegistrationSuccess = () => {
+        if (selectedEvent) {
+            setRegisteredEvents(prev => [...prev, selectedEvent._id]);
+        }
+        setShowRegistrationForm(false);
     };
 
     const openModal = (event) => {
@@ -208,16 +147,30 @@ export default function Events() {
         setSelectedEvent(null);
     };
 
+    const closeRegistrationForm = () => {
+        setShowRegistrationForm(false);
+        setSelectedEvent(null);
+    };
+
     const getColor = (category) => categoryColors[category] || categoryColors.default;
 
-    const spotsLeft = (event) => event.capacity - event.registered;
+    const spotsLeft = (event) => Math.max(0, event.capacity - event.registered);
 
     return (
         <div className="events-page">
+            {/* Registration Form Modal */}
+            {showRegistrationForm && selectedEvent && (
+                <EventRegistrationForm
+                    event={selectedEvent}
+                    onClose={closeRegistrationForm}
+                    onSuccess={handleRegistrationSuccess}
+                />
+            )}
+
             {/* Top Bar — same glass style as dashboard */}
             <header className="events-topbar">
                 <div className="topbar-title">
-                    <h1>Student Dashboard</h1>
+                    <h1>All Events</h1>
                 </div>
                 <div className="topbar-user">
                     <span className="user-avatar-sm">{user?.name?.[0] || user?.email?.[0] || 'S'}</span>
@@ -321,7 +274,7 @@ export default function Events() {
                                     </p>
 
                                     <div className="event-card-meta">
-                                        <span>📅 {new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        <span>📅 {new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                         <span>📍 {event.location}</span>
                                         <span>🎤 {event.speaker}</span>
                                     </div>
@@ -329,13 +282,15 @@ export default function Events() {
                                     <div className="event-card-footer">
                                         <div className="event-price-ticket">
                                             <span className="price-tag">{event.price}</span>
-                                            <span className="spots-left">
-                                                {spotsLeft(event) > 0 ? `${spotsLeft(event)} spots left` : 'Full'}
-                                            </span>
+                                            {spotsLeft(event) > 0 && (
+                                                <span className="spots-left">
+                                                    {`${spotsLeft(event)} spots left`}
+                                                </span>
+                                            )}
                                         </div>
                                         <button
                                             className={`register-btn ${registeredEvents.includes(event._id) ? 'registered' : ''}`}
-                                            onClick={e => { e.stopPropagation(); openModal(event); }}
+                                            onClick={e => { e.stopPropagation(); handleRegister(event._id); }}
                                             disabled={spotsLeft(event) === 0}
                                         >
                                             {registeredEvents.includes(event._id)
@@ -376,14 +331,14 @@ export default function Events() {
                             <p className="ev-modal-desc">{selectedEvent.description}</p>
 
                             <div className="ev-modal-details">
-                                <div className="detail-row"><span>📅</span><span>{new Date(selectedEvent.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+                                <div className="detail-row"><span>📅</span><span>{new Date(selectedEvent.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
                                 <div className="detail-row"><span>⏰</span><span>{selectedEvent.time}</span></div>
                                 <div className="detail-row"><span>📍</span><span>{selectedEvent.location}</span></div>
-                                <div className="detail-row"><span>🎤</span><span>{selectedEvent.speaker}</span></div>
+                                <div className="detail-row"><span>🎤</span><span>Organized by: {selectedEvent.speaker}</span></div>
                                 <div className="detail-row"><span>💰</span><span>{selectedEvent.price}</span></div>
                                 <div className="detail-row">
                                     <span>👥</span>
-                                    <span>{selectedEvent.registered}/{selectedEvent.capacity} registered &middot; {spotsLeft(selectedEvent)} spots left</span>
+                                    <span>{selectedEvent.registered}/{selectedEvent.capacity} registered</span>
                                 </div>
                             </div>
 
@@ -410,7 +365,7 @@ export default function Events() {
                                         className="register-btn large"
                                         onClick={() => handleRegister(selectedEvent._id)}
                                     >
-                                        Confirm Registration
+                                        Register for Event
                                     </button>
                                 )}
                                 <button className="cancel-btn" onClick={closeModal}>Cancel</button>
@@ -422,3 +377,4 @@ export default function Events() {
         </div>
     );
 }
+
