@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
-import Chatbot from '../components/Chatbot';
+import Chatbot from '../components/chatbot';
 
 const useCounter = (end, duration = 2000, start = false) => {
   const [count, setCount] = useState(0);

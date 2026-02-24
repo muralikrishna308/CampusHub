@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import "../styles/auth.css";
-import Chatbot from '../components/Chatbot';
+import Chatbot from '../components/chatbot';
 
 export default function Auth() {
     const { login, register } = useContext(AuthContext);
