@@ -1,18 +1,29 @@
-import React, { useContext, useEffect, useState, useCallback } from 'react';
+import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
 
+/* ─── Dummy event images ─── */
 const eventImages = {
-  tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  music: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  workshop: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  networking: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  charity: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  default: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
+  music: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=800&q=80',
+  workshop: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80',
+  networking: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=800&q=80',
+  charity: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80',
 };
 
-export default function AdminDashboard() {
+/* ─── Registration trend data (monthly) ─── */
+const trendData = [
+  { month: 'Sep', registrations: 120, revenue: 4800 },
+  { month: 'Oct', registrations: 185, revenue: 7400 },
+  { month: 'Nov', registrations: 210, revenue: 8400 },
+  { month: 'Dec', registrations: 160, revenue: 6400 },
+  { month: 'Jan', registrations: 290, revenue: 11600 },
+  { month: 'Feb', registrations: 245, revenue: 9800 },
+  { month: 'Mar', registrations: 320, revenue: 12800 },
+];
+
+export default function SuperAdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -20,1091 +31,449 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showUsersModal, setShowUsersModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
-
-  // Form states
-  const [eventForm, setEventForm] = useState({
-    title: '',
-    category: 'Technology',
-    date: '',
-    location: '',
-    description: '',
-    capacity: '',
-    price: '',
-    status: 'upcoming'
-  });
-
   const [reportFilters, setReportFilters] = useState({
     startDate: '2024-03-01',
     endDate: '2024-03-31',
     eventType: 'all',
-    format: 'pdf'
+    format: 'pdf',
   });
 
-  // Fetch dashboard data
+  /* ─── Data fetch ─── */
   const fetchDashboardData = useCallback(async () => {
     if (!token) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Simulated API call
-      setTimeout(() => {
-        setStats({
-          totalEvents: 24,
-          activeEvents: 8,
-          totalRegistrations: 1250,
-          avgParticipants: 52,
-          totalRevenue: 45800,
-          growth: 15.5,
-          
-          events: [
-            { 
-              _id: 1, 
-              title: 'Tech Conference 2024', 
-              participants: 245, 
-              registered: 245,
-              capacity: 300,
-              active: true,
-              image: eventImages.tech,
-              date: '2024-03-15',
-              location: 'Convention Center',
-              category: 'Technology',
-              revenue: 12500,
-              status: 'upcoming',
-              description: 'Annual technology conference featuring latest trends in AI and Web Development.',
-              speaker: 'Dr. Sarah Johnson',
-              time: '09:00 AM - 06:00 PM'
-            },
-            { 
-              _id: 2, 
-              title: 'Music Festival', 
-              participants: 189, 
-              registered: 189,
-              capacity: 200,
-              active: true,
-              image: eventImages.music,
-              date: '2024-03-20',
-              location: 'Central Park',
-              category: 'Music',
-              revenue: 8900,
-              status: 'upcoming',
-              description: 'A day filled with amazing performances from top artists.',
-              speaker: 'Various Artists',
-              time: '12:00 PM - 11:00 PM'
-            },
-            { 
-              _id: 3, 
-              title: 'Workshop: React Basics', 
-              participants: 78, 
-              registered: 78,
-              capacity: 100,
-              active: false,
-              image: eventImages.workshop,
-              date: '2024-02-28',
-              location: 'Online',
-              category: 'Education',
-              revenue: 3900,
-              status: 'completed',
-              description: 'Learn React fundamentals in this hands-on workshop.',
-              speaker: 'Mike Johnson',
-              time: '10:00 AM - 04:00 PM'
-            },
-            { 
-              _id: 4, 
-              title: 'Networking Mixer', 
-              participants: 156, 
-              registered: 156,
-              capacity: 200,
-              active: true,
-              image: eventImages.networking,
-              date: '2024-03-25',
-              location: 'Business Center',
-              category: 'Networking',
-              revenue: 6200,
-              status: 'upcoming',
-              description: 'Connect with professionals from various industries.',
-              speaker: 'Networking Hosts',
-              time: '06:00 PM - 09:00 PM'
-            },
-            { 
-              _id: 5, 
-              title: 'Charity Run', 
-              participants: 320, 
-              registered: 320,
-              capacity: 500,
-              active: true,
-              image: eventImages.charity,
-              date: '2024-04-01',
-              location: 'City Stadium',
-              category: 'Charity',
-              revenue: 15000,
-              status: 'upcoming',
-              description: 'Annual charity run to support local causes.',
-              speaker: 'Charity Organization',
-              time: '08:00 AM - 12:00 PM'
-            },
-          ],
-          
-          users: [
-            { id: 1, name: 'John Doe', email: 'john@example.com', role: 'student', events: 5, joined: '2024-01-15' },
-            { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'student', events: 3, joined: '2024-01-20' },
-            { id: 3, name: 'Bob Wilson', email: 'bob@example.com', role: 'organizer', events: 8, joined: '2023-12-10' },
-            { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'student', events: 2, joined: '2024-02-01' },
-            { id: 5, name: 'Charlie Davis', email: 'charlie@example.com', role: 'admin', events: 12, joined: '2023-11-05' },
-          ],
-          
-          recentActivity: [
-            { id: 1, action: 'New registration', user: 'John Doe', event: 'Tech Conference', time: '2 minutes ago' },
-            { id: 2, action: 'Event created', user: 'Admin', event: 'Music Festival', time: '1 hour ago' },
-            { id: 3, action: 'Payment received', user: 'Jane Smith', event: 'Workshop', time: '3 hours ago' },
-            { id: 4, action: 'Event completed', user: 'System', event: 'React Basics', time: '1 day ago' },
-          ]
-        });
-        setLoading(false);
-      }, 1000);
-    } catch (err) {
-      setError('Failed to load dashboard data');
+    setLoading(true);
+    setError(null);
+    setTimeout(() => {
+      setStats({
+        totalEvents: 24,
+        activeEvents: 8,
+        totalRegistrations: 1250,
+        totalRevenue: 45800,
+        growth: 15.5,
+        events: [
+          { _id: 1, title: 'Tech Conference 2024', registered: 245, capacity: 300, active: true, image: eventImages.tech, date: '2024-03-15', location: 'Convention Center', category: 'Technology', revenue: 12500, status: 'upcoming', description: 'Annual technology conference featuring latest trends in AI and Web Development.', speaker: 'Dr. Sarah Johnson', time: '09:00 AM – 06:00 PM' },
+          { _id: 2, title: 'Music Festival', registered: 189, capacity: 200, active: true, image: eventImages.music, date: '2024-03-20', location: 'Central Park', category: 'Music', revenue: 8900, status: 'upcoming', description: 'A day filled with amazing performances from top artists.', speaker: 'Various Artists', time: '12:00 PM – 11:00 PM' },
+          { _id: 3, title: 'Workshop: React Basics', registered: 78, capacity: 100, active: false, image: eventImages.workshop, date: '2024-02-28', location: 'Online', category: 'Education', revenue: 3900, status: 'completed', description: 'Learn React fundamentals in this hands-on workshop.', speaker: 'Mike Johnson', time: '10:00 AM – 04:00 PM' },
+          { _id: 4, title: 'Networking Mixer', registered: 156, capacity: 200, active: true, image: eventImages.networking, date: '2024-03-25', location: 'Business Center', category: 'Networking', revenue: 6200, status: 'upcoming', description: 'Connect with professionals from various industries.', speaker: 'Networking Hosts', time: '06:00 PM – 09:00 PM' },
+          { _id: 5, title: 'Charity Run', registered: 320, capacity: 500, active: true, image: eventImages.charity, date: '2024-04-01', location: 'City Stadium', category: 'Charity', revenue: 15000, status: 'upcoming', description: 'Annual charity run to support local causes.', speaker: 'Charity Org', time: '08:00 AM – 12:00 PM' },
+        ],
+        users: [
+          { id: 1, name: 'John Doe', email: 'john@example.com', role: 'student', events: 5, joined: '2024-01-15' },
+          { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'student', events: 3, joined: '2024-01-20' },
+          { id: 3, name: 'Bob Wilson', email: 'bob@example.com', role: 'organizer', events: 8, joined: '2023-12-10' },
+          { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'student', events: 2, joined: '2024-02-01' },
+          { id: 5, name: 'Charlie Davis', email: 'charlie@example.com', role: 'admin', events: 12, joined: '2023-11-05' },
+        ],
+        recentActivity: [
+          { id: 1, action: 'New registration', user: 'John Doe', event: 'Tech Conference', time: '2 min ago', icon: '📝' },
+          { id: 2, action: 'Payment received', user: 'Jane Smith', event: 'Workshop', time: '1 hr ago', icon: '💳' },
+          { id: 3, action: 'Event ', user: 'Admin', event: 'Music Festival', time: '3 hrs ago', icon: '👁️' },
+          { id: 4, action: 'Event completed', user: 'System', event: 'React Basics', time: '1 day ago', icon: '✅' },
+        ],
+      });
       setLoading(false);
-    }
+    }, 900);
   }, [token]);
 
-  // Fetch notifications
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(() => {
     setNotifications([
-      { id: 1, type: 'event', message: 'Tech Conference starts in 2 days', read: false, time: '5 min ago' },
-      { id: 2, type: 'user', message: 'New user registered: Sarah Johnson', read: false, time: '1 hour ago' },
-      { id: 3, type: 'payment', message: 'Payment received: $500 from Event Corp', read: false, time: '3 hours ago' },
-      { id: 4, type: 'alert', message: 'Event capacity reached: Music Festival', read: true, time: '1 day ago' },
+      { id: 1, message: 'Tech Conference starts in 2 days', read: false, time: '5 min ago' },
+      { id: 2, message: 'New user registered: Sarah Johnson', read: false, time: '1 hr ago' },
+      { id: 3, message: 'Payment received: $500 from Event Corp', read: false, time: '3 hrs ago' },
+      { id: 4, message: 'Event capacity reached: Music Festival', read: true, time: '1 day ago' },
     ]);
   }, []);
 
+  useEffect(() => { fetchDashboardData(); fetchNotifications(); }, [fetchDashboardData, fetchNotifications]);
+
+  const notifRef = useRef(null);
   useEffect(() => {
-    fetchDashboardData();
-    fetchNotifications();
-  }, [fetchDashboardData, fetchNotifications]);
-
-  // Handle event creation
-  const handleCreateEvent = (e) => {
-    e.preventDefault();
-    alert('Event created successfully!');
-    setShowCreateModal(false);
-    setEventForm({
-      title: '',
-      category: 'Technology',
-      date: '',
-      location: '',
-      description: '',
-      capacity: '',
-      price: '',
-      status: 'upcoming'
-    });
-  };
-
-  // Handle event update
-  const handleUpdateEvent = (e) => {
-    e.preventDefault();
-    alert('Event updated successfully!');
-    setShowEditModal(false);
-  };
-
-  // Handle event deletion
-  const handleDeleteEvent = (eventId) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      alert('Event deleted successfully!');
-      setSelectedEvent(null);
-    }
-  };
-
-  // Handle user actions
-  const handleUserAction = (action, user) => {
-    if (action === 'delete' && window.confirm(`Delete user ${user.name}?`)) {
-      alert(`User ${user.name} deleted`);
-    } else if (action === 'role') {
-      alert(`Role changed for ${user.name}`);
-    }
-  };
-
-  // Handle report generation
-  const handleGenerateReport = () => {
-    alert(`Generating ${reportFilters.format.toUpperCase()} report from ${reportFilters.startDate} to ${reportFilters.endDate}`);
-    setShowReportModal(false);
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  // Mark notification as read
-  const markNotificationAsRead = (id) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
-  };
-
-  // Get status color
-  const getStatusColor = (status) => {
-    const colors = {
-      upcoming: '#4f46e5',
-      ongoing: '#ea580c',
-      completed: '#16a34a',
-      cancelled: '#dc2626'
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
     };
-    return colors[status] || '#6b7280';
-  };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-  if (error) {
-    return (
-      <div className="error-container">
-        <h2>Error Loading Dashboard</h2>
+  const handleLogout = () => { logout(); navigate('/login'); };
+  const markRead = id => setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  if (error) return (
+    <div className="sa-error-page">
+      <div className="sa-orb sa-orb--a" /><div className="sa-orb sa-orb--b" />
+      <div className="sa-error-card">
+        <span style={{ fontSize: '2.5rem' }}>⚠️</span>
+        <h2>Dashboard Error</h2>
         <p>{error}</p>
-        <button onClick={fetchDashboardData} className="btn-primary">Retry</button>
+        <button className="sa-btn-primary" onClick={fetchDashboardData}>Retry</button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="admin-dashboard">
-      {/* Header */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <h1>SuperAdmin Dashboard</h1>
-          <div className="user-badge">
-            <span className="user-avatar">
-              {user?.name?.[0] || user?.email?.[0] || 'A'}
-            </span>
-            <span className="user-info">
-              <span className="user-name">{user?.name || user?.email}</span>
-              <span className="user-role">{user?.role || 'Administrator'}</span>
-            </span>
+    <div className="sa-root">
+      {/* Ambient background */}
+      <div className="sa-bg-layer" aria-hidden="true">
+        <div className="sa-orb sa-orb--a" />
+        <div className="sa-orb sa-orb--b" />
+        <div className="sa-grid-lines" />
+      </div>
+
+      {/* ══ HEADER ══ */}
+      <header className="sa-header">
+        <div className="sa-header-inner">
+          {/* Brand */}
+          <div className="sa-brand">
+            <div className="sa-brand-icon">
+              <span className="sa-logomark">✦</span>
+            </div>
+            <div>
+              <div className="sa-brand-name">CampusHub <span className="sa-brand-tag">Super Admin</span></div>
+              <div className="sa-brand-sub">Management Console</div>
+            </div>
           </div>
-        </div>
-        
-        <div className="header-right">
-          <div className="notification-wrapper">
-            <button 
-              className="btn-icon"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              🔔
-              {notifications.filter(n => !n.read).length > 0 && (
-                <span className="notification-badge">
-                  {notifications.filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
-            
-            {showNotifications && (
-              <div className="notification-dropdown">
-                <h4>Notifications</h4>
-                {notifications.length === 0 ? (
-                  <p>No notifications</p>
-                ) : (
-                  notifications.map(notification => (
-                    <div 
-                      key={notification.id}
-                      className={`notification-item ${notification.read ? 'read' : 'unread'}`}
-                      onClick={() => markNotificationAsRead(notification.id)}
-                    >
-                      <p>{notification.message}</p>
-                      <small>{notification.time}</small>
+
+          {/* Right controls */}
+          <div className="sa-header-controls">
+            {/* Notifications */}
+            <div className="sa-notif-wrap" ref={notifRef}>
+              <button className="sa-icon-btn" onClick={() => setShowNotifications(v => !v)}>
+                🔔
+                {unreadCount > 0 && <span className="sa-badge-dot">{unreadCount}</span>}
+              </button>
+              {showNotifications && (
+                <div className="sa-notif-panel">
+                  <div className="sa-notif-head">
+                    <span className="sa-notif-title">Notifications</span>
+                    <span className="sa-notif-new">{unreadCount} new</span>
+                  </div>
+                  {notifications.map(n => (
+                    <div key={n.id} className={`sa-notif-item ${n.read ? '--read' : '--unread'}`} onClick={() => markRead(n.id)}>
+                      <span className="sa-notif-dot-ind" />
+                      <div>
+                        <p className="sa-notif-msg">{n.message}</p>
+                        <small className="sa-notif-time">{n.time}</small>
+                      </div>
                     </div>
-                  ))
-                )}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* User pill */}
+            <div className="sa-user-pill">
+              <div className="sa-avatar">{user?.name?.[0] || user?.email?.[0] || 'A'}</div>
+              <div className="sa-user-text">
+                <span className="sa-user-name">{user?.name || user?.email || 'Administrator'}</span>
+                <span className="sa-user-role">Super Admin</span>
               </div>
-            )}
+            </div>
+
+            <button className="sa-logout-btn" onClick={handleLogout}>Sign out →</button>
           </div>
-          
-          <button className="btn-icon" onClick={() => setShowSettingsModal(true)}>⚙️</button>
-          <button onClick={handleLogout} className="btn-logout">
-            <span>🚪</span>
-            Sign out
-          </button>
         </div>
       </header>
 
-      {/* Tab Navigation */}
-      <div className="admin-tabs">
-        <button 
-          className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          📊 Overview
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'events' ? 'active' : ''}`}
-          onClick={() => setActiveTab('events')}
-        >
-          📅 Events
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          👥 Users
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
-          onClick={() => setActiveTab('reports')}
-        >
-          📈 Reports
-        </button>
+      {/* ══ TAB BAR ══ */}
+      <div className="sa-tabbar">
+        <div className="sa-tabbar-inner">
+          {[
+            { id: 'overview', icon: '📊', label: 'Overview' },
+            { id: 'events', icon: '📅', label: 'Events' },
+            { id: 'users', icon: '👥', label: 'Users' },
+            { id: 'reports', icon: '📈', label: 'Analytics' },
+          ].map(t => (
+            <button
+              key={t.id}
+              className={`sa-tab ${activeTab === t.id ? 'sa-tab--active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              <span>{t.icon}</span> {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Main Content */}
-      <main className="dashboard-main">
+      {/* ══ MAIN ══ */}
+      <main className="sa-main">
         {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading dashboard...</p>
+          <div className="sa-loading">
+            <div className="sa-spinner" />
+            <span>Loading data…</span>
           </div>
-          
         ) : stats && (
-          <>
-            {/* Overview Tab */}
+          <div className="sa-pane" key={activeTab}>
+
+            {/* ── OVERVIEW ── */}
             {activeTab === 'overview' && (
               <>
-              {user?.role === "superadmin" && (
-  <div className="superadmin-section">
-    <div className="section-header">
-      <h2>Platform Overview</h2>
-    </div>
-
-    <div className="stats-grid">
-      <StatCard
-        title="Total Colleges"
-        value={15}
-        icon="🏫"
-        trend="Across platform"
-        color="#0ea5e9"
-      />
-      <StatCard
-        title="Total Admins"
-        value={32}
-        icon="🛡️"
-        trend="Active managers"
-        color="#f59e0b"
-      />
-      <StatCard
-        title="Total Users"
-        value={2450}
-        icon="🌍"
-        trend="All registered users"
-        color="#10b981"
-      />
-    </div>
-  </div>
-)}
-
-                {/* Stats Cards */}
-                <div className="stats-grid">
-                  <StatCard 
-                    title="Total Events" 
-                    value={stats.totalEvents} 
-                    icon="📅"
-                    trend="+12% from last month"
-                    trendType="positive"
-                    onClick={() => setActiveTab('events')}
-                  />
-                  <StatCard 
-                    title="Active Events" 
-                    value={stats.activeEvents} 
-                    icon="🔥"
-                    trend="3 ending soon"
-                    trendType="warning"
-                    onClick={() => setActiveTab('events')}
-                  />
-                  <StatCard 
-                    title="Total Registrations" 
-                    value={stats.totalRegistrations} 
-                    icon="👥"
-                    trend="+245 this week"
-                    trendType="positive"
-                  />
-                  <StatCard 
-                    title="Total Revenue" 
-                    value={`$${stats.totalRevenue?.toLocaleString()}`} 
-                    icon="💰"
-                    trend={`+${stats.growth}% growth`}
-                    trendType="positive"
-                  />
+                {/* Stat strip */}
+                <div className="sa-stat-grid">
+                  <StatCard icon="📅" label="Total Events" value={stats.totalEvents} accent="purple" trend="+12%" />
+                  <StatCard icon="🔥" label="Active Events" value={stats.activeEvents} accent="blue" trend="Stable" />
+                  <StatCard icon="👥" label="Total Members" value={stats.totalRegistrations.toLocaleString()} accent="violet" trend="+245" />
+                  <StatCard icon="💰" label="Platform Revenue" value={`$${stats.totalRevenue.toLocaleString()}`} accent="green" trend={`+${stats.growth}%`} />
                 </div>
 
-                {/* Recent Events */}
-                <div className="recent-events-section">
-                  <div className="section-header">
-                    <h2>Recent Events</h2>
-                    <div className="header-actions">
-                      <button className="btn-secondary" onClick={() => setShowReportModal(true)}>
-                        <span>📊</span>
-                        Export Report
-                      </button>
-                      <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-                        <span>➕</span>
-                        Create Event
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="events-grid">
-                    {stats.events?.slice(0, 3).map(event => (
-                      <EventCard
-                        key={event._id}
-                        event={event}
-                        onClick={() => setSelectedEvent(event)}
-                        onEdit={() => {
-                          setEventForm(event);
-                          setShowEditModal(true);
-                        }}
-                        getStatusColor={getStatusColor}
-                      />
-                    ))}
-                  </div>
+                {/* Quick event cards */}
+                <SectionHead title="Live Events" pill="Top 3" />
+                <div className="sa-event-grid">
+                  {stats.events.slice(0, 3).map(ev => (
+                    <EventCard key={ev._id} event={ev} onClick={() => setSelectedEvent(ev)} />
+                  ))}
                 </div>
 
-                {/* Recent Activity */}
-                <div className="activity-section">
-                  <h3>Recent Activity</h3>
-                  <div className="activity-timeline">
-                    {stats.recentActivity?.map(activity => (
-                      <div key={activity.id} className="timeline-item">
-                        <div className="timeline-dot"></div>
-                        <div className="timeline-content">
-                          <p><strong>{activity.action}</strong></p>
-                          <p>{activity.user} • {activity.event}</p>
-                          <small>{activity.time}</small>
-                        </div>
+                {/* Activity log */}
+                <SectionHead title="Recent Activity" pill="System Log" />
+                <div className="sa-activity-card">
+                  {stats.recentActivity.map((a, i) => (
+                    <div key={a.id} className="sa-activity-row" style={{ animationDelay: `${i * 60}ms` }}>
+                      <div className="sa-activity-icon">{a.icon}</div>
+                      <div className="sa-activity-body">
+                        <span className="sa-activity-action">{a.action}</span>
+                        <span className="sa-activity-meta">{a.user} · {a.event}</span>
                       </div>
-                    ))}
-                  </div>
+                      <span className="sa-activity-time">{a.time}</span>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
 
-            {/* Events Tab */}
+            {/* ── EVENTS ── */}
             {activeTab === 'events' && (
-              <div className="events-tab">
-                <div className="tab-header">
-                  <h2>All Events</h2>
-                  <div className="tab-actions">
-                    <input 
-                      type="text" 
-                      placeholder="Search events..." 
-                      className="search-input"
-                    />
-                    <select className="filter-select">
+              <>
+                <div className="sa-tabhead">
+                  <SectionHead title="Event Registry" pill={`${stats.events.length} events`} />
+                  <div className="sa-filter-bar">
+                    <input className="sa-search" type="text" placeholder="🔍  Search events…" />
+                    <select className="sa-select">
                       <option>All Categories</option>
                       <option>Technology</option>
                       <option>Music</option>
                       <option>Education</option>
                       <option>Networking</option>
-                    </select>
-                    <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-                      + New Event
-                    </button>
-                  </div>
-                </div>
-
-                <div className="events-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Event</th>
-                        <th>Date</th>
-                        <th>Location</th>
-                        <th>Registrations</th>
-                        <th>Revenue</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stats.events?.map(event => (
-                        <tr key={event._id}>
-                          <td>
-                            <div className="event-cell">
-                              <img src={event.image} alt={event.title} />
-                              <span>{event.title}</span>
-                            </div>
-                          </td>
-                          <td>{new Date(event.date).toLocaleDateString()}</td>
-                          <td>{event.location}</td>
-                          <td>{event.registered}/{event.capacity}</td>
-                          <td>${event.revenue?.toLocaleString()}</td>
-                          <td>
-                            <span className={`status-badge ${event.status}`}>
-                              {event.status}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="action-btn" onClick={() => {
-                              setEventForm(event);
-                              setShowEditModal(true);
-                            }}>✏️</button>
-                            <button className="action-btn" onClick={() => handleDeleteEvent(event._id)}>🗑️</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Users Tab */}
-            {activeTab === 'users' && (
-              <div className="users-tab">
-                <div className="tab-header">
-                  <h2>User Management</h2>
-                  <div className="tab-actions">
-                    <input type="text" placeholder="Search users..." className="search-input" />
-                    <select className="filter-select">
-                      <option>All Roles</option>
-                      <option>Students</option>
-                      <option>Organizers</option>
-                      <option>Admins</option>
+                      <option>Charity</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="users-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>
-                          <input 
-                            type="checkbox" 
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedUsers(stats.users.map(u => u.id));
-                              } else {
-                                setSelectedUsers([]);
-                              }
-                            }}
-                          />
-                        </th>
-                        <th>User</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Events</th>
-                        <th>Joined</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
+                <div className="sa-table-box">
+                  <table className="sa-table">
+                    <thead><tr>
+                      <th>Event</th><th>Date</th><th>Location</th>
+                      <th>Registrations</th><th>Revenue</th><th>Status</th><th>Details</th>
+                    </tr></thead>
                     <tbody>
-                      {stats.users?.map(user => (
-                        <tr key={user.id}>
+                      {stats.events.map(ev => (
+                        <tr key={ev._id}>
                           <td>
-                            <input 
-                              type="checkbox"
-                              checked={selectedUsers.includes(user.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedUsers([...selectedUsers, user.id]);
-                                } else {
-                                  setSelectedUsers(selectedUsers.filter(id => id !== user.id));
-                                }
-                              }}
-                            />
-                          </td>
-                          <td>
-                            <div className="user-cell">
-                              <div className="user-avatar-small">
-                                {user.name.charAt(0)}
+                            <div className="sa-cell-event">
+                              <img src={ev.image} alt={ev.title} className="sa-thumb" />
+                              <div>
+                                <div className="sa-cell-title">{ev.title}</div>
+                                <div className="sa-cell-sub">{ev.category}</div>
                               </div>
-                              <span>{user.name}</span>
                             </div>
                           </td>
-                          <td>{user.email}</td>
+                          <td className="sa-muted">{new Date(ev.date).toLocaleDateString()}</td>
+                          <td className="sa-muted">{ev.location}</td>
                           <td>
-                            <select 
-                              value={user.role}
-                              onChange={(e) => handleUserAction('role', { ...user, role: e.target.value })}
-                              className="role-select"
-                            >
-                              <option value="student">Student</option>
-                              <option value="organizer">Organizer</option>
-                              <option value="admin">Admin</option>
-                            </select>
+                            <span className="sa-muted">{ev.registered}/{ev.capacity}</span>
+                            <MiniBar pct={Math.round((ev.registered / ev.capacity) * 100)} />
                           </td>
-                          <td>{user.events}</td>
-                          <td>{new Date(user.joined).toLocaleDateString()}</td>
+                          <td className="sa-green">${ev.revenue.toLocaleString()}</td>
+                          <td><StatusBadge status={ev.status} /></td>
                           <td>
-                            <button className="action-btn" onClick={() => handleUserAction('edit', user)}>✏️</button>
-                            <button className="action-btn" onClick={() => handleUserAction('delete', user)}>🗑️</button>
+                            <button className="sa-view-btn" onClick={() => setSelectedEvent(ev)}>View ↗</button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-
-                {selectedUsers.length > 0 && (
-                  <div className="bulk-actions">
-                    <span>{selectedUsers.length} users selected</span>
-                    <button className="btn-secondary">Bulk Edit</button>
-                    <button className="btn-danger">Bulk Delete</button>
-                  </div>
-                )}
-              </div>
+              </>
             )}
 
-            {/* Reports Tab */}
-            {activeTab === 'reports' && (
-              <div className="reports-tab">
-                <h2>Analytics & Reports</h2>
-                
-                {/* Quick Stats - White Cards */}
-                <div className="quick-stats">
-                  <div className="quick-stat-card">
-                    <span className="quick-stat-icon">📊</span>
-                    <div className="quick-stat-info">
-                      <h4>Conversion Rate</h4>
-                      <span>68.5%</span>
-                    </div>
-                  </div>
-                  <div className="quick-stat-card">
-                    <span className="quick-stat-icon">👥</span>
-                    <div className="quick-stat-info">
-                      <h4>Active Users</h4>
-                      <span>1,245</span>
-                    </div>
-                  </div>
-                  <div className="quick-stat-card">
-                    <span className="quick-stat-icon">💰</span>
-                    <div className="quick-stat-info">
-                      <h4>Avg. Revenue</h4>
-                      <span>$1,250</span>
-                    </div>
-                  </div>
-                  <div className="quick-stat-card">
-                    <span className="quick-stat-icon">📈</span>
-                    <div className="quick-stat-info">
-                      <h4>Growth</h4>
-                      <span>+15.3%</span>
-                    </div>
-                  </div>
+            {/* ── USERS ── */}
+            {activeTab === 'users' && (
+              <>
+                <div className="sa-tabhead">
+                  <SectionHead title="User Directory" pill={`${stats.users.length} users`} />
+                  <input className="sa-search" style={{ maxWidth: '360px' }} type="text" placeholder="🔍  Search by name or email…" />
                 </div>
 
-                {/* Filters - Fixed Layout with 3 columns */}
-                <div className="report-filters">
-                  <div className="filter-group">
-                    <label>DATE RANGE</label>
-                    <div className="date-range-picker">
-                      <input 
-                        type="date" 
-                        className="date-input" 
-                        value={reportFilters.startDate}
-                        onChange={(e) => setReportFilters({...reportFilters, startDate: e.target.value})}
-                      />
-                      <span>to</span>
-                      <input 
-                        type="date" 
-                        className="date-input" 
-                        value={reportFilters.endDate}
-                        onChange={(e) => setReportFilters({...reportFilters, endDate: e.target.value})}
-                      />
+                <div className="sa-table-box">
+                  <table className="sa-table">
+                    <thead><tr>
+                      <th>User</th><th>Email</th><th>Role</th><th>Events</th><th>Joined</th>
+                    </tr></thead>
+                    <tbody>
+                      {stats.users.map(u => (
+                        <tr key={u.id}>
+                          <td>
+                            <div className="sa-cell-event">
+                              <div className="sa-avatar-sm">{u.name[0]}</div>
+                              <span className="sa-cell-title">{u.name}</span>
+                            </div>
+                          </td>
+                          <td className="sa-muted">{u.email}</td>
+                          <td><RoleBadge role={u.role} /></td>
+                          <td className="sa-muted">{u.events} events</td>
+                          <td className="sa-muted">{new Date(u.joined).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {/* ── ANALYTICS / REPORTS ── */}
+            {activeTab === 'reports' && (
+              <>
+                <SectionHead title="Platform Analytics" pill="Live Data" />
+
+                {/* KPI strip */}
+                <div className="sa-kpi-row">
+                  <KpiBox label="Total Participants" value="1,530" sub="+18% vs last period" icon="👥" />
+                  <KpiBox label="Total Revenue" value="$45,800" sub="+15.5% growth" icon="💰" />
+                  <KpiBox label="Avg. Fill Rate" value="78%" sub="Across all events" icon="📊" />
+                  <KpiBox label="Completed Events" value="6" sub="Out of 24 total" icon="✅" />
+                </div>
+
+                {/* Registration Trend – area chart */}
+                <div className="sa-chart-card">
+                  <div className="sa-chart-head">
+                    <div>
+                      <h3 className="sa-chart-title">Registration Trends</h3>
+                      <p className="sa-chart-sub">Monthly registrations over the last 7 months</p>
+                    </div>
+                    <div className="sa-chart-legend">
+                      <span className="sa-legend-dot" style={{ background: 'var(--c-primary)' }} /> Registrations
                     </div>
                   </div>
-                  
-                  <div className="filter-group">
-                    <label>EVENT TYPE</label>
-                    <select
-                      value={reportFilters.eventType}
-                      onChange={(e) => setReportFilters({...reportFilters, eventType: e.target.value})}
-                    >
-                      <option value="all">All Events</option>
+                  <AreaChart data={trendData} />
+                </div>
+
+                {/* Participants per event – bar chart */}
+                <div className="sa-chart-card">
+                  <div className="sa-chart-head">
+                    <div>
+                      <h3 className="sa-chart-title">Participants per Event</h3>
+                      <p className="sa-chart-sub">Total registered vs capacity</p>
+                    </div>
+                  </div>
+                  <BarChart events={stats.events} />
+                </div>
+
+                {/* Data table */}
+                <div className="sa-report-filters">
+                  <div className="sa-filter-group">
+                    <label className="sa-filter-label">Date Range</label>
+                    <div className="sa-date-range">
+                      <input type="date" className="sa-date-input" value={reportFilters.startDate}
+                        onChange={e => setReportFilters(f => ({ ...f, startDate: e.target.value }))} />
+                      <span className="sa-date-sep">→</span>
+                      <input type="date" className="sa-date-input" value={reportFilters.endDate}
+                        onChange={e => setReportFilters(f => ({ ...f, endDate: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="sa-filter-group">
+                    <label className="sa-filter-label">Category</label>
+                    <select className="sa-select" value={reportFilters.eventType}
+                      onChange={e => setReportFilters(f => ({ ...f, eventType: e.target.value }))}>
+                      <option value="all">All Categories</option>
                       <option value="tech">Technology</option>
                       <option value="music">Music</option>
-                      <option value="workshop">Workshops</option>
-                      <option value="networking">Networking</option>
-                      <option value="charity">Charity</option>
                     </select>
                   </div>
-                  
-                  <div className="filter-group">
-                    <label>FORMAT</label>
-                    <select
-                      value={reportFilters.format}
-                      onChange={(e) => setReportFilters({...reportFilters, format: e.target.value})}
-                    >
+                  <div className="sa-filter-group">
+                    <label className="sa-filter-label">Export Format</label>
+                    <select className="sa-select" value={reportFilters.format}
+                      onChange={e => setReportFilters(f => ({ ...f, format: e.target.value }))}>
                       <option value="pdf">PDF Document</option>
                       <option value="excel">Excel Spreadsheet</option>
-                      <option value="csv">CSV File</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Stats - White Cards */}
-                <div className="report-stats">
-                  <div className="stat-box">
-                    <span className="stat-label">Total Events</span>
-                    <span className="stat-number">{stats.totalEvents}</span>
-                  </div>
-                  <div className="stat-box">
-                    <span className="stat-label">Total Registrations</span>
-                    <span className="stat-number">{stats.totalRegistrations}</span>
-                  </div>
-                  <div className="stat-box">
-                    <span className="stat-label">Avg Participants</span>
-                    <span className="stat-number">{stats.avgParticipants}</span>
-                  </div>
-                  <div className="stat-box">
-                    <span className="stat-label">Total Revenue</span>
-                    <span className="stat-number">${stats.totalRevenue?.toLocaleString()}</span>
-                  </div>
-                </div>
-
-                {/* Charts - White Cards */}
-                <div className="report-charts">
-                  <div className="chart-card">
-                    <h3>Registration Trends</h3>
-                    <div className="chart-placeholder">
-                      📊 Chart visualization would go here
-                    </div>
-                  </div>
-                  <div className="chart-card">
-                    <h3>Revenue by Category</h3>
-                    <div className="chart-placeholder">
-                      📈 Chart visualization would go here
-                    </div>
-                  </div>
-                </div>
-
-                {/* Report Table - White Background */}
-                <div className="report-table-section">
-                  <div className="report-table-header">
-                    <h3>Event Performance</h3>
-                    <div className="table-actions">
-                      <button className="table-action-btn">📥 Export</button>
-                      <button className="table-action-btn">🖨️ Print</button>
-                    </div>
-                  </div>
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>Event Name</th>
-                        <th>Date</th>
-                        <th>Registrations</th>
-                        <th>Revenue</th>
-                        <th>Conversion</th>
-                      </tr>
-                    </thead>
+                <div className="sa-table-box" style={{ marginBottom: '1.5rem' }}>
+                  <table className="sa-table">
+                    <thead><tr>
+                      <th>Event</th><th>Date</th><th>Registrations</th><th>Revenue</th><th>Fill Rate</th>
+                    </tr></thead>
                     <tbody>
-                      {stats.events?.map(event => (
-                        <tr key={event._id}>
-                          <td>{event.title}</td>
-                          <td>{new Date(event.date).toLocaleDateString()}</td>
-                          <td>{event.registered}/{event.capacity}</td>
-                          <td>${event.revenue?.toLocaleString()}</td>
-                          <td>{Math.round((event.registered/event.capacity)*100)}%</td>
+                      {stats.events.map(ev => (
+                        <tr key={ev._id}>
+                          <td className="sa-cell-title">{ev.title}</td>
+                          <td className="sa-muted">{new Date(ev.date).toLocaleDateString()}</td>
+                          <td className="sa-muted">{ev.registered}/{ev.capacity}</td>
+                          <td className="sa-green">${ev.revenue.toLocaleString()}</td>
+                          <td>
+                            <div className="sa-fill-row">
+                              <MiniBar pct={Math.round((ev.registered / ev.capacity) * 100)} />
+                              <span className="sa-muted" style={{ fontSize: '0.78rem', width: '36px', textAlign: 'right' }}>
+                                {Math.round((ev.registered / ev.capacity) * 100)}%
+                              </span>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Generate Report Button */}
-                <button className="generate-report" onClick={handleGenerateReport}>
-                  <span>📊</span>
-                  Generate {reportFilters.format.toUpperCase()} Report
+                <button className="sa-btn-primary sa-generate-btn"
+                  onClick={() => alert(`Generating ${reportFilters.format.toUpperCase()} report…`)}>
+                  Generate Report ↓
                 </button>
-              </div>
+              </>
             )}
-          </>
+          </div>
         )}
       </main>
 
-      {/* Create Event Modal */}
-      {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content create-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowCreateModal(false)}>×</button>
-            <h2>Create New Event</h2>
-            
-            <form onSubmit={handleCreateEvent} className="modal-form">
-              <div className="form-group">
-                <label>Event Title</label>
-                <input 
-                  type="text" 
-                  value={eventForm.title}
-                  onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <select 
-                    value={eventForm.category}
-                    onChange={(e) => setEventForm({...eventForm, category: e.target.value})}
-                  >
-                    <option>Technology</option>
-                    <option>Music</option>
-                    <option>Education</option>
-                    <option>Networking</option>
-                    <option>Charity</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label>Status</label>
-                  <select 
-                    value={eventForm.status}
-                    onChange={(e) => setEventForm({...eventForm, status: e.target.value})}
-                  >
-                    <option value="upcoming">Upcoming</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Date</label>
-                  <input 
-                    type="date" 
-                    value={eventForm.date}
-                    onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Location</label>
-                  <input 
-                    type="text" 
-                    value={eventForm.location}
-                    onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Capacity</label>
-                  <input 
-                    type="number" 
-                    value={eventForm.capacity}
-                    onChange={(e) => setEventForm({...eventForm, capacity: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Price ($)</label>
-                  <input 
-                    type="number" 
-                    value={eventForm.price}
-                    onChange={(e) => setEventForm({...eventForm, price: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea 
-                  rows="4"
-                  value={eventForm.description}
-                  onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
-                  required
-                ></textarea>
-              </div>
-
-              <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Create Event
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Event Modal */}
-      {showEditModal && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content edit-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowEditModal(false)}>×</button>
-            <h2>Edit Event</h2>
-            
-            <form onSubmit={handleUpdateEvent} className="modal-form">
-              <div className="form-group">
-                <label>Event Title</label>
-                <input 
-                  type="text" 
-                  value={eventForm.title}
-                  onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <select 
-                    value={eventForm.category}
-                    onChange={(e) => setEventForm({...eventForm, category: e.target.value})}
-                  >
-                    <option>Technology</option>
-                    <option>Music</option>
-                    <option>Education</option>
-                    <option>Networking</option>
-                    <option>Charity</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label>Status</label>
-                  <select 
-                    value={eventForm.status}
-                    onChange={(e) => setEventForm({...eventForm, status: e.target.value})}
-                  >
-                    <option value="upcoming">Upcoming</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Date</label>
-                  <input 
-                    type="date" 
-                    value={eventForm.date}
-                    onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Location</label>
-                  <input 
-                    type="text" 
-                    value={eventForm.location}
-                    onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Update Event
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Event Details Modal */}
+      {/* ══ EVENT DETAIL MODAL ══ */}
       {selectedEvent && (
-        <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedEvent(null)}>×</button>
-            
-            <img src={selectedEvent.image} alt={selectedEvent.title} className="modal-image" />
-            
-            <div className="modal-details">
-              <h2>{selectedEvent.title}</h2>
-              
-              <div className="event-meta">
-                <span>📅 {new Date(selectedEvent.date).toLocaleDateString()}</span>
-                <span>📍 {selectedEvent.location}</span>
-                <span>🏷️ {selectedEvent.category}</span>
-              </div>
-              
-              <p className="event-description">{selectedEvent.description}</p>
-              
-              <div className="event-stats-grid">
-                <div className="stat-item">
-                  <label>Registrations</label>
-                  <span>{selectedEvent.registered}/{selectedEvent.capacity}</span>
-                </div>
-                <div className="stat-item">
-                  <label>Revenue</label>
-                  <span>${selectedEvent.revenue?.toLocaleString()}</span>
-                </div>
-                <div className="stat-item">
-                  <label>Status</label>
-                  <span className={`status-badge ${selectedEvent.status}`}>
-                    {selectedEvent.status}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="modal-actions">
-                <button className="btn-primary" onClick={() => {
-                  setEventForm(selectedEvent);
-                  setShowEditModal(true);
-                  setSelectedEvent(null);
-                }}>
-                  Edit Event
-                </button>
-                <button className="btn-secondary">View Registrations</button>
-              </div>
+        <div className="sa-overlay" onClick={() => setSelectedEvent(null)}>
+          <div className="sa-modal" onClick={e => e.stopPropagation()}>
+            <button className="sa-modal-close" onClick={() => setSelectedEvent(null)}>✕</button>
+            <div className="sa-modal-img-wrap">
+              <img src={selectedEvent.image} alt={selectedEvent.title} className="sa-modal-img" />
+              <div className="sa-modal-img-fade" />
+              <StatusBadge status={selectedEvent.status} style={{ position: 'absolute', top: '1rem', left: '1rem' }} />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
-          <div className="modal-content settings-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowSettingsModal(false)}>×</button>
-            <h2>Settings</h2>
-            
-            <div className="settings-tabs">
-              <button className="settings-tab active">General</button>
-              <button className="settings-tab">Notifications</button>
-              <button className="settings-tab">Security</button>
-              <button className="settings-tab">API</button>
-            </div>
-            
-            <div className="settings-content">
-              <div className="setting-item">
-                <label>
-                  <input type="checkbox" /> Enable email notifications
-                </label>
+            <div className="sa-modal-body">
+              <span className="sa-modal-cat">{selectedEvent.category}</span>
+              <h2 className="sa-modal-title">{selectedEvent.title}</h2>
+              <div className="sa-modal-tags">
+                {[`📅 ${new Date(selectedEvent.date).toLocaleDateString()}`,
+                `📍 ${selectedEvent.location}`,
+                `🕐 ${selectedEvent.time}`,
+                `🎤 ${selectedEvent.speaker}`].map(t => (
+                  <span key={t} className="sa-modal-tag">{t}</span>
+                ))}
               </div>
-              <div className="setting-item">
-                <label>
-                  <input type="checkbox" /> Auto-approve events
-                </label>
+              <p className="sa-modal-desc">{selectedEvent.description}</p>
+              <div className="sa-modal-kpis">
+                {[
+                  { label: 'Registrations', val: `${selectedEvent.registered}/${selectedEvent.capacity}` },
+                  { label: 'Revenue', val: `$${selectedEvent.revenue.toLocaleString()}` },
+                  { label: 'Fill Rate', val: `${Math.round((selectedEvent.registered / selectedEvent.capacity) * 100)}%` },
+                ].map(k => (
+                  <div key={k.label} className="sa-modal-kpi">
+                    <span className="sa-modal-kpi-lbl">{k.label}</span>
+                    <span className="sa-modal-kpi-val">{k.val}</span>
+                  </div>
+                ))}
               </div>
-              <div className="setting-item">
-                <label>Default event capacity</label>
-                <input type="number" defaultValue="100" />
-              </div>
-            </div>
-            
-            <div className="modal-actions">
-              <button className="btn-primary">Save Settings</button>
-              <button className="btn-secondary" onClick={() => setShowSettingsModal(false)}>Cancel</button>
             </div>
           </div>
         </div>
@@ -1113,69 +482,216 @@ export default function AdminDashboard() {
   );
 }
 
-// Stat Card Component
-function StatCard({ title, value, icon, trend, trendType = 'positive', onClick }) {
+/*Sub-components*/
+
+function SectionHead({ title, pill }) {
   return (
-    <div 
-      className={`stat-card ${onClick ? 'clickable' : ''}`} 
-      onClick={onClick}
-    >
-      <div className="stat-card-header">
-        <span className="stat-icon" data-icon={icon}>{icon}</span>
-        <span className="stat-title">{title}</span>
+    <div className="sa-section-head">
+      <h2 className="sa-section-title">{title}</h2>
+      {pill && <span className="sa-pill">{pill}</span>}
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, accent, trend }) {
+  return (
+    <div className={`sa-stat-card sa-stat-card--${accent}`}>
+      <div className="sa-stat-card-glow" />
+      <div className="sa-stat-row">
+        <div className="sa-stat-icon-box">{icon}</div>
+        <span className="sa-stat-trend">{trend}</span>
       </div>
-      <div className="stat-card-body">
-        <span className="stat-main-value">{value}</span>
-        {trend && (
-          <span className={`stat-trend ${trendType}`}>
-            {trend}
-          </span>
-        )}
+      <div className="sa-stat-val">{value}</div>
+      <div className="sa-stat-lbl">{label}</div>
+    </div>
+  );
+}
+
+function EventCard({ event, onClick }) {
+  const pct = Math.round((event.registered / event.capacity) * 100);
+  return (
+    <div className="sa-event-card" onClick={onClick}>
+      <div className="sa-event-img-wrap">
+        <img src={event.image} alt={event.title} className="sa-event-img" />
+        <div className="sa-event-img-fade" />
+        <StatusBadge status={event.status} className="sa-event-badge" />
+        <span className="sa-event-cat">{event.category}</span>
+      </div>
+      <div className="sa-event-body">
+        <h3 className="sa-event-title">{event.title}</h3>
+        <p className="sa-event-meta">📅 {new Date(event.date).toLocaleDateString()} · 📍 {event.location}</p>
+        <div className="sa-cap-row">
+          <span className="sa-muted" style={{ fontSize: '0.78rem' }}>Capacity</span>
+          <span className="sa-purple-txt" style={{ fontSize: '0.78rem', fontWeight: 700 }}>{pct}%</span>
+        </div>
+        <MiniBar pct={pct} />
+        <button className="sa-inspect-btn" onClick={e => { e.stopPropagation(); onClick(); }}>View Details ↗</button>
       </div>
     </div>
   );
 }
 
-// Event Card Component
-function EventCard({ event, onClick, onEdit }) {
+function MiniBar({ pct }) {
   return (
-    <div className="event-card" onClick={onClick}>
-      <div className="event-image-container">
-        <img src={event.image} alt={event.title} className="event-image" />
-        <span className={`event-status ${event.status}`}>{event.status}</span>
-        <span className="event-category">{event.category}</span>
-      </div>
-      
-      <div className="event-details">
-        <h3 className="event-title">{event.title}</h3>
-        
-        <div className="event-meta">
-          <span>📅 {new Date(event.date).toLocaleDateString()}</span>
-          <span>📍 {event.location}</span>
-        </div>
+    <div className="sa-mini-bar">
+      <div className="sa-mini-fill" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
 
-        <div className="event-stats">
-          <div className="stat">
-            <span className="stat-label">Registered</span>
-            <span className="stat-value">{event.registered}/{event.capacity}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Revenue</span>
-            <span className="stat-value">${event.revenue?.toLocaleString()}</span>
-          </div>
-        </div>
+function StatusBadge({ status, className, style }) {
+  return (
+    <span className={`sa-status-badge sa-status-badge--${status} ${className || ''}`} style={style}>
+      {status}
+    </span>
+  );
+}
 
-        <div className="event-actions">
-          <button className="btn-edit" onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}>✏️ Edit</button>
-          <button className="btn-view" onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}>👁️ View</button>
-        </div>
-      </div>
+function RoleBadge({ role }) {
+  return <span className={`sa-role-badge sa-role-badge--${role}`}>{role}</span>;
+}
+
+function KpiBox({ icon, label, value, sub }) {
+  return (
+    <div className="sa-kpi-box">
+      <div className="sa-kpi-icon">{icon}</div>
+      <div className="sa-kpi-val">{value}</div>
+      <div className="sa-kpi-lbl">{label}</div>
+      <div className="sa-kpi-sub">{sub}</div>
+    </div>
+  );
+}
+
+/* ─── SVG Area Chart: Registration Trends ─── */
+function AreaChart({ data }) {
+  const W = 700, H = 200, PAD = { top: 16, right: 20, bottom: 32, left: 44 };
+  const innerW = W - PAD.left - PAD.right;
+  const innerH = H - PAD.top - PAD.bottom;
+
+  const maxVal = Math.max(...data.map(d => d.registrations));
+  const minVal = 0;
+
+  const xScale = i => PAD.left + (i / (data.length - 1)) * innerW;
+  const yScale = v => PAD.top + innerH - ((v - minVal) / (maxVal - minVal)) * innerH;
+
+  const pts = data.map((d, i) => `${xScale(i)},${yScale(d.registrations)}`).join(' ');
+  const areaPath = [
+    `M ${xScale(0)},${PAD.top + innerH}`,
+    ...data.map((d, i) => `L ${xScale(i)},${yScale(d.registrations)}`),
+    `L ${xScale(data.length - 1)},${PAD.top + innerH}`,
+    'Z'
+  ].join(' ');
+
+  const yTicks = [0, Math.round(maxVal * 0.5), maxVal];
+
+  return (
+    <div className="sa-svg-wrap">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="sa-svg">
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#667eea" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#667eea" stopOpacity="0.01" />
+          </linearGradient>
+          <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#667eea" />
+            <stop offset="100%" stopColor="#a855f7" />
+          </linearGradient>
+        </defs>
+
+        {/* Y grid lines */}
+        {yTicks.map(v => (
+          <line key={v}
+            x1={PAD.left} x2={W - PAD.right}
+            y1={yScale(v)} y2={yScale(v)}
+            stroke="rgba(255,255,255,0.07)" strokeWidth="1"
+          />
+        ))}
+
+        {/* Y labels */}
+        {yTicks.map(v => (
+          <text key={v} x={PAD.left - 6} y={yScale(v) + 4}
+            textAnchor="end" fontSize="10" fill="#94a3b8">{v}</text>
+        ))}
+
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#areaGrad)" />
+
+        {/* Line */}
+        <polyline points={pts} fill="none" stroke="url(#lineGrad)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+
+        {/* Dots + tooltips */}
+        {data.map((d, i) => (
+          <g key={i}>
+            <circle cx={xScale(i)} cy={yScale(d.registrations)} r="4"
+              fill="#667eea" stroke="#0f0f1a" strokeWidth="2" />
+            {/* X labels */}
+            <text x={xScale(i)} y={H - 4} textAnchor="middle" fontSize="10" fill="#94a3b8">{d.month}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/* ─── SVG Bar Chart: Participants per Event ─── */
+function BarChart({ events }) {
+  const W = 700, H = 220, PAD = { top: 16, right: 20, bottom: 48, left: 44 };
+  const innerW = W - PAD.left - PAD.right;
+  const innerH = H - PAD.top - PAD.bottom;
+
+  const maxCap = Math.max(...events.map(e => e.capacity));
+  const barW = innerW / events.length;
+  const gap = barW * 0.28;
+
+  return (
+    <div className="sa-svg-wrap">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="sa-svg">
+        <defs>
+          <linearGradient id="barGrad1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#667eea" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#764ba2" stopOpacity="0.7" />
+          </linearGradient>
+          <linearGradient id="barGrad2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+          </linearGradient>
+        </defs>
+
+        {events.map((ev, i) => {
+          const x = PAD.left + i * barW + gap / 2;
+          const bw = barW - gap;
+          const capH = ((ev.capacity / maxCap) * innerH);
+          const regH = ((ev.registered / maxCap) * innerH);
+          const capY = PAD.top + innerH - capH;
+          const regY = PAD.top + innerH - regH;
+          const shortName = ev.title.split(' ')[0];
+
+          return (
+            <g key={ev._id}>
+              {/* Capacity ghost bar */}
+              <rect x={x} y={capY} width={bw} height={capH} fill="url(#barGrad2)" rx="4" ry="4" />
+              {/* Registered bar */}
+              <rect x={x} y={regY} width={bw} height={regH} fill="url(#barGrad1)" rx="4" ry="4" />
+              {/* Value label */}
+              <text x={x + bw / 2} y={regY - 5} textAnchor="middle" fontSize="9" fill="#e2e8f0" fontWeight="700">
+                {ev.registered}
+              </text>
+              {/* X label */}
+              <text x={x + bw / 2} y={H - 8} textAnchor="middle" fontSize="9" fill="#94a3b8">
+                {shortName}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Legend */}
+        <g>
+          <rect x={PAD.left} y={H - 3} width={12} height={5} fill="url(#barGrad1)" rx="2" />
+          <text x={PAD.left + 16} y={H - 0} fontSize="9" fill="#94a3b8">Registered</text>
+          <rect x={PAD.left + 80} y={H - 3} width={12} height={5} fill="url(#barGrad2)" rx="2" />
+          <text x={PAD.left + 96} y={H - 0} fontSize="9" fill="#94a3b8">Capacity</text>
+        </g>
+      </svg>
     </div>
   );
 }
