@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
 
-/* ─── Dummy event images ─── */
+/* Dummy event images */
 const eventImages = {
   tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
   music: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=800&q=80',
@@ -33,6 +33,7 @@ export default function SuperAdminDashboard() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [reportFilters, setReportFilters] = useState({
     startDate: '2024-03-01',
@@ -89,6 +90,7 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => { fetchDashboardData(); fetchNotifications(); }, [fetchDashboardData, fetchNotifications]);
 
+  /* ── Click-outside: close notification dropdown ── */
   const notifRef = useRef(null);
   useEffect(() => {
     const handler = (e) => {
@@ -174,6 +176,15 @@ export default function SuperAdminDashboard() {
                 <span className="sa-user-role">Super Admin</span>
               </div>
             </div>
+
+            {/* Settings button */}
+            <button
+              className="sa-icon-btn"
+              onClick={() => setShowSettings(true)}
+              aria-label="Settings"
+            >
+              ⚙️
+            </button>
 
             <button className="sa-logout-btn" onClick={handleLogout}>Sign out →</button>
           </div>
@@ -478,6 +489,53 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* ══ SETTINGS MODAL ══ */}
+      {showSettings && (
+        <div className="sa-overlay" onClick={() => setShowSettings(false)}>
+          <div className="sa-modal sa-settings-modal" onClick={e => e.stopPropagation()}>
+            <button className="sa-modal-close" onClick={() => setShowSettings(false)}>✕</button>
+
+            <div className="sa-settings-body">
+              <div className="sa-settings-head">
+                <div className="sa-settings-icon">⚙️</div>
+                <div>
+                  <h2 className="sa-settings-title">Dashboard Settings</h2>
+                  <p className="sa-settings-sub">Manage your console preferences</p>
+                </div>
+              </div>
+
+              <div className="sa-settings-section">
+                <p className="sa-settings-label">Appearance</p>
+                <div className="sa-settings-list">
+                  <SettingToggle label="Dark Mode" sub="Use dark theme across the dashboard" defaultChecked={true} />
+                  <SettingToggle label="Compact View" sub="Reduce spacing in tables and cards" defaultChecked={false} />
+                </div>
+              </div>
+
+              <div className="sa-settings-section">
+                <p className="sa-settings-label">Notifications</p>
+                <div className="sa-settings-list">
+                  <SettingToggle label="Push Notifications" sub="Receive real-time alerts" defaultChecked={true} />
+                  <SettingToggle label="Email Digest" sub="Weekly summary sent to your email" defaultChecked={false} />
+                </div>
+              </div>
+
+              <div className="sa-settings-section">
+                <p className="sa-settings-label">Data</p>
+                <div className="sa-settings-list">
+                  <SettingToggle label="Auto-refresh Stats" sub="Refresh dashboard data every 5 minutes" defaultChecked={true} />
+                  <SettingToggle label="Debug Analytics" sub="Show raw data in reports tab" defaultChecked={false} />
+                </div>
+              </div>
+
+              <button className="sa-btn-primary sa-settings-save" onClick={() => setShowSettings(false)}>
+                Save Preferences
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -489,6 +547,25 @@ function SectionHead({ title, pill }) {
     <div className="sa-section-head">
       <h2 className="sa-section-title">{title}</h2>
       {pill && <span className="sa-pill">{pill}</span>}
+    </div>
+  );
+}
+
+function SettingToggle({ label, sub, defaultChecked }) {
+  const [on, setOn] = React.useState(defaultChecked);
+  return (
+    <div className="sa-setting-row">
+      <div className="sa-setting-text">
+        <span className="sa-setting-label">{label}</span>
+        <span className="sa-setting-sub">{sub}</span>
+      </div>
+      <button
+        className={`sa-toggle ${on ? 'sa-toggle--on' : ''}`}
+        onClick={() => setOn(v => !v)}
+        aria-label={label}
+      >
+        <span className="sa-toggle-thumb" />
+      </button>
     </div>
   );
 }
@@ -562,7 +639,7 @@ function KpiBox({ icon, label, value, sub }) {
   );
 }
 
-/* ─── SVG Area Chart: Registration Trends ─── */
+/* SVG Area Chart: Registration Trends */
 function AreaChart({ data }) {
   const W = 700, H = 200, PAD = { top: 16, right: 20, bottom: 32, left: 44 };
   const innerW = W - PAD.left - PAD.right;
@@ -633,7 +710,7 @@ function AreaChart({ data }) {
   );
 }
 
-/* ─── SVG Bar Chart: Participants per Event ─── */
+/*  SVG Bar Chart: Participants per Event */
 function BarChart({ events }) {
   const W = 700, H = 220, PAD = { top: 16, right: 20, bottom: 48, left: 44 };
   const innerW = W - PAD.left - PAD.right;
