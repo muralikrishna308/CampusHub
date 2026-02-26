@@ -255,7 +255,9 @@ export default function Events() {
                             <div key={event._id} className="event-card" onClick={() => openModal(event)}>
                                 <div
                                     className="event-card-img"
-                                    style={{ backgroundImage: `url(${event.image})` }}
+                                    style={{ 
+                                        backgroundImage: `url(http://localhost:5000/uploads/${event.image})` 
+                                    }}
                                 >
                                     <span
                                         className="event-badge"
@@ -319,7 +321,9 @@ export default function Events() {
 
                         <div
                             className="ev-modal-img"
-                            style={{ backgroundImage: `url(${selectedEvent.image})` }}
+                            style={{ 
+                                backgroundImage: `url(http://localhost:5000/uploads/${selectedEvent.image})` 
+                            }}
                         >
                             <span
                                 className="event-badge large"
