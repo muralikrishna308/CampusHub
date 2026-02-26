@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
 
-/* Dummy event images */
+/* Dummy event images*/
 const eventImages = {
   tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
   music: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=800&q=80',
@@ -12,7 +12,7 @@ const eventImages = {
   charity: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80',
 };
 
-/* ─── Registration trend data (monthly) ─── */
+/*Registration trend data (monthly) */
 const trendData = [
   { month: 'Sep', registrations: 120, revenue: 4800 },
   { month: 'Oct', registrations: 185, revenue: 7400 },
@@ -42,7 +42,7 @@ export default function SuperAdminDashboard() {
     format: 'pdf',
   });
 
-  /* ─── Data fetch ─── */
+  /*Data fetch*/
   const fetchDashboardData = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -90,7 +90,7 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => { fetchDashboardData(); fetchNotifications(); }, [fetchDashboardData, fetchNotifications]);
 
-  /* ── Click-outside: close notification dropdown ── */
+  /*Click-outside: close notification dropdown */
   const notifRef = useRef(null);
   useEffect(() => {
     const handler = (e) => {
@@ -127,13 +127,13 @@ export default function SuperAdminDashboard() {
         <div className="sa-grid-lines" />
       </div>
 
-      {/* ══ HEADER ══ */}
+      {/*HEADER*/}
       <header className="sa-header">
         <div className="sa-header-inner">
           {/* Brand */}
           <div className="sa-brand">
             <div className="sa-brand-icon">
-              <span className="sa-logomark">✦</span>
+              <span className="sa-logomark">🎓</span>
             </div>
             <div>
               <div className="sa-brand-name">CampusHub <span className="sa-brand-tag">Super Admin</span></div>
@@ -191,7 +191,7 @@ export default function SuperAdminDashboard() {
         </div>
       </header>
 
-      {/* ══ TAB BAR ══ */}
+      {/* TAB BAR */}
       <div className="sa-tabbar">
         <div className="sa-tabbar-inner">
           {[
@@ -211,7 +211,7 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
-      {/* ══ MAIN ══ */}
+      {/* MAIN */}
       <main className="sa-main">
         {loading ? (
           <div className="sa-loading">
@@ -221,7 +221,7 @@ export default function SuperAdminDashboard() {
         ) : stats && (
           <div className="sa-pane" key={activeTab}>
 
-            {/* ── OVERVIEW ── */}
+            {/* OVERVIEW*/}
             {activeTab === 'overview' && (
               <>
                 {/* Stat strip */}
@@ -257,7 +257,7 @@ export default function SuperAdminDashboard() {
               </>
             )}
 
-            {/* ── EVENTS ── */}
+            {/*EVENTS */}
             {activeTab === 'events' && (
               <>
                 <div className="sa-tabhead">
@@ -312,7 +312,7 @@ export default function SuperAdminDashboard() {
               </>
             )}
 
-            {/* ── USERS ── */}
+            {/* USERS */}
             {activeTab === 'users' && (
               <>
                 <div className="sa-tabhead">
@@ -346,7 +346,7 @@ export default function SuperAdminDashboard() {
               </>
             )}
 
-            {/* ── ANALYTICS / REPORTS ── */}
+            {/* ANALYTICS / REPORTS */}
             {activeTab === 'reports' && (
               <>
                 <SectionHead title="Platform Analytics" pill="Live Data" />
@@ -451,7 +451,7 @@ export default function SuperAdminDashboard() {
         )}
       </main>
 
-      {/* ══ EVENT DETAIL MODAL ══ */}
+      {/* EVENT DETAIL MODAL */}
       {selectedEvent && (
         <div className="sa-overlay" onClick={() => setSelectedEvent(null)}>
           <div className="sa-modal" onClick={e => e.stopPropagation()}>
@@ -490,7 +490,7 @@ export default function SuperAdminDashboard() {
         </div>
       )}
 
-      {/* ══ SETTINGS MODAL ══ */}
+      {/*SETTINGS MODAL*/}
       {showSettings && (
         <div className="sa-overlay" onClick={() => setShowSettings(false)}>
           <div className="sa-modal sa-settings-modal" onClick={e => e.stopPropagation()}>
@@ -540,7 +540,7 @@ export default function SuperAdminDashboard() {
   );
 }
 
-/*Sub-components*/
+/* Sub-components*/
 
 function SectionHead({ title, pill }) {
   return (
@@ -639,7 +639,7 @@ function KpiBox({ icon, label, value, sub }) {
   );
 }
 
-/* SVG Area Chart: Registration Trends */
+/*SVG Area Chart: Registration Trends */
 function AreaChart({ data }) {
   const W = 700, H = 200, PAD = { top: 16, right: 20, bottom: 32, left: 44 };
   const innerW = W - PAD.left - PAD.right;
@@ -710,7 +710,7 @@ function AreaChart({ data }) {
   );
 }
 
-/*  SVG Bar Chart: Participants per Event */
+/*SVG Bar Chart: Participants per Event */
 function BarChart({ events }) {
   const W = 700, H = 220, PAD = { top: 16, right: 20, bottom: 48, left: 44 };
   const innerW = W - PAD.left - PAD.right;

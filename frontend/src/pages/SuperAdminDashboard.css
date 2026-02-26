@@ -1,6 +1,8 @@
 
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+/* Design tokens */
 :root {
   --c-primary: #667eea;
   --c-secondary: #764ba2;
@@ -31,7 +33,7 @@
   --danger: #ef4444;
 }
 
-/* Reset  */
+/*Reset*/
 *,
 *::before,
 *::after {
@@ -40,7 +42,7 @@
   box-sizing: border-box;
 }
 
-/*Root*/
+/* Root */
 .sa-root {
   min-height: 100vh;
   background: var(--c-dark);
@@ -51,7 +53,7 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Ambient Background*/
+/*Ambient Background*/
 .sa-bg-layer {
   position: fixed;
   inset: 0;
@@ -145,25 +147,32 @@
   align-items: center;
   gap: 0.85rem;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .sa-brand-icon {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   background: var(--grad-main);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   box-shadow: 0 4px 20px rgba(102, 126, 234, .45);
   flex-shrink: 0;
+  transition: var(--transition);
 }
 
-/* ✦ logomark — same as Home page nav */
+.sa-brand:hover .sa-brand-icon {
+  transform: rotate(-10deg) scale(1.1);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, .65);
+}
+
+/* logomark */
 .sa-logomark {
   color: #fff;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
@@ -179,7 +188,7 @@
   gap: 0.3rem;
 }
 
-/* Gradient accent on "Event" — matches Home page logo */
+
 .sa-brand-accent {
   background: var(--grad-text);
   -webkit-background-clip: text;
@@ -428,7 +437,7 @@
   box-shadow: 0 6px 20px rgba(239, 68, 68, .3);
 }
 
-/* Tab bar */
+/*Tab bar */
 .sa-tabbar {
   position: relative;
   z-index: 1;
@@ -477,7 +486,7 @@
   border-bottom-color: var(--c-primary);
 }
 
-/*Main content */
+/* Main content */
 .sa-main {
   max-width: 1380px;
   margin: 0 auto;
@@ -503,7 +512,7 @@
   }
 }
 
-/*Section header */
+/*  Section header */
 .sa-section-head {
   display: flex;
   align-items: center;
@@ -531,7 +540,7 @@
   border-radius: 50px;
 }
 
-/*Stat cards (overview)*/
+/* Stat cards (overview)  */
 .sa-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -659,7 +668,7 @@
   z-index: 1;
 }
 
-/*Event cards (overview grid)  */
+/*  Event cards (overview grid)  */
 .sa-event-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -792,7 +801,7 @@
   transform: translateY(-2px);
 }
 
-/*  Activity log  */
+/*Activity log*/
 .sa-activity-card {
   background: var(--c-card);
   border: 1px solid var(--c-border);
@@ -857,7 +866,7 @@
   white-space: nowrap;
 }
 
-/*  Tab section header + filter bar */
+/* Tab section header + filter bar */
 .sa-tabhead {
   display: flex;
   align-items: flex-start;
@@ -923,7 +932,7 @@
   background: var(--c-dark2);
 }
 
-/* Tables  */
+/* Tables */
 .sa-table-box {
   background: var(--c-card);
   border: 1px solid var(--c-border);
@@ -1110,9 +1119,9 @@
   gap: 0.5rem;
 }
 
-/* ANALYTICS / REPORTS TAB */
+/* ANALYTICS / REPORTS TAB*/
 
-/* KPI Row*/
+/* KPI Row */
 .sa-kpi-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1230,7 +1239,7 @@
   min-height: 160px;
 }
 
-/*  Report filters*/
+/* Report filters */
 .sa-report-filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -1288,7 +1297,7 @@
   background: rgba(255, 255, 255, .08);
 }
 
-/* Generate Report button  */
+/*Generate Report button  */
 .sa-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -1333,7 +1342,7 @@
   padding: 1rem 2rem;
 }
 
-/*Event detail modal */
+/* Event detail modal */
 .sa-overlay {
   position: fixed;
   inset: 0;
@@ -1540,7 +1549,7 @@
   }
 }
 
-/*Error page */
+/*  Error page  */
 .sa-error-page {
   min-height: 100vh;
   background: var(--c-dark);
@@ -1649,7 +1658,7 @@
   font-size: 2.5rem;
 }
 
-/*Scrollbar*/
+/*  Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -1664,7 +1673,7 @@
   border-radius: 4px;
 }
 
-/*Responsive*/
+/* ─ Responsive */
 @media (max-width:900px) {
   .sa-stat-grid {
     grid-template-columns: 1fr 1fr;
