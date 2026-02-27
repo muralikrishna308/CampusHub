@@ -113,7 +113,7 @@ const Home = () => {
       <header className={`lp-nav ${scrolled ? 'lp-nav--scrolled' : ''}`}>
         <div className="lp-nav__inner">
           <button className="lp-nav__logo" onClick={() => scrollTo('top')}>
-            <span className="lp-nav__logomark">✦</span>
+            <span className="lp-nav__logomark">🎓</span>
             Campus<span className="lp-nav__logo-accent">Event</span>Hub
           </button>
 
@@ -469,7 +469,7 @@ const Home = () => {
         <div className="lp-footer__inner">
           <div className="lp-footer__brand">
             <p className="lp-footer__logo">
-              <span className="lp-nav__logomark">✦</span>
+              <span className="lp-nav__logomark">🎓</span>
               Campus<span className="lp-nav__logo-accent">Event</span>Hub
             </p>
             <p className="lp-footer__tagline">Connecting campus. Elevating experiences.</p>

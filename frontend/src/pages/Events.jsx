@@ -47,7 +47,7 @@ export default function Events() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     // Transform API data to match component format
@@ -55,14 +55,14 @@ export default function Events() {
                         ...event,
                         _id: event._id,
                         date: event.eventDate,
-                        category: 'tech', // Default category - you can extract from title or description
+                        category: event.category || 'tech',
                         speaker: event.admin?.name || 'Admin',
-                        capacity: 100, // Default - update in API if needed
-                        registered: 0, // This should come from registrations count
+                        capacity: event.capacity || 100,
+                        registered: event.registered || 0,
                         price: event.ticketPrice ? `$${event.ticketPrice}` : 'Free',
-                        time: new Date(event.eventDate).toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
+                        time: new Date(event.eventDate).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
                         }) + ' onwards'
                     }));
                     setEvents(transformedEvents);
@@ -94,7 +94,10 @@ export default function Events() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    const registeredEventIds = data.map(reg => reg.event._id);
+                    // Filter out registrations where event was deleted (event is null)
+                    const registeredEventIds = data
+                        .filter(reg => reg.event && reg.event._id)
+                        .map(reg => reg.event._id);
                     setRegisteredEvents(registeredEventIds);
                 }
             } catch (err) {
@@ -108,11 +111,11 @@ export default function Events() {
     // Filter events based on search and category
     useEffect(() => {
         let result = events;
-        
+
         if (selectedCategory !== 'all') {
             result = result.filter(e => e.category === selectedCategory);
         }
-        
+
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             result = result.filter(
@@ -123,7 +126,7 @@ export default function Events() {
                     (e.speaker && e.speaker.toLowerCase().includes(term))
             );
         }
-        
+
         setFilteredEvents(result);
     }, [searchTerm, selectedCategory, events]);
 
