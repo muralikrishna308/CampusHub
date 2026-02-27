@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState, useCallback, useRef } from 'rea
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
+import Chatbot from '../components/chatbot';
 
 /* Dummy event images*/
 const eventImages = {
@@ -12,16 +13,7 @@ const eventImages = {
   charity: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80',
 };
 
-/*Registration trend data (monthly) */
-const trendData = [
-  { month: 'Sep', registrations: 120, revenue: 4800 },
-  { month: 'Oct', registrations: 185, revenue: 7400 },
-  { month: 'Nov', registrations: 210, revenue: 8400 },
-  { month: 'Dec', registrations: 160, revenue: 6400 },
-  { month: 'Jan', registrations: 290, revenue: 11600 },
-  { month: 'Feb', registrations: 245, revenue: 9800 },
-  { month: 'Mar', registrations: 320, revenue: 12800 },
-];
+const trendData = []; // Unused, kept as empty for potential future local use
 
 export default function SuperAdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
@@ -47,37 +39,77 @@ export default function SuperAdminDashboard() {
     if (!token) return;
     setLoading(true);
     setError(null);
-    setTimeout(() => {
-      setStats({
-        totalEvents: 24,
-        activeEvents: 8,
-        totalRegistrations: 1250,
-        totalRevenue: 45800,
-        growth: 15.5,
-        events: [
-          { _id: 1, title: 'Tech Conference 2024', registered: 245, capacity: 300, active: true, image: eventImages.tech, date: '2024-03-15', location: 'Convention Center', category: 'Technology', revenue: 12500, status: 'upcoming', description: 'Annual technology conference featuring latest trends in AI and Web Development.', speaker: 'Dr. Sarah Johnson', time: '09:00 AM – 06:00 PM' },
-          { _id: 2, title: 'Music Festival', registered: 189, capacity: 200, active: true, image: eventImages.music, date: '2024-03-20', location: 'Central Park', category: 'Music', revenue: 8900, status: 'upcoming', description: 'A day filled with amazing performances from top artists.', speaker: 'Various Artists', time: '12:00 PM – 11:00 PM' },
-          { _id: 3, title: 'Workshop: React Basics', registered: 78, capacity: 100, active: false, image: eventImages.workshop, date: '2024-02-28', location: 'Online', category: 'Education', revenue: 3900, status: 'completed', description: 'Learn React fundamentals in this hands-on workshop.', speaker: 'Mike Johnson', time: '10:00 AM – 04:00 PM' },
-          { _id: 4, title: 'Networking Mixer', registered: 156, capacity: 200, active: true, image: eventImages.networking, date: '2024-03-25', location: 'Business Center', category: 'Networking', revenue: 6200, status: 'upcoming', description: 'Connect with professionals from various industries.', speaker: 'Networking Hosts', time: '06:00 PM – 09:00 PM' },
-          { _id: 5, title: 'Charity Run', registered: 320, capacity: 500, active: true, image: eventImages.charity, date: '2024-04-01', location: 'City Stadium', category: 'Charity', revenue: 15000, status: 'upcoming', description: 'Annual charity run to support local causes.', speaker: 'Charity Org', time: '08:00 AM – 12:00 PM' },
-        ],
-        users: [
-          { id: 1, name: 'John Doe', email: 'john@example.com', role: 'student', events: 5, joined: '2024-01-15' },
-          { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'student', events: 3, joined: '2024-01-20' },
-          { id: 3, name: 'Bob Wilson', email: 'bob@example.com', role: 'organizer', events: 8, joined: '2023-12-10' },
-          { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'student', events: 2, joined: '2024-02-01' },
-          { id: 5, name: 'Charlie Davis', email: 'charlie@example.com', role: 'admin', events: 12, joined: '2023-11-05' },
-        ],
-        recentActivity: [
-          { id: 1, action: 'New registration', user: 'John Doe', event: 'Tech Conference', time: '2 min ago', icon: '📝' },
-          { id: 2, action: 'Payment received', user: 'Jane Smith', event: 'Workshop', time: '1 hr ago', icon: '💳' },
-          { id: 3, action: 'Event ', user: 'Admin', event: 'Music Festival', time: '3 hrs ago', icon: '👁️' },
-          { id: 4, action: 'Event completed', user: 'System', event: 'React Basics', time: '1 day ago', icon: '✅' },
-        ],
+    try {
+      const response = await fetch('http://localhost:5000/api/dashboard/admin', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.msg || data.error || `Error ${response.status}: Failed to fetch data`);
+      }
+
+      // Map backend data to frontend state
+      setStats({
+        totalEvents: data.totalEvents || 0,
+        activeEvents: data.activeEvents || 0,
+        totalRegistrations: data.totalRegistrations || 0,
+        totalUsers: data.totalUsers || 0,
+        totalRevenue: data.totalRevenue || 0,
+        growth: data.growth || 0,
+        trends: data.trends || [],
+        events: data.events.map(ev => ({
+          ...ev,
+          image: ev.image ?
+            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${ev.image}`) :
+            eventImages.tech,
+          date: ev.eventDate,
+          registered: ev.registered || 0,
+          capacity: ev.capacity || 100,
+          revenue: ev.revenue || 0,
+          status: ev.status,
+          time: ev.eventDate ? new Date(ev.eventDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD',
+          speaker: ev.speaker || 'TBD'
+        })),
+        users: data.users.map(u => ({
+          id: u._id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          events: u.eventCount,
+          joined: u.createdAt
+        })),
+        recentActivity: data.recentActivity.map(a => ({
+          ...a,
+          time: formatTimeAgo(new Date(a.time))
+        }))
+      });
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+      setError(err.message);
+    } finally {
       setLoading(false);
-    }, 900);
+    }
   }, [token]);
+
+  // Helper to format time ago
+  const formatTimeAgo = (date) => {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
+  };
 
   const fetchNotifications = useCallback(() => {
     setNotifications([
@@ -226,10 +258,10 @@ export default function SuperAdminDashboard() {
               <>
                 {/* Stat strip */}
                 <div className="sa-stat-grid">
-                  <StatCard icon="📅" label="Total Events" value={stats.totalEvents} accent="purple" trend="+12%" />
-                  <StatCard icon="🔥" label="Active Events" value={stats.activeEvents} accent="blue" trend="Stable" />
-                  <StatCard icon="👥" label="Total Members" value={stats.totalRegistrations.toLocaleString()} accent="violet" trend="+245" />
-                  <StatCard icon="💰" label="Platform Revenue" value={`$${stats.totalRevenue.toLocaleString()}`} accent="green" trend={`+${stats.growth}%`} />
+                  <StatCard icon="📅" label="Total Events" value={stats.totalEvents} accent="purple" trend="" />
+                  <StatCard icon="🔥" label="Active Events" value={stats.activeEvents} accent="blue" trend="" />
+                  <StatCard icon="👥" label="Total Members" value={stats.totalRegistrations.toLocaleString()} accent="violet" trend="" />
+                  <StatCard icon="💰" label="Platform Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} accent="green" trend={`+${stats.growth}%`} />
                 </div>
 
                 {/* Quick event cards */}
@@ -299,7 +331,7 @@ export default function SuperAdminDashboard() {
                             <span className="sa-muted">{ev.registered}/{ev.capacity}</span>
                             <MiniBar pct={Math.round((ev.registered / ev.capacity) * 100)} />
                           </td>
-                          <td className="sa-green">${ev.revenue.toLocaleString()}</td>
+                          <td className="sa-green">₹{ev.revenue.toLocaleString()}</td>
                           <td><StatusBadge status={ev.status} /></td>
                           <td>
                             <button className="sa-view-btn" onClick={() => setSelectedEvent(ev)}>View ↗</button>
@@ -353,10 +385,10 @@ export default function SuperAdminDashboard() {
 
                 {/* KPI strip */}
                 <div className="sa-kpi-row">
-                  <KpiBox label="Total Participants" value="1,530" sub="+18% vs last period" icon="👥" />
-                  <KpiBox label="Total Revenue" value="$45,800" sub="+15.5% growth" icon="💰" />
-                  <KpiBox label="Avg. Fill Rate" value="78%" sub="Across all events" icon="📊" />
-                  <KpiBox label="Completed Events" value="6" sub="Out of 24 total" icon="✅" />
+                  <KpiBox label="Total Participants" value={stats.totalRegistrations.toLocaleString()} sub="" icon="👥" />
+                  <KpiBox label="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} sub={`+${stats.growth}% growth`} icon="💰" />
+                  <KpiBox label="Total Users" value={stats.totalUsers.toLocaleString()} sub="" icon="📊" />
+                  <KpiBox label="Active Events" value={stats.activeEvents.toLocaleString()} sub="" icon="✅" />
                 </div>
 
                 {/* Registration Trend – area chart */}
@@ -370,7 +402,7 @@ export default function SuperAdminDashboard() {
                       <span className="sa-legend-dot" style={{ background: 'var(--c-primary)' }} /> Registrations
                     </div>
                   </div>
-                  <AreaChart data={trendData} />
+                  <AreaChart data={stats.trends || []} />
                 </div>
 
                 {/* Participants per event – bar chart */}
@@ -426,7 +458,7 @@ export default function SuperAdminDashboard() {
                           <td className="sa-cell-title">{ev.title}</td>
                           <td className="sa-muted">{new Date(ev.date).toLocaleDateString()}</td>
                           <td className="sa-muted">{ev.registered}/{ev.capacity}</td>
-                          <td className="sa-green">${ev.revenue.toLocaleString()}</td>
+                          <td className="sa-green">₹{ev.revenue.toLocaleString()}</td>
                           <td>
                             <div className="sa-fill-row">
                               <MiniBar pct={Math.round((ev.registered / ev.capacity) * 100)} />
@@ -476,7 +508,7 @@ export default function SuperAdminDashboard() {
               <div className="sa-modal-kpis">
                 {[
                   { label: 'Registrations', val: `${selectedEvent.registered}/${selectedEvent.capacity}` },
-                  { label: 'Revenue', val: `$${selectedEvent.revenue.toLocaleString()}` },
+                  { label: 'Revenue', val: `₹${selectedEvent.revenue.toLocaleString()}` },
                   { label: 'Fill Rate', val: `${Math.round((selectedEvent.registered / selectedEvent.capacity) * 100)}%` },
                 ].map(k => (
                   <div key={k.label} className="sa-modal-kpi">
@@ -536,6 +568,7 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       )}
+      <Chatbot />
     </div>
   );
 }
@@ -645,10 +678,15 @@ function AreaChart({ data }) {
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
 
-  const maxVal = Math.max(...data.map(d => d.registrations));
+  if (!data || data.length === 0) return <div className="sa-no-data">No registration data available</div>;
+
+  const maxVal = Math.max(...data.map(d => d.registrations)) || 10;
   const minVal = 0;
 
-  const xScale = i => PAD.left + (i / (data.length - 1)) * innerW;
+  const xScale = i => {
+    if (data.length <= 1) return PAD.left + innerW / 2;
+    return PAD.left + (i / (data.length - 1)) * innerW;
+  };
   const yScale = v => PAD.top + innerH - ((v - minVal) / (maxVal - minVal)) * innerH;
 
   const pts = data.map((d, i) => `${xScale(i)},${yScale(d.registrations)}`).join(' ');
@@ -716,7 +754,9 @@ function BarChart({ events }) {
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
 
-  const maxCap = Math.max(...events.map(e => e.capacity));
+  if (!events || events.length === 0) return <div className="sa-no-data">No event data available</div>;
+
+  const maxCap = Math.max(...events.map(e => e.capacity)) || 100;
   const barW = innerW / events.length;
   const gap = barW * 0.28;
 

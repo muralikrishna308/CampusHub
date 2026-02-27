@@ -6,6 +6,7 @@ import AdminDashboard from "./pages/dashboardAdmin";
 import AdminParticipants from "./pages/AdminParticipants";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import Events from "./pages/Events";
+import MyRegistrations from "./pages/MyRegistrations";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -47,6 +48,14 @@ function App() {
             element={
               <ProtectedRoute role={"admin"}>
                 <AdminParticipants />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/registrations"
+            element={
+              <ProtectedRoute role={"student"}>
+                <MyRegistrations />
               </ProtectedRoute>
             }
           />
