@@ -4,14 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
 import Chatbot from '../components/chatbot';
 
-// const eventImages = {
-//   tech: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-//   music: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-//   workshop: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-//   networking: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-//   charity: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-//   default: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-// };
 
 export default function AdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
@@ -39,6 +31,7 @@ export default function AdminDashboard() {
     location: '',
     registrationEndDate: '',
     ticketPrice: '',
+    category: 'tech',
     image: null
   });
 
@@ -112,7 +105,7 @@ export default function AdminDashboard() {
         totalRegistrations: totalRegistrations,
         avgParticipants: events.length > 0 ? Math.round(totalRegistrations / events.length) : 0,
         totalRevenue: events.reduce(
-          (sum, event) => totalRegistrations * (event.ticketPrice ),
+          (sum, event) => totalRegistrations * (event.ticketPrice),
           0
         ),
         growth: 0,
@@ -146,75 +139,77 @@ export default function AdminDashboard() {
 
   // Handle event creation
   const handleCreateEvent = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (isSubmitting) return;
+    if (isSubmitting) return;
 
-  try {
-    setIsSubmitting(true);
+    try {
+      setIsSubmitting(true);
 
-    const formData = new FormData();
-    formData.append('title', eventForm.title);
-    formData.append('description', eventForm.description);
-    formData.append(
-      'eventDate',
-      new Date(eventForm.eventDate + 'T00:00:00').toISOString()
-    );
-    formData.append('location', eventForm.location);
-    formData.append(
-      'registrationEndDate',
-      new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString()
-    );
-    formData.append('ticketPrice', eventForm.ticketPrice || 0);
+      const formData = new FormData();
+      formData.append('title', eventForm.title);
+      formData.append('description', eventForm.description);
+      formData.append(
+        'eventDate',
+        new Date(eventForm.eventDate + 'T00:00:00').toISOString()
+      );
+      formData.append('location', eventForm.location);
+      formData.append(
+        'registrationEndDate',
+        new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString()
+      );
+      formData.append('ticketPrice', eventForm.ticketPrice || 0);
+      formData.append('category', eventForm.category || 'tech');
 
-    if (eventForm.image) {
-      formData.append('image', eventForm.image);
-    }
-
-    const response = await fetch(
-      'http://localhost:5000/api/dashboard/create-event',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formData
+      if (eventForm.image) {
+        formData.append('image', eventForm.image);
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText);
+      const response = await fetch(
+        'http://localhost:5000/api/dashboard/create-event',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      alert('Event created successfully!');
+
+      setShowCreateModal(false);
+
+      setEventForm({
+        title: '',
+        description: '',
+        eventDate: '',
+        location: '',
+        registrationEndDate: '',
+        ticketPrice: '',
+        category: 'tech',
+        image: null
+      });
+
+      fetchDashboardData();
+
+    } catch (err) {
+      console.error('Error creating event:', err);
+      alert(`Failed to create event: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    alert('Event created successfully!');
-
-    setShowCreateModal(false);
-
-    setEventForm({
-      title: '',
-      description: '',
-      eventDate: '',
-      location: '',
-      registrationEndDate: '',
-      ticketPrice: '',
-      image: null
-    });
-
-    fetchDashboardData();
-
-  } catch (err) {
-    console.error('Error creating event:', err);
-    alert(`Failed to create event: ${err.message}`);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   // Handle event update
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
-    
+
     try {
       const formData = new FormData();
       formData.append('title', eventForm.title);
@@ -256,30 +251,30 @@ export default function AdminDashboard() {
 
   // Handle event deletion
   const handleDeleteEvent = async (eventId) => {
-  if (window.confirm('Are you sure you want to delete this event?')) {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/dashboard/admin/events/${eventId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/dashboard/admin/events/${eventId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        }
-      );
+        );
 
-      if (response.ok) {
-        alert('Event deleted successfully!');
-        fetchDashboardData(); // refresh UI
-      } else {
-        alert('Failed to delete event');
+        if (response.ok) {
+          alert('Event deleted successfully!');
+          fetchDashboardData(); 
+        } else {
+          alert('Failed to delete event');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error deleting event');
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error deleting event');
     }
-  }
-};
+  };
 
   // Handle user actions
   const handleUserAction = (action, user) => {
@@ -358,22 +353,10 @@ export default function AdminDashboard() {
 
   // Mark notification as read
   const markNotificationAsRead = (id) => {
-    setNotifications(notifications.map(n => 
+    setNotifications(notifications.map(n =>
       n.id === id ? { ...n, read: true } : n
     ));
   };
-
-  // Get status color
-  // const getStatusColor = (status) => {
-  //   const colors = {
-  //     upcoming: '#4f46e5',
-  //     ongoing: '#ea580c',
-  //     completed: '#16a34a',
-  //     cancelled: '#dc2626'
-  //   };
-  //   return colors[status] || '#6b7280';
-  // };
-
   if (error) {
     return (
       <div className="error-container">
@@ -400,10 +383,10 @@ export default function AdminDashboard() {
             </span>
           </div>
         </div>
-        
+
         <div className="header-right">
           <div className="notification-wrapper">
-            <button 
+            <button
               className="btn-icon"
               onClick={() => setShowNotifications(!showNotifications)}
             >
@@ -414,7 +397,7 @@ export default function AdminDashboard() {
                 </span>
               )}
             </button>
-            
+
             {showNotifications && (
               <div className="notification-dropdown">
                 <h4>Notifications</h4>
@@ -422,7 +405,7 @@ export default function AdminDashboard() {
                   <p>No notifications</p>
                 ) : (
                   notifications.map(notification => (
-                    <div 
+                    <div
                       key={notification.id}
                       className={`notification-item ${notification.read ? 'read' : 'unread'}`}
                       onClick={() => markNotificationAsRead(notification.id)}
@@ -435,7 +418,7 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
-          
+
           <button className="btn-icon" onClick={() => setShowSettingsModal(true)}>⚙️</button>
           <button onClick={handleLogout} className="btn-logout">
             <span>🚪</span>
@@ -446,25 +429,25 @@ export default function AdminDashboard() {
 
       {/* Tab Navigation */}
       <div className="admin-tabs">
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           📊 Overview
         </button>
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'events' ? 'active' : ''}`}
           onClick={() => setActiveTab('events')}
         >
           📅 Events
         </button>
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => setActiveTab('users')}
         >
           👥 Users
         </button>
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
           onClick={() => setActiveTab('reports')}
         >
@@ -486,32 +469,32 @@ export default function AdminDashboard() {
               <>
                 {/* Stats Cards */}
                 <div className="stats-grid">
-                  <StatCard 
-                    title="Total Events" 
-                    value={stats.totalEvents} 
+                  <StatCard
+                    title="Total Events"
+                    value={stats.totalEvents}
                     icon="📅"
                     trend="+12% from last month"
                     trendType="positive"
                     onClick={() => setActiveTab('events')}
                   />
-                  <StatCard 
-                    title="Active Events" 
-                    value={stats.activeEvents} 
+                  <StatCard
+                    title="Active Events"
+                    value={stats.activeEvents}
                     icon="🔥"
                     trend="3 ending soon"
                     trendType="warning"
                     onClick={() => setActiveTab('events')}
                   />
-                  <StatCard 
-                    title="Total Registrations" 
-                    value={stats.totalRegistrations} 
+                  <StatCard
+                    title="Total Registrations"
+                    value={stats.totalRegistrations}
                     icon="👥"
                     trend="+245 this week"
                     trendType="positive"
                   />
-                  <StatCard 
-                    title="Total Revenue" 
-                    value={`$${stats.totalRevenue?.toLocaleString()}`} 
+                  <StatCard
+                    title="Total Revenue"
+                    value={`$${stats.totalRevenue?.toLocaleString()}`}
                     icon="💰"
                     trend={`+${stats.growth}% growth`}
                     trendType="positive"
@@ -580,9 +563,9 @@ export default function AdminDashboard() {
                 <div className="tab-header">
                   <h2>All Events</h2>
                   <div className="tab-actions">
-                    <input 
-                      type="text" 
-                      placeholder="Search events..." 
+                    <input
+                      type="text"
+                      placeholder="Search events..."
                       className="search-input"
                     />
                     <select className="filter-select">
@@ -643,8 +626,8 @@ export default function AdminDashboard() {
                               setShowEditModal(true);
                             }}>✏️</button>
                             <button
-                            className="action-btn"
-                            onClick={() => handleDeleteEvent(event._id)}
+                              className="action-btn"
+                              onClick={() => handleDeleteEvent(event._id)}
                             >
                               🗑️
                             </button>
@@ -678,8 +661,8 @@ export default function AdminDashboard() {
                     <thead>
                       <tr>
                         <th>
-                          <input 
-                            type="checkbox" 
+                          <input
+                            type="checkbox"
                             onChange={(e) => {
                               if (e.target.checked) {
                                 setSelectedUsers(stats.users.map(u => u.id));
@@ -701,7 +684,7 @@ export default function AdminDashboard() {
                       {stats.users?.map(user => (
                         <tr key={user.id}>
                           <td>
-                            <input 
+                            <input
                               type="checkbox"
                               checked={selectedUsers.includes(user.id)}
                               onChange={(e) => {
@@ -723,7 +706,7 @@ export default function AdminDashboard() {
                           </td>
                           <td>{user.email}</td>
                           <td>
-                            <select 
+                            <select
                               value={user.role}
                               onChange={(e) => handleUserAction('role', { ...user, role: e.target.value })}
                               className="role-select"
@@ -759,7 +742,7 @@ export default function AdminDashboard() {
             {activeTab === 'reports' && stats && (
               <div className="reports-tab">
                 <h2>Analytics & Reports</h2>
-                
+
                 {/* Quick Stats - Dynamic */}
                 <div className="quick-stats">
                   <div className="quick-stat-card">
@@ -767,8 +750,8 @@ export default function AdminDashboard() {
                     <div className="quick-stat-info">
                       <h4>Conversion Rate</h4>
                       <span>
-                        {stats.totalEvents > 0 
-                          ? Math.round((stats.totalRegistrations / (stats.totalEvents * 100)) * 100) 
+                        {stats.totalEvents > 0
+                          ? Math.round((stats.totalRegistrations / (stats.totalEvents * 100)) * 100)
                           : 0}%
                       </span>
                     </div>
@@ -785,8 +768,8 @@ export default function AdminDashboard() {
                     <div className="quick-stat-info">
                       <h4>Avg. Revenue</h4>
                       <span>
-                        ${stats.totalEvents > 0 
-                          ? Math.round(stats.totalRevenue / stats.totalEvents) 
+                        ${stats.totalEvents > 0
+                          ? Math.round(stats.totalRevenue / stats.totalEvents)
                           : 0}
                       </span>
                     </div>
@@ -805,27 +788,27 @@ export default function AdminDashboard() {
                   <div className="filter-group">
                     <label>DATE RANGE</label>
                     <div className="date-range-picker">
-                      <input 
-                        type="date" 
-                        className="date-input" 
+                      <input
+                        type="date"
+                        className="date-input"
                         value={reportFilters.startDate}
-                        onChange={(e) => setReportFilters({...reportFilters, startDate: e.target.value})}
+                        onChange={(e) => setReportFilters({ ...reportFilters, startDate: e.target.value })}
                       />
                       <span>to</span>
-                      <input 
-                        type="date" 
-                        className="date-input" 
+                      <input
+                        type="date"
+                        className="date-input"
                         value={reportFilters.endDate}
-                        onChange={(e) => setReportFilters({...reportFilters, endDate: e.target.value})}
+                        onChange={(e) => setReportFilters({ ...reportFilters, endDate: e.target.value })}
                       />
                     </div>
                   </div>
-                  
+
                   <div className="filter-group">
                     <label>EVENT TYPE</label>
                     <select
                       value={reportFilters.eventType}
-                      onChange={(e) => setReportFilters({...reportFilters, eventType: e.target.value})}
+                      onChange={(e) => setReportFilters({ ...reportFilters, eventType: e.target.value })}
                     >
                       <option value="all">All Events</option>
                       <option value="tech">Technology</option>
@@ -835,12 +818,12 @@ export default function AdminDashboard() {
                       <option value="charity">Charity</option>
                     </select>
                   </div>
-                  
+
                   <div className="filter-group">
                     <label>FORMAT</label>
                     <select
                       value={reportFilters.format}
-                      onChange={(e) => setReportFilters({...reportFilters, format: e.target.value})}
+                      onChange={(e) => setReportFilters({ ...reportFilters, format: e.target.value })}
                     >
                       <option value="pdf">PDF Document</option>
                       <option value="excel">Excel Spreadsheet</option>
@@ -875,11 +858,11 @@ export default function AdminDashboard() {
                     <h3>Registration Trends</h3>
                     <div className="chart-placeholder">
                       <div style={{ padding: '20px', textAlign: 'center' }}>
-                        <p style={{ marginBottom: '10px' }}>📊 Total Registrations</p>
-                        <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#3498db' }}>
+                        <p style={{ marginBottom: '10px', color: '#94a3b8' }}>📊 Total Registrations</p>
+                        <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#667eea' }}>
                           {stats.totalRegistrations}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#666' }}>
+                        <p style={{ fontSize: '12px', color: '#94a3b8' }}>
                           Across {stats.totalEvents} events
                         </p>
                       </div>
@@ -889,11 +872,11 @@ export default function AdminDashboard() {
                     <h3>Revenue Overview</h3>
                     <div className="chart-placeholder">
                       <div style={{ padding: '20px', textAlign: 'center' }}>
-                        <p style={{ marginBottom: '10px' }}>💰 Total Revenue</p>
-                        <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#27ae60' }}>
+                        <p style={{ marginBottom: '10px', color: '#94a3b8' }}>💰 Total Revenue</p>
+                        <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#10b981' }}>
                           ${stats.totalRevenue?.toLocaleString() || 0}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#666' }}>
+                        <p style={{ fontSize: '12px', color: '#94a3b8' }}>
                           Avg: ${stats.totalEvents > 0 ? Math.round(stats.totalRevenue / stats.totalEvents) : 0} per event
                         </p>
                       </div>
@@ -914,9 +897,9 @@ export default function AdminDashboard() {
                             const endDate = new Date(reportFilters.endDate);
                             return eventDate >= startDate && eventDate <= endDate;
                           })
-                          .map(e => `${e.title},${new Date(e.eventDate).toLocaleDateString()},${e.registered}/${e.capacity},${e.revenue || 0},${Math.round((e.registered/(e.capacity||1))*100)}%`)
+                          .map(e => `${e.title},${new Date(e.eventDate).toLocaleDateString()},${e.registered}/${e.capacity},${e.revenue || 0},${Math.round((e.registered / (e.capacity || 1)) * 100)}%`)
                           .join('\n');
-                        
+
                         const csv = 'Event Name,Date,Registrations,Revenue,Conversion\n' + filteredData;
                         const blob = new Blob([csv], { type: 'text/csv' });
                         const url = window.URL.createObjectURL(blob);
@@ -953,7 +936,7 @@ export default function AdminDashboard() {
                             <td>{new Date(event.eventDate).toLocaleDateString()}</td>
                             <td>{event.registered || 0}/{event.capacity || 0}</td>
                             <td>${(event.revenue || 0).toLocaleString()}</td>
-                            <td>{event.capacity ? Math.round(((event.registered || 0)/event.capacity)*100) : 0}%</td>
+                            <td>{event.capacity ? Math.round(((event.registered || 0) / event.capacity) * 100) : 0}%</td>
                           </tr>
                         ))}
                     </tbody>
@@ -977,14 +960,14 @@ export default function AdminDashboard() {
           <div className="modal-content create-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowCreateModal(false)}>×</button>
             <h2>Create New Event</h2>
-            
+
             <form onSubmit={handleCreateEvent} className="modal-form">
               <div className="form-group">
                 <label>Event Title *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={eventForm.title}
-                  onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
+                  onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
                   placeholder="Enter event title"
                   required
                 />
@@ -992,10 +975,10 @@ export default function AdminDashboard() {
 
               <div className="form-group">
                 <label>Event Description *</label>
-                <textarea 
+                <textarea
                   rows="4"
                   value={eventForm.description}
-                  onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+                  onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
                   placeholder="Describe your event"
                   required
                 ></textarea>
@@ -1004,20 +987,20 @@ export default function AdminDashboard() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Event Date *</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={eventForm.eventDate}
-                    onChange={(e) => setEventForm({...eventForm, eventDate: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, eventDate: e.target.value })}
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label>Location *</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={eventForm.location}
-                    onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
                     placeholder="Event venue/location"
                     required
                   />
@@ -1027,20 +1010,20 @@ export default function AdminDashboard() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Registration End Date *</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={eventForm.registrationEndDate}
-                    onChange={(e) => setEventForm({...eventForm, registrationEndDate: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, registrationEndDate: e.target.value })}
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label>Ticket Price ($) *</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={eventForm.ticketPrice}
-                    onChange={(e) => setEventForm({...eventForm, ticketPrice: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, ticketPrice: e.target.value })}
                     placeholder="Enter ticket price (0 for free)"
                     min="0"
                     step="0.01"
@@ -1050,15 +1033,31 @@ export default function AdminDashboard() {
               </div>
 
               <div className="form-group">
+                <label>Category *</label>
+                <select
+                  value={eventForm.category}
+                  onChange={(e) => setEventForm({ ...eventForm, category: e.target.value })}
+                  required
+                >
+                  <option value="tech">💻 Technology</option>
+                  <option value="music">🎵 Music</option>
+                  <option value="workshop">🛠️ Workshop</option>
+                  <option value="cultural">🎭 Cultural</option>
+                  <option value="sports">⚽ Sports</option>
+                  <option value="other">🌟 Other</option>
+                </select>
+              </div>
+
+              <div className="form-group">
                 <label>Event Image</label>
                 <div className="image-upload-container">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files[0];
                       if (file) {
-                        setEventForm({...eventForm, image: file});
+                        setEventForm({ ...eventForm, image: file });
                       }
                     }}
                   />
@@ -1070,9 +1069,9 @@ export default function AdminDashboard() {
                 <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  className="btn-primary" 
+                <button
+                  type="submit"
+                  className="btn-primary"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Creating...' : 'Create Event'}
@@ -1089,24 +1088,24 @@ export default function AdminDashboard() {
           <div className="modal-content edit-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowEditModal(false)}>×</button>
             <h2>Edit Event</h2>
-            
+
             <form onSubmit={handleUpdateEvent} className="modal-form">
               <div className="form-group">
                 <label>Event Title *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={eventForm.title}
-                  onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
+                  onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
                   required
                 />
               </div>
 
               <div className="form-group">
                 <label>Event Description *</label>
-                <textarea 
+                <textarea
                   rows="4"
                   value={eventForm.description}
-                  onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+                  onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
                   required
                 ></textarea>
               </div>
@@ -1114,20 +1113,20 @@ export default function AdminDashboard() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Event Date *</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={eventForm.eventDate}
-                    onChange={(e) => setEventForm({...eventForm, eventDate: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, eventDate: e.target.value })}
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label>Location *</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={eventForm.location}
-                    onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
                     required
                   />
                 </div>
@@ -1136,20 +1135,20 @@ export default function AdminDashboard() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Registration End Date *</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={eventForm.registrationEndDate}
-                    onChange={(e) => setEventForm({...eventForm, registrationEndDate: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, registrationEndDate: e.target.value })}
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label>Ticket Price ($) *</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={eventForm.ticketPrice}
-                    onChange={(e) => setEventForm({...eventForm, ticketPrice: e.target.value})}
+                    onChange={(e) => setEventForm({ ...eventForm, ticketPrice: e.target.value })}
                     min="0"
                     step="0.01"
                     required
@@ -1175,24 +1174,24 @@ export default function AdminDashboard() {
         <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setSelectedEvent(null)}>×</button>
-            
+
             <img
-             src={`http://localhost:5000/uploads/${selectedEvent.image}`}
-            alt={selectedEvent.title}
-            className="modal-image"
+              src={`http://localhost:5000/uploads/${selectedEvent.image}`}
+              alt={selectedEvent.title}
+              className="modal-image"
             />
-            
+
             <div className="modal-details">
               <h2>{selectedEvent.title}</h2>
-              
+
               <div className="event-meta">
                 <span>📅 {new Date(selectedEvent.eventDate).toLocaleDateString()}</span>
                 <span>📍 {selectedEvent.location}</span>
                 <span>🏷️ {selectedEvent.category}</span>
               </div>
-              
+
               <p className="event-description">{selectedEvent.description}</p>
-              
+
               <div className="event-stats-grid">
                 <div className="stat-item">
                   <label>Registrations</label>
@@ -1213,7 +1212,7 @@ export default function AdminDashboard() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="modal-actions">
                 <button className="btn-primary" onClick={() => {
                   const formattedEvent = {
@@ -1240,14 +1239,14 @@ export default function AdminDashboard() {
           <div className="modal-content settings-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowSettingsModal(false)}>×</button>
             <h2>Settings</h2>
-            
+
             <div className="settings-tabs">
               <button className="settings-tab active">General</button>
               <button className="settings-tab">Notifications</button>
               <button className="settings-tab">Security</button>
               <button className="settings-tab">API</button>
             </div>
-            
+
             <div className="settings-content">
               <div className="setting-item">
                 <label>
@@ -1264,7 +1263,7 @@ export default function AdminDashboard() {
                 <input type="number" defaultValue="100" />
               </div>
             </div>
-            
+
             <div className="modal-actions">
               <button className="btn-primary">Save Settings</button>
               <button className="btn-secondary" onClick={() => setShowSettingsModal(false)}>Cancel</button>
@@ -1280,8 +1279,8 @@ export default function AdminDashboard() {
 // Stat Card Component
 function StatCard({ title, value, icon, trend, trendType = 'positive', onClick }) {
   return (
-    <div 
-      className={`stat-card ${onClick ? 'clickable' : ''}`} 
+    <div
+      className={`stat-card ${onClick ? 'clickable' : ''}`}
       onClick={onClick}
     >
       <div className="stat-card-header">
@@ -1306,17 +1305,17 @@ function EventCard({ event, onClick, onEdit }) {
     <div className="event-card" onClick={onClick}>
       <div className="event-image-container">
         <img
-        src={`http://localhost:5000/uploads/${event.image}`}
-        alt={event.title}
-        className="event-image"
+          src={`http://localhost:5000/uploads/${event.image}`}
+          alt={event.title}
+          className="event-image"
         />
         <span className={`event-status ${event.status}`}>{event.status}</span>
         <span className="event-category">{event.category}</span>
       </div>
-      
+
       <div className="event-details">
         <h3 className="event-title">{event.title}</h3>
-        
+
         <div className="event-meta">
           <span>📅 {new Date(event.eventDate).toLocaleDateString()}</span>
           <span>📍 {event.location}</span>

@@ -35,7 +35,7 @@ export default function StudentDashboard() {
                 const data = await response.json();
                 const isComplete = data.profileComplete || false;
                 setProfileComplete(isComplete);
-                
+
                 // IMPORTANT: Show profile form if profile is not complete
                 if (!isComplete) {
                     setShowProfileForm(true);
@@ -82,15 +82,17 @@ export default function StudentDashboard() {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setStudentRegistrations(data);
-                    
-                    // Calculate stats
+                    // Filter out registrations where the event was deleted
+                    const validRegistrations = data.filter(reg => reg.event && reg.event._id);
+                    setStudentRegistrations(validRegistrations);
+
+                    // Calculate stats based on valid registrations only
                     const nowDate = new Date();
-                    const upcoming = data.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
-                    const completed = data.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
-                    
+                    const upcoming = validRegistrations.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
+                    const completed = validRegistrations.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
+
                     setStats({
-                        totalRegistrations: data.length,
+                        totalRegistrations: validRegistrations.length,
                         upcomingEvents: upcoming,
                         completedEvents: completed
                     });
@@ -148,12 +150,12 @@ export default function StudentDashboard() {
     return (
         <div className="dashboard-container">
             {showProfileForm && (
-                <ProfileForm 
+                <ProfileForm
                     onProfileComplete={handleProfileComplete}
-                    onClose={() => {}}
+                    onClose={() => setShowProfileForm(false)}
                 />
             )}
-            
+
             <Sidebar role="student" />
             <main className="main-content">
                 <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" id={user?.id} />
@@ -163,12 +165,12 @@ export default function StudentDashboard() {
                         <div>
                             <h1>Welcome back, {(studentProfile?.name?.split(' ')[0]) || (user?.name?.split(' ')[0]) || 'Student'}! 👋</h1>
                             <p>
-                                {studentProfile?.department ? `📚 ${studentProfile.department}` : 'Your dashboard'} 
-                                {studentProfile?.year ? ` • Year ${studentProfile.year}` : ''} 
+                                {studentProfile?.department ? `📚 ${studentProfile.department}` : 'Your dashboard'}
+                                {studentProfile?.year ? ` • Year ${studentProfile.year}` : ''}
                                 {studentProfile?.college ? ` • ${studentProfile.college}` : ''}
                             </p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setShowProfileForm(true)}
                             style={{
                                 padding: '10px 16px',
@@ -190,67 +192,135 @@ export default function StudentDashboard() {
                     </div>
 
                     {/* Stats Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '40px' }}>
-                        <div style={{ background: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #EFEFEF' }}>
-                            <div style={{ fontSize: '14px', color: '#6F767E', marginBottom: '8px' }}>Total Registrations</div>
-                            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--primary)' }}>{stats.totalRegistrations}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+                        {/* Total Registrations Card */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
+                            borderRadius: '18px',
+                            padding: '24px',
+                            border: '1px solid rgba(102, 126, 234, 0.3)',
+                            backdropFilter: 'blur(12px)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            transition: 'all 0.3s ease'
+                        }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(102,126,234,0.25)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                <div style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>Total Registrations</div>
+                                <div style={{ width: '42px', height: '42px', background: 'rgba(102, 126, 234, 0.2)', border: '1px solid rgba(102, 126, 234, 0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>📋</div>
+                            </div>
+                            <div style={{ fontSize: '2.4rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.03em', lineHeight: 1 }}>{stats.totalRegistrations}</div>
+                            <div style={{ fontSize: '12px', color: 'rgba(102, 126, 234, 0.9)', marginTop: '8px', fontWeight: '600', background: 'rgba(102, 126, 234, 0.12)', display: 'inline-block', padding: '2px 10px', borderRadius: '50px', border: '1px solid rgba(102,126,234,0.25)' }}>All time</div>
                         </div>
-                        <div style={{ background: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #EFEFEF' }}>
-                            <div style={{ fontSize: '14px', color: '#6F767E', marginBottom: '8px' }}>Upcoming Events</div>
-                            <div style={{ fontSize: '32px', fontWeight: '700', color: '#16a34a' }}>{stats.upcomingEvents}</div>
+
+                        {/* Upcoming Events Card */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.12) 100%)',
+                            borderRadius: '18px',
+                            padding: '24px',
+                            border: '1px solid rgba(16, 185, 129, 0.25)',
+                            backdropFilter: 'blur(12px)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            transition: 'all 0.3s ease'
+                        }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(16,185,129,0.2)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                <div style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>Upcoming Events</div>
+                                <div style={{ width: '42px', height: '42px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🚀</div>
+                            </div>
+                            <div style={{ fontSize: '2.4rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.03em', lineHeight: 1 }}>{stats.upcomingEvents}</div>
+                            <div style={{ fontSize: '12px', color: '#10b981', marginTop: '8px', fontWeight: '600', background: 'rgba(16, 185, 129, 0.12)', display: 'inline-block', padding: '2px 10px', borderRadius: '50px', border: '1px solid rgba(16,185,129,0.25)' }}>Upcoming</div>
                         </div>
-                        <div style={{ background: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #EFEFEF' }}>
-                            <div style={{ fontSize: '14px', color: '#6F767E', marginBottom: '8px' }}>Completed Events</div>
-                            <div style={{ fontSize: '32px', fontWeight: '700', color: '#0891b2' }}>{stats.completedEvents}</div>
+
+                        {/* Completed Events Card */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.12) 0%, rgba(6, 182, 212, 0.12) 100%)',
+                            borderRadius: '18px',
+                            padding: '24px',
+                            border: '1px solid rgba(8, 145, 178, 0.25)',
+                            backdropFilter: 'blur(12px)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            transition: 'all 0.3s ease'
+                        }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(8,145,178,0.2)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                <div style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>Completed Events</div>
+                                <div style={{ width: '42px', height: '42px', background: 'rgba(8, 145, 178, 0.15)', border: '1px solid rgba(8, 145, 178, 0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>✅</div>
+                            </div>
+                            <div style={{ fontSize: '2.4rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.03em', lineHeight: 1 }}>{stats.completedEvents}</div>
+                            <div style={{ fontSize: '12px', color: '#0891b2', marginTop: '8px', fontWeight: '600', background: 'rgba(8, 145, 178, 0.12)', display: 'inline-block', padding: '2px 10px', borderRadius: '50px', border: '1px solid rgba(8,145,178,0.25)' }}>Attended</div>
                         </div>
                     </div>
                 </div>
 
                 <section>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '24px' }}>🎯 Featured Events</h2>
-                        <button 
+                        <h2 style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, #667eea, #a855f7)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>🎯 Featured Events</h2>
+                        <button
                             style={{
                                 color: 'var(--primary)',
                                 textDecoration: 'none',
                                 fontWeight: '600',
-                                border: 'none',
-                                background: 'none',
+                                border: '1px solid rgba(102,126,234,0.3)',
+                                background: 'rgba(102,126,234,0.08)',
                                 cursor: 'pointer',
-                                fontSize: '14px'
+                                fontSize: '13px',
+                                padding: '6px 16px',
+                                borderRadius: '50px',
+                                transition: 'all 0.2s ease'
                             }}
                             onClick={() => navigate('/events')}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(102,126,234,0.2)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(102,126,234,0.08)'; }}
                         >
                             View all →
                         </button>
                     </div>
                     {featuredEvents.length === 0 ? (
-                        <div style={{ background: 'white', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #EFEFEF' }}>
-                            <p style={{ color: '#6F767E' }}>No events available right now. Check back soon!</p>
+                        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '16px', padding: '40px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <p style={{ color: '#94a3b8' }}>No events available right now. Check back soon!</p>
                         </div>
                     ) : (
                         <div className="grid-layout">
                             {featuredEvents.map((event, idx) => (
                                 <div key={idx} style={{
-                                    background: 'white',
-                                    borderRadius: '12px',
+                                    background: 'rgba(255, 255, 255, 0.04)',
+                                    borderRadius: '16px',
                                     overflow: 'hidden',
-                                    border: '1px solid #EFEFEF',
+                                    border: '1px solid rgba(255,255,255,0.08)',
                                     cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    textDecoration: 'none'
-                                }}>
+                                    transition: 'all 0.3s ease'
+                                }}
+                                    onClick={() => navigate('/events')}
+                                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = 'rgba(102,126,234,0.35)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.3)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'none'; }}
+                                >
                                     <div style={{
-                                        height: '200px',
+                                        height: '160px',
                                         backgroundImage: `url(${event.image})`,
                                         backgroundSize: 'cover',
-                                        backgroundPosition: 'center'
-                                    }}></div>
+                                        backgroundPosition: 'center',
+                                        backgroundColor: 'rgba(102,126,234,0.1)',
+                                        position: 'relative'
+                                    }}>
+                                        <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(102,126,234,0.9)', color: '#fff', fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '50px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            {event.category || 'Tech'}
+                                        </div>
+                                    </div>
                                     <div style={{ padding: '16px' }}>
-                                        <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 8px 0' }}>{event.title}</h3>
-                                        <p style={{ fontSize: '14px', color: '#6F767E', margin: '0 0 12px 0' }}>{event.description?.substring(0, 60)}...</p>
-                                        <div style={{ fontSize: '13px', color: '#6F767E' }}>
-                                            📅 {new Date(event.eventDate).toLocaleDateString()}
+                                        <h3 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 8px 0', color: '#fff' }}>{event.title}</h3>
+                                        <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 12px 0' }}>{event.description?.substring(0, 70)}...</p>
+                                        <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', gap: '12px' }}>
+                                            <span>📅 {new Date(event.eventDate).toLocaleDateString()}</span>
+                                            <span>📍 {event.location}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -261,57 +331,86 @@ export default function StudentDashboard() {
 
                 <section style={{ marginTop: '48px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '24px' }}>📝 Your Registrations ({studentRegistrations.length})</h2>
+                        <h2 style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, #667eea, #a855f7)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>📝 Your Registrations ({studentRegistrations.length})</h2>
                         <button
                             style={{
                                 color: 'var(--primary)',
                                 textDecoration: 'none',
                                 fontWeight: '600',
-                                border: 'none',
-                                background: 'none',
+                                border: '1px solid rgba(102,126,234,0.3)',
+                                background: 'rgba(102,126,234,0.08)',
                                 cursor: 'pointer',
-                                fontSize: '14px'
+                                fontSize: '13px',
+                                padding: '6px 16px',
+                                borderRadius: '50px',
+                                transition: 'all 0.2s ease'
                             }}
                             onClick={() => navigate('/events')}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(102,126,234,0.2)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(102,126,234,0.08)'; }}
                         >
                             Register for more →
                         </button>
                     </div>
-                    
+
                     {studentRegistrations.length === 0 ? (
-                        <div className="registrations-list" style={{ background: 'white', borderRadius: '12px', padding: '40px', border: '1px solid #EFEFEF', textAlign: 'center' }}>
-                            <p style={{ color: '#6F767E', margin: 0 }}>No registrations yet. Head over to the Events page to register for upcoming events!</p>
+                        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '16px', padding: '40px', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>📅</div>
+                            <p style={{ color: '#94a3b8', margin: 0, fontSize: '15px' }}>No registrations yet. Head over to the Events page to register for upcoming events!</p>
                         </div>
                     ) : (
                         <div className="registrations-list">
-                            {studentRegistrations.slice(0, 5).map((registration, idx) => (
-                                <div key={registration._id || idx} style={{ background: 'white', borderRadius: '12px', padding: '24px', border: '1px solid #EFEFEF', marginBottom: '16px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flex: 1 }}>
-                                            <div style={{ width: '70px', height: '70px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: '700', flexShrink: 0 }}>
-                                                <span style={{ fontSize: '20px' }}>
-                                                    {new Date(registration.event?.eventDate).getDate()}
-                                                </span>
-                                                <span style={{ fontSize: '11px' }}>
-                                                    {new Date(registration.event?.eventDate).toLocaleString('en-US', { month: 'short' }).toUpperCase()}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h4 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 8px 0' }}>{registration.event?.title}</h4>
-                                                <div style={{ fontSize: '13px', color: '#6F767E', marginBottom: '4px' }}>
-                                                    🕒 {new Date(registration.event?.eventDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            {studentRegistrations.slice(0, 5).map((registration, idx) => {
+                                const isUpcoming = new Date(registration.event?.eventDate) > new Date();
+                                return (
+                                    <div key={registration._id || idx} style={{
+                                        background: 'rgba(255,255,255,0.04)',
+                                        borderRadius: '16px',
+                                        padding: '20px 24px',
+                                        border: '1px solid rgba(255,255,255,0.08)',
+                                        marginBottom: '12px',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(102,126,234,0.35)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
+                                                <div style={{ width: '60px', height: '60px', background: 'linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2))', border: '1px solid rgba(102,126,234,0.3)', borderRadius: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: '800', flexShrink: 0 }}>
+                                                    <span style={{ fontSize: '18px', color: '#fff', lineHeight: 1 }}>
+                                                        {new Date(registration.event?.eventDate).getDate()}
+                                                    </span>
+                                                    <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.05em' }}>
+                                                        {new Date(registration.event?.eventDate).toLocaleString('en-US', { month: 'short' }).toUpperCase()}
+                                                    </span>
                                                 </div>
-                                                <div style={{ fontSize: '13px', color: '#6F767E' }}>
-                                                    📍 {registration.event?.location}
+                                                <div>
+                                                    <h4 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 6px 0', color: '#fff' }}>{registration.event?.title}</h4>
+                                                    <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '3px' }}>
+                                                        🕒 {new Date(registration.event?.eventDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                                                        📍 {registration.event?.location}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <span style={{
+                                                background: isUpcoming ? 'rgba(16, 185, 129, 0.12)' : 'rgba(102,126,234,0.12)',
+                                                color: isUpcoming ? '#10b981' : '#667eea',
+                                                border: isUpcoming ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(102,126,234,0.25)',
+                                                padding: '6px 14px',
+                                                borderRadius: '50px',
+                                                fontSize: '12px',
+                                                fontWeight: '700',
+                                                whiteSpace: 'nowrap',
+                                                marginLeft: '16px'
+                                            }}>
+                                                {isUpcoming ? '🚀 Upcoming' : '✅ Completed'}
+                                            </span>
                                         </div>
-                                        <span style={{ background: '#e8f4f8', color: '#0891b2', padding: '8px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', marginLeft: '16px' }}>
-                                            {registration.status || 'Registered'}
-                                        </span>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </section>
