@@ -1,6 +1,7 @@
 // pages/Auth.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import './Auth.css';
 
 const Auth = () => {
@@ -21,11 +22,13 @@ const Auth = () => {
   const [college, setCollege] = useState('');
   const [role, setRole] = useState('student');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Handle mode switching with slower slide animation
   const switchMode = (newMode) => {
     if (newMode === currentMode || isAnimating) return;
     
+    setErrorMessage(''); // clear any previous errors when changing modes
     // Set slide direction based on mode change
     if (newMode === 'login') {
       setSlideDirection('left'); // Slide from left when going to login
@@ -56,30 +59,57 @@ const Auth = () => {
     }, 500); // Increased from 300ms to 500ms
   };
 
+  const { login, register, loginWithToken } = useContext(AuthContext);
+
   // Update currentMode when path changes
   useEffect(() => {
     setCurrentMode(isLogin ? 'login' : 'register');
   }, [isLogin]);
 
-  const handleSubmit = (e) => {
+  // check for token returned by OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tokenParam = params.get('token');
+    if (tokenParam) {
+      loginWithToken(tokenParam);
+    }
+  }, [location.search, loginWithToken]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (currentMode === 'login') {
-      console.log('Login:', { email, password, rememberMe });
-    } else {
-      if (password !== confirmPassword) {
-        alert('Passwords do not match');
-        return;
+    setErrorMessage('');
+    try {
+      if (currentMode === 'login') {
+        await login(email, password);
+      } else {
+        if (password !== confirmPassword) {
+          setErrorMessage('Passwords do not match');
+          return;
+        }
+        await register({ name, email, password, role, college });
       }
-      console.log('Register:', { name, email, password, role, college });
+    } catch (err) {
+      // try to parse server message
+      try {
+        const body = await err.json();
+        setErrorMessage(body.msg || 'Authentication failed');
+      } catch {
+        setErrorMessage('Network error');
+      }
     }
   };
 
-  // Determine animation classes
+  // Determine animation classes (exit/enter in the correct direction)
   const getFormAnimationClass = () => {
-    if (!isAnimating) return 'form-card-enter-active';
-    return slideDirection === 'right' 
-      ? 'form-card-exit-left' 
-      : 'form-card-exit-right';
+    if (isAnimating) {
+      return slideDirection === 'right'
+        ? 'form-card-exit-left'
+        : 'form-card-exit-right';
+    }
+    // when animation finished choose entry direction
+    return slideDirection === 'right'
+      ? 'form-card-enter-right'
+      : 'form-card-enter-left';
   };
 
   return (
@@ -144,7 +174,10 @@ const Auth = () => {
           </div>
 
           {/* Form Container with Slide Animation */}
-          <div className="form-container">
+          <div
+            className="form-container"
+            style={{ minHeight: currentMode === 'login' ? 'auto' : '500px' }}
+          >
             <form onSubmit={handleSubmit} className="auth-form">
               {/* Registration Fields */}
               {currentMode === 'register' && (
@@ -248,6 +281,7 @@ const Auth = () => {
               <button type="submit" className="sign-in-btn">
                 {currentMode === 'login' ? 'Sign In' : 'Create Account'}
               </button>
+              {errorMessage && <p className="form-error">{errorMessage}</p>}
             </form>
           </div>
           
@@ -258,7 +292,9 @@ const Auth = () => {
             </div>
             
             <div className="social-buttons">
-              <button className="social-btn google-btn" type="button">
+              <button className="social-btn google-btn" type="button" onClick={() => {
+                window.location.href = `${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/google`;
+              }}>
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -267,7 +303,10 @@ const Auth = () => {
                 </svg>
                 Google
               </button>
-              <button className="social-btn github-btn" type="button">
+              <button className="social-btn github-btn" type="button" onClick={() => {
+                // GitHub OAuth is not wired up yet; show alert
+                alert('GitHub login is not yet supported. Please use email or Google.');
+              }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
                 </svg>

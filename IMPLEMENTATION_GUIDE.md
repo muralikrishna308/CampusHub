@@ -171,7 +171,31 @@ DELETE /api/registrations/cancel/:registrationId - Cancel a registration
 ```
 
 ---
+### Google Authentication (OAuth)
 
+The application now supports signing in/up via Google. The backend uses `passport` and the
+`passport-google-oauth20` strategy to create or lookup users by email.  On first OAuth
+login a new `student` account is generated with a random password (not used).
+
+#### Setup
+1. Obtain a Google OAuth 2.0 Client ID/Secret from the Google Cloud Console.
+2. Add the following variables to your `.env` file:
+   ```
+   GOOGLE_CLIENT_ID=your_client_id
+   GOOGLE_CLIENT_SECRET=your_client_secret
+   API_URL=http://localhost:5000        # used by passport callback
+   FRONTEND_URL=http://localhost:3000  # frontend redirect target
+   ```
+3. Run `npm install passport passport-google-oauth20` in the backend folder.
+
+#### Flow
+- Clicking the **Google** button on `/login` or `/register` navigates to `/api/auth/google`.
+- Google redirects back to `/api/auth/google/callback` with the profile.
+- Server generates a JWT token and redirects to the frontend `/login?token={token}`.
+- Frontend detects `token` query parameter, stores it and automatically navigates
+  to the appropriate dashboard.
+
+---
 ## API Integration Points
 
 ### Environment Configuration
