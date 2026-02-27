@@ -117,7 +117,13 @@ export default function StudentDashboard() {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setFeaturedEvents(data.slice(0, 3));
+                    const transformedEvents = data.slice(0, 3).map(ev => ({
+                        ...ev,
+                        image: ev.image ?
+                            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${ev.image}`) :
+                            'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80'
+                    }));
+                    setFeaturedEvents(transformedEvents);
                 }
             } catch (err) {
                 console.error('Error fetching events:', err);
@@ -345,7 +351,7 @@ export default function StudentDashboard() {
                                 borderRadius: '50px',
                                 transition: 'all 0.2s ease'
                             }}
-                            onClick={() => navigate('/events')}
+                            onClick={() => navigate('/registrations')}
                             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(102,126,234,0.2)'; }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(102,126,234,0.08)'; }}
                         >
