@@ -38,10 +38,12 @@ const userSchema = new mongoose.Schema(
         default: "student",
       },
 
+    // college field is no longer required; students signing up via
+    // Google may not have provided this information and will complete it later
     college: {
       type: String,
-      required: [true, "College is required"],
       trim: true,
+      default: ''
     },
 
     collegeName: {

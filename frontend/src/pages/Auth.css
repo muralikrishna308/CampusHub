@@ -178,7 +178,7 @@ body {
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem; /* slightly tighter spacing for register fields */
 }
 
 .form-group label {
@@ -271,7 +271,7 @@ body {
 
 /* Social Login */
 .social-login {
-  margin-top: 1.5rem;
+  margin-top: 0.75rem; /* bring the social buttons closer to submit */
 }
 
 .divider {
@@ -703,171 +703,52 @@ body {
   }
 }
 
-/* Add to Auth.css */
+/* ---------- overrides added for login/register improvements ---------- */
 
-/* Mode Indicator Tabs */
-.mode-indicator {
-  display: flex;
-  position: relative;
-  background: #1E2539;
-  border-radius: 50px;
-  padding: 4px;
-  margin-bottom: 2rem;
-  border: 1px solid #2D3748;
-}
-
-.mode-tab {
-  flex: 1;
-  text-align: center;
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #94A3B8;
-  cursor: pointer;
-  transition: color 0.3s ease;
-  z-index: 1;
-  position: relative;
-}
-
-.mode-tab.active {
-  color: #FFFFFF;
-}
-
-.mode-slider {
-  position: absolute;
-  top: 4px;
-  bottom: 4px;
-  width: calc(50% - 4px);
-  background: #7C3AED;
-  border-radius: 50px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 0;
-}
-
-/* Form Card Animations */
-.form-card {
-  background: #1A1F33;
-  border-radius: 24px;
-  padding: 2.5rem;
-  width: 100%;
-  max-width: 440px;
-  border: 1px solid #2D3748;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Form Container */
+/* make sure the card container stays large enough when fields are added */
 .form-container {
-  position: relative;
-  overflow: hidden;
-  min-height: 400px;
+  /* min-height is set dynamically via inline styles in JSX */
+}
+/* card height will size to content; container min-height keeps layout stable */
+.form-card {
+  /*min-height: 550px;*/
 }
 
-/* Form Fields Animations */
-.form-fields {
-  transition: all 0.3s ease;
-}
-
-.register-fields {
-  animation: slideDown 0.3s ease-out;
-}
-
-.common-fields {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Slide Animations */
-@keyframes slideInFromRight {
-  0% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInFromLeft {
-  0% {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideOutToRight {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-@keyframes slideOutToLeft {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-}
-
-@keyframes slideDown {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/* Animation Classes */
-.form-card-enter-active {
+/* entry animations that respect slide direction */
+.form-card-enter-right {
   animation: slideInFromRight 0.3s ease-out;
 }
-
-.form-card-exit-left {
-  animation: slideOutToLeft 0.3s ease-in forwards;
+.form-card-enter-left {
+  animation: slideInFromLeft 0.3s ease-out;
 }
 
-.form-card-exit-right {
-  animation: slideOutToRight 0.3s ease-in forwards;
+/* field animations simplified to avoid vertical jump */
+.form-fields {
+  transition: opacity 0.3s ease;
+}
+.register-fields,
+.common-fields {
+  opacity: 1;
+  /* removed individual field animations; let the card transition handle it */
 }
 
-/* Form Field Transitions */
+/* form groups no longer animate individually */
 .form-group {
   transition: all 0.3s ease;
-  animation: slideDown 0.3s ease-out;
-  animation-fill-mode: both;
+  /* removed staggered delays */
 }
 
-.form-group:nth-child(1) { animation-delay: 0.05s; }
-.form-group:nth-child(2) { animation-delay: 0.1s; }
-.form-group:nth-child(3) { animation-delay: 0.15s; }
-.form-group:nth-child(4) { animation-delay: 0.2s; }
-.form-group:nth-child(5) { animation-delay: 0.25s; }
+/* errors shown beneath button */
+.form-error {
+  color: #F87171;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+.form-group {
+  transition: all 0.3s ease;
+}
 
 /* Select input styling */
 .form-group select {

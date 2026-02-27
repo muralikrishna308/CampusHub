@@ -51,6 +51,29 @@ export function AuthProvider({ children }) {
     else navigate('/student');
   };
 
+  // helper used when a token is supplied directly (e.g. from OAuth callback)
+  const loginWithToken = async (incomingToken) => {
+    setToken(incomingToken);
+    localStorage.setItem('token', incomingToken);
+    // fetch user so that we can redirect appropriately
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${incomingToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch user');
+      const data = await res.json();
+      setUser(data);
+      if (data.role === 'super_admin') navigate('/super-admin');
+      else if (data.role === 'admin') navigate('/admin');
+      else navigate('/student');
+    } catch (err) {
+      console.error('Token login error', err);
+      // clear token if something goes wrong
+      setToken(null);
+      localStorage.removeItem('token');
+    }
+  };
+
   const register = async (payload) => {
     const res = await fetch(`${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/register`, {
       method: 'POST',
@@ -75,7 +98,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, register, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, loginWithToken, logout, register, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
