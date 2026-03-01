@@ -1,8 +1,8 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
-const Sidebar = ({ role }) => {
+const Sidebar = ({ role, isOpen, onClose }) => {
     const location = useLocation();
     const { logout } = useContext(AuthContext);
 
@@ -24,36 +24,51 @@ const Sidebar = ({ role }) => {
 
     const menuItems = role === "admin" ? adminMenuItems : studentMenuItems;
 
+    // Close sidebar on route change (mobile)
+    useEffect(() => {
+        if (onClose) onClose();
+    }, [location.pathname]);
+
     return (
-        <aside className="sidebar">
-            <div className="sidebar-logo">
-                <span className="logo-icon">🎓</span>
-                <span>CampusHub</span>
-            </div>
+        <>
+            {/* Overlay for mobile */}
+            {isOpen && (
+                <div
+                    className="sidebar-overlay open"
+                    onClick={onClose}
+                />
+            )}
 
-            <nav>
-                <ul className="sidebar-menu">
-                    {menuItems.map((item, index) => (
-                        <li key={index}>
-                            <Link
-                                to={item.path}
-                                className={`menu-item ${location.pathname === item.path ? 'active' : ''}`}
-                            >
-                                <span className="menu-icon">{item.icon}</span>
-                                <span>{item.name}</span>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
-
-            <div className="sidebar-footer">
-                <div className="menu-item logout-btn" onClick={logout} style={{ cursor: 'pointer' }}>
-                    <span className="menu-icon">🚪</span>
-                    <span>Sign Out</span>
+            <aside className={`sidebar${isOpen ? ' open' : ''}`}>
+                <div className="sidebar-logo">
+                    <span className="logo-icon">🎓</span>
+                    <span>CampusHub</span>
                 </div>
-            </div>
-        </aside>
+
+                <nav>
+                    <ul className="sidebar-menu">
+                        {menuItems.map((item, index) => (
+                            <li key={index}>
+                                <Link
+                                    to={item.path}
+                                    className={`menu-item ${location.pathname === item.path ? 'active' : ''}`}
+                                >
+                                    <span className="menu-icon">{item.icon}</span>
+                                    <span>{item.name}</span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+
+                <div className="sidebar-footer">
+                    <div className="menu-item logout-btn" onClick={logout} style={{ cursor: 'pointer' }}>
+                        <span className="menu-icon">🚪</span>
+                        <span>Sign Out</span>
+                    </div>
+                </div>
+            </aside>
+        </>
     );
 };
 

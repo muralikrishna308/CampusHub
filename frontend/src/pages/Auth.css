@@ -1,4 +1,4 @@
-/* Auth.css - Exact match to homepage design */
+
 
 * {
   margin: 0;
@@ -178,7 +178,7 @@ body {
 }
 
 .form-group {
-  margin-bottom: 1rem; /* slightly tighter spacing for register fields */
+  margin-bottom: 1rem; 
 }
 
 .form-group label {
@@ -271,7 +271,7 @@ body {
 
 /* Social Login */
 .social-login {
-  margin-top: 0.75rem; /* bring the social buttons closer to submit */
+  margin-top: 0.75rem; 
 }
 
 .divider {
@@ -703,7 +703,7 @@ body {
   }
 }
 
-/* ---------- overrides added for login/register improvements ---------- */
+/*overrides added for login/register improvements */
 
 /* make sure the card container stays large enough when fields are added */
 .form-container {
