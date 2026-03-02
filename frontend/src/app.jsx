@@ -7,6 +7,7 @@ import AdminParticipants from "./pages/AdminParticipants";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import Events from "./pages/Events";
 import MyRegistrations from "./pages/MyRegistrations";
+import ForgotPassword from "./pages/ForgotPassword";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           <Route
             path="/student"

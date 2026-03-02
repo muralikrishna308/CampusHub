@@ -6,10 +6,12 @@ import Header from "../components/Header";
 import EventCard from "../components/EventCard";
 import ProfileForm from "../components/ProfileForm";
 import "../styles/dashboard.css";
+import Chatbot from "../components/chatbot";
 
 export default function StudentDashboard() {
     const navigate = useNavigate();
     const { user, token } = useContext(AuthContext);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showProfileForm, setShowProfileForm] = useState(false);
     const [profileComplete, setProfileComplete] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -143,7 +145,15 @@ export default function StudentDashboard() {
     if (loading) {
         return (
             <div className="dashboard-container">
-                <Sidebar role="student" />
+                {/* Mobile sidebar toggle */}
+                <button
+                    className="sidebar-toggle"
+                    onClick={() => setSidebarOpen(o => !o)}
+                    aria-label="Toggle navigation"
+                >
+                    ☰
+                </button>
+                <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <main className="main-content">
                     <div style={{ padding: '40px', textAlign: 'center' }}>
                         <div style={{ fontSize: '18px', color: '#6F767E' }}>Loading your dashboard...</div>
@@ -162,12 +172,28 @@ export default function StudentDashboard() {
                 />
             )}
 
-            <Sidebar role="student" />
+            {/* Mobile sidebar toggle */}
+            <button
+                className="sidebar-toggle"
+                onClick={() => setSidebarOpen(o => !o)}
+                aria-label="Toggle navigation"
+            >
+                ☰
+            </button>
+
+            <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <main className="main-content">
                 <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" id={user?.id} />
 
                 <div className="welcome-section">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'start',
+                        marginBottom: '20px',
+                        flexWrap: 'wrap',
+                        gap: '12px'
+                    }}>
                         <div>
                             <h1>Welcome back, {(studentProfile?.name?.split(' ')[0]) || (user?.name?.split(' ')[0]) || 'Student'}! 👋</h1>
                             <p>
@@ -188,7 +214,8 @@ export default function StudentDashboard() {
                                 fontWeight: '600',
                                 fontSize: '14px',
                                 transition: 'all 0.2s ease',
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
                             }}
                             onMouseEnter={(e) => e.target.style.opacity = '0.9'}
                             onMouseLeave={(e) => e.target.style.opacity = '1'}
@@ -198,7 +225,12 @@ export default function StudentDashboard() {
                     </div>
 
                     {/* Stats Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '20px',
+                        marginBottom: '40px'
+                    }}>
                         {/* Total Registrations Card */}
                         <div style={{
                             background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
@@ -421,6 +453,7 @@ export default function StudentDashboard() {
                     )}
                 </section>
             </main>
+            <Chatbot />
         </div>
     );
 }

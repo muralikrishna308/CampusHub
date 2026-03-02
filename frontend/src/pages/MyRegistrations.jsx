@@ -2,10 +2,11 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import './Events.css'; // Reuse Events.css for consistent card styling
+import Header from '../components/Header';
+import './MyRegistrations.css';
 
 const CATEGORIES = [
-    { id: 'all', name: 'All Categories', emoji: '🌟' },
+    { id: 'all', name: 'All', emoji: '🌟' },
     { id: 'tech', name: 'Technology', emoji: '💻' },
     { id: 'music', name: 'Music & Arts', emoji: '🎸' },
     { id: 'education', name: 'Education', emoji: '📚' },
@@ -19,18 +20,31 @@ const MyRegistrations = () => {
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [studentProfile, setStudentProfile] = useState(null);
+    const [stats, setStats] = useState({
+        total: 0,
+        upcoming: 0,
+        completed: 0
+    });
 
     useEffect(() => {
-        const fetchRegistrations = async () => {
+        const fetchUserData = async () => {
             if (!token) return;
             try {
+                const profileRes = await fetch('http://localhost:5000/api/auth/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    setStudentProfile(profileData);
+                }
+
                 setLoading(true);
                 const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    // Filter and prefix images
                     const validRegs = data.filter(reg => reg.event && reg.event._id).map(reg => ({
                         ...reg,
                         event: {
@@ -41,22 +55,28 @@ const MyRegistrations = () => {
                         }
                     }));
                     setRegistrations(validRegs);
+
+                    const now = new Date();
+                    const tot = validRegs.length;
+                    const up = validRegs.filter(r => new Date(r.event.eventDate) > now).length;
+                    const cp = tot - up;
+                    setStats({ total: tot, upcoming: up, completed: cp });
                 }
             } catch (err) {
-                console.error('Error fetching registrations:', err);
+                console.error('Error fetching data:', err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchRegistrations();
+        fetchUserData();
     }, [token]);
 
     const filteredRegistrations = selectedCategory === 'all'
         ? registrations
         : registrations.filter(reg => reg.event.category === selectedCategory);
 
-    const getColor = (catId) => {
+    const getCatColor = (catId) => {
         const colors = {
             tech: '#6366f1',
             music: '#ec4899',
@@ -72,113 +92,127 @@ const MyRegistrations = () => {
         <div className="dashboard-container">
             <Sidebar role="student" />
 
-            <main className="main-content" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', minHeight: '100vh', color: '#fff' }}>
-                <header className="events-header" style={{ padding: '40px 0', marginBottom: '40px', background: 'transparent' }}>
-                    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
-                        <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '16px', background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                            My Registrations
-                        </h1>
-                        <p style={{ color: '#94a3b8', fontSize: '18px', maxWidth: '600px' }}>
-                            Your personal roadmap of upcoming events and workshops.
-                        </p>
-                    </div>
-                </header>
+            <main className="main-content">
+                <Header
+                    userName={studentProfile?.name || user?.name || "Student"}
+                    userRole="Student"
+                    id={user?.id}
+                />
 
-                <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
-                    {/* Category Tabs */}
-                    <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '32px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '40px' }}>
-                        {CATEGORIES.map(cat => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setSelectedCategory(cat.id)}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '10px 20px',
-                                    borderRadius: '50px',
-                                    border: '1px solid',
-                                    borderColor: selectedCategory === cat.id ? getColor(cat.id) : 'rgba(255,255,255,0.08)',
-                                    background: selectedCategory === cat.id ? `${getColor(cat.id)}15` : 'rgba(255,255,255,0.04)',
-                                    color: selectedCategory === cat.id ? getColor(cat.id) : '#fff',
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                <span>{cat.emoji}</span>
-                                <span>{cat.name}</span>
-                            </button>
-                        ))}
+                <div className="myreg-content-wrapper">
+                    {/* Page Title */}
+                    <div className="myreg-page-title">
+                        <div>
+                            <h1>📋 My Registrations</h1>
+                            <p>Track and manage all your event registrations</p>
+                        </div>
                     </div>
 
+                    {/* Toolbar: Filters + Results Count */}
+                    <div className="myreg-toolbar">
+                        <div className="myreg-filters">
+                            {CATEGORIES.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat.id)}
+                                    className={`myreg-chip ${selectedCategory === cat.id ? 'myreg-chip--active' : ''}`}
+                                >
+                                    <span>{cat.emoji}</span>
+                                    <span>{cat.name}</span>
+                                    {selectedCategory === cat.id && (
+                                        <span className="myreg-chip__count">
+                                            {filteredRegistrations.length}
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        <span className="myreg-results-label">
+                            {filteredRegistrations.length} registration{filteredRegistrations.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+
+                    {/* Content */}
                     {loading ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
+                        <div className="myreg-loading">
                             <div className="spinner"></div>
-                            <p style={{ color: '#94a3b8', marginTop: '16px' }}>Loading your registrations...</p>
+                            <p>Loading your registrations...</p>
                         </div>
                     ) : filteredRegistrations.length === 0 ? (
-                        <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '24px', padding: '80px 24px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                            <div style={{ fontSize: '48px', marginBottom: '20px' }}>📝</div>
-                            <h3 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '12px' }}>No registrations found</h3>
-                            <p style={{ color: '#94a3b8', marginBottom: '32px', maxWidth: '400px', margin: '0 auto 32px' }}>
-                                You haven't registered for any events in this category yet.
+                        <div className="myreg-empty">
+                            <div className="myreg-empty__icon">📅</div>
+                            <h3>No registrations found</h3>
+                            <p>
+                                {selectedCategory === 'all'
+                                    ? "You haven't registered for any events yet. Discover exciting events to get started!"
+                                    : "No registrations in this category. Try exploring other categories or browse all events."}
                             </p>
                             <button
-                                onClick={() => navigate('/events')}
-                                style={{ padding: '12px 32px', borderRadius: '50px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 24px rgba(102,126,234,0.3)' }}
+                                className="myreg-empty__btn"
+                                onClick={() => selectedCategory === 'all' ? navigate('/events') : setSelectedCategory('all')}
                             >
-                                Explore Events
+                                {selectedCategory === 'all' ? '🔍 Explore Events' : '← View All Categories'}
                             </button>
                         </div>
                     ) : (
-                        <div className="events-grid">
+                        <div className="myreg-grid">
                             {filteredRegistrations.map((reg, idx) => {
                                 const event = reg.event;
+                                const isUpcoming = new Date(event.eventDate) > new Date();
                                 return (
-                                    <div key={idx} className="event-card" style={{ transition: 'all 0.3s ease' }}>
-                                        <div
-                                            className="event-card-img"
-                                            style={{ backgroundImage: `url(${event.image})` }}
-                                        >
+                                    <div key={reg._id || idx} className="myreg-card">
+                                        <div className="myreg-card__img">
+                                            <div
+                                                className="myreg-card__img-inner"
+                                                style={{ backgroundImage: `url(${event.image})` }}
+                                            />
                                             <span
-                                                className="event-badge"
-                                                style={{ background: getColor(event.category) }}
+                                                className="myreg-card__cat-badge"
+                                                style={{ background: getCatColor(event.category) }}
                                             >
                                                 {CATEGORIES.find(c => c.id === event.category)?.emoji || '📅'}{' '}
                                                 {CATEGORIES.find(c => c.id === event.category)?.name || event.category}
                                             </span>
-                                            <span className="registered-badge" style={{ position: 'absolute', bottom: '12px', right: '12px', background: 'rgba(16,185,129,0.9)', color: '#fff', padding: '4px 12px', borderRadius: '50px', fontSize: '11px', fontWeight: '700' }}>
-                                                ✔ CONFIRMED
+                                            <span className={`myreg-card__status-badge ${isUpcoming ? 'myreg-card__status-badge--upcoming' : 'myreg-card__status-badge--done'}`}>
+                                                {isUpcoming ? '🕒 UPCOMING' : '✅ COMPLETED'}
                                             </span>
                                         </div>
 
-                                        <div className="event-card-body">
-                                            <h3 className="event-card-title">{event.title}</h3>
-                                            <p className="event-card-desc">
-                                                {event.description?.substring(0, 90)}...
+                                        <div className="myreg-card__body">
+                                            <h3 className="myreg-card__title">{event.title}</h3>
+                                            <p className="myreg-card__desc">
+                                                {event.description?.substring(0, 110)}...
                                             </p>
 
-                                            <div className="event-card-meta">
-                                                <span>📅 {new Date(event.eventDate).toLocaleDateString()}</span>
-                                                <span>📍 {event.location}</span>
+                                            <div className="myreg-card__meta">
+                                                <div className="myreg-meta-row">
+                                                    <span className="myreg-meta-icon">📅</span>
+                                                    <span>{new Date(event.eventDate).toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                                </div>
+                                                <div className="myreg-meta-row">
+                                                    <span className="myreg-meta-icon">📍</span>
+                                                    <span>{event.location}</span>
+                                                </div>
                                             </div>
 
-                                            <div className="event-card-footer">
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ticket Price</span>
-                                                    <span style={{ fontSize: '18px', fontWeight: '800', color: '#fff' }}>₹{event.ticketPrice || 0}</span>
+                                            <div className="myreg-card__footer">
+                                                <div className="myreg-price-box">
+                                                    <span className="myreg-price-label">Ticket Price</span>
+                                                    <span className="myreg-price-value">
+                                                        {event.ticketPrice ? `₹${event.ticketPrice}` : 'Free'}
+                                                    </span>
                                                 </div>
-                                                <button
-                                                    className="btn-primary"
-                                                    style={{ height: '38px', fontSize: '13px' }}
-                                                    onClick={() => navigate('/events')}
-                                                >
-                                                    View Details
-                                                </button>
+                                                <div className="myreg-card__confirmed">
+                                                    <span style={{ fontSize: '10px' }}>●</span> CONFIRMED
+                                                </div>
                                             </div>
+
+                                            <button
+                                                className="myreg-card__btn"
+                                                onClick={() => navigate('/events')}
+                                            >
+                                                View Event Details →
+                                            </button>
                                         </div>
                                     </div>
                                 );
