@@ -1,8 +1,10 @@
 const Registration = require('../models/Registration');
 const Event = require('../models/Event');
 const User = require('../models/User');
-
+const sendEmail = require("../utils/sendemail");
 // Register for an event
+
+
 exports.registerForEvent = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -39,6 +41,17 @@ exports.registerForEvent = async (req, res) => {
       city,
       gender
     });
+    // ✅ SEND EMAIL HERE
+    console.log("Sending email to:", email);
+await sendEmail(
+  email,
+  "Event Registration Successful 🎉",
+  `Hello ${firstName},
+
+You have successfully registered for the event: ${event.title}.
+
+Thank you for registering!`
+);
 
     // Populate the registration with event and admin info
     await registration.populate('event', 'title eventDate location');
