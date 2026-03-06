@@ -1,11 +1,15 @@
 import React from "react";
 
 const EventCard = ({ title, category, location, joined, image }) => {
+    const imageUrl = image ?
+        (image.startsWith('http') ? image : `http://localhost:5000/uploads/${image}`) :
+        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80';
+
     return (
         <div className="card">
             <div
                 className="card-img"
-                style={{ backgroundImage: `url(${image})` }}
+                style={{ backgroundImage: `url(${imageUrl})` }}
             ></div>
             <div className="card-content">
                 <span className="card-tag">{category}</span>

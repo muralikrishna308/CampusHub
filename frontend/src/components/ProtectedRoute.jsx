@@ -40,8 +40,12 @@ export default function ProtectedRoute({ children, role }) {
     return <Navigate to="/" replace />;
   }
 
-  if (role && user?.role !== role) {
-    return <div style={{padding:20}}>Access denied</div>;
+  // Support for multiple roles or super_admin bypass
+  const allowedRoles = Array.isArray(role) ? role : [role];
+  const hasAccess = !role || user?.role === 'super_admin' || user?.role === 'superadmin' || allowedRoles.includes(user?.role);
+
+  if (!hasAccess) {
+    return <div style={{ padding: 20 }}>Access denied</div>;
   }
 
   return children;

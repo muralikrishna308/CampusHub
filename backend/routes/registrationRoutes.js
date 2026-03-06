@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/role');
+const sendEmail = require("../utils/sendemail");
 const {
   registerForEvent,
   getMyRegistrations,
