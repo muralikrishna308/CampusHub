@@ -3,7 +3,8 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
 import Chatbot from '../components/chatbot';
-
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allRegistrations, setAllRegistrations] = useState([]);
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -36,8 +38,8 @@ export default function AdminDashboard() {
   });
 
   const [reportFilters, setReportFilters] = useState({
-    startDate: '2024-03-01',
-    endDate: '2024-03-31',
+    startDate: '2024-01-01',
+    endDate: '2030-12-31',
     eventType: 'all',
     format: 'pdf'
   });
@@ -76,6 +78,7 @@ export default function AdminDashboard() {
         if (registrationsResponse.ok) {
           participants = await registrationsResponse.json();
           totalRegistrations = participants.length;
+          setAllRegistrations(participants);
         }
       } catch (regErr) {
         console.log('Could not fetch registrations:', regErr);
@@ -99,17 +102,34 @@ export default function AdminDashboard() {
         ).values()
       );
 
+      // Filter out cancelled registrations for stats accuracy
+      const activeRegistrations = participants.filter(p => p.status !== 'cancelled');
+      const totalActiveRegistrations = activeRegistrations.length;
+
+      // Enrich events with registration data
+      const enrichedEvents = events.map(event => {
+        const eventRegistrations = activeRegistrations.filter(p => 
+          (p.event?._id || p.event) === event._id
+        );
+        const registeredCount = eventRegistrations.length;
+        const revenueAmount = registeredCount * (event.ticketPrice || 0);
+        return {
+          ...event,
+          registered: registeredCount,
+          revenue: revenueAmount
+        };
+      });
+
+      const totalRevenueValue = enrichedEvents.reduce((sum, e) => sum + e.revenue, 0);
+
       setStats({
-        totalEvents: events.length,
-        activeEvents: events.filter(e => e.status === 'active').length,
-        totalRegistrations: totalRegistrations,
-        avgParticipants: events.length > 0 ? Math.round(totalRegistrations / events.length) : 0,
-        totalRevenue: events.reduce(
-          (sum, event) => totalRegistrations * (event.ticketPrice),
-          0
-        ),
+        totalEvents: enrichedEvents.length,
+        activeEvents: enrichedEvents.filter(e => e.status === 'active').length,
+        totalRegistrations: totalActiveRegistrations,
+        avgParticipants: enrichedEvents.length > 0 ? Math.round(totalActiveRegistrations / enrichedEvents.length) : 0,
+        totalRevenue: totalRevenueValue,
         growth: 0,
-        events: events,
+        events: enrichedEvents,
         users: uniqueUsers,
         recentActivity: []
       });
@@ -292,12 +312,17 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Filter events by date range
+    // Filter events by date range and type
     const filteredEvents = stats.events.filter(event => {
       const eventDate = new Date(event.eventDate);
       const startDate = new Date(reportFilters.startDate);
       const endDate = new Date(reportFilters.endDate);
-      return eventDate >= startDate && eventDate <= endDate;
+      endDate.setHours(23, 59, 59, 999);
+      
+      const isInDateRange = eventDate >= startDate && eventDate <= endDate;
+      const isTypeMatch = reportFilters.eventType === 'all' || event.category === reportFilters.eventType;
+      
+      return isInDateRange && isTypeMatch;
     });
 
     if (filteredEvents.length === 0) {
@@ -340,6 +365,51 @@ export default function AdminDashboard() {
       link.download = `event_report_${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
       window.URL.revokeObjectURL(url);
+    } else if (reportFilters.format === 'pdf') {
+      const doc = new jsPDF();
+      
+      doc.setFontSize(18);
+      doc.text('Event Registrations Report', 14, 22);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+      
+      doc.text(`Total Events: ${filteredEvents.length}`, 14, 40);
+      doc.text(`Total Registrations: ${totalReg}`, 14, 46);
+      doc.text(`Total Revenue: $${totalRev.toLocaleString()}`, 14, 52);
+
+      const filteredEventIds = filteredEvents.map(e => e._id);
+      const relevantRegistrations = allRegistrations.filter(reg => 
+        reg.event && filteredEventIds.includes(reg.event._id || reg.event)
+      );
+
+      const tableColumn = ["No.", "Participant Name", "Email", "College", "Event Title", "Event Date", "Status"];
+      const tableRows = [];
+
+      relevantRegistrations.forEach((reg, index) => {
+        const eventData = reg.event || {};
+        const registrationData = [
+          index + 1,
+          reg.firstName ? `${reg.firstName} ${reg.lastName || ''}` : (reg.user?.name || 'Unknown'),
+          reg.email || reg.user?.email || 'N/A',
+          reg.college || 'N/A',
+          eventData.title || 'Unknown Event',
+          eventData.eventDate ? new Date(eventData.eventDate).toLocaleDateString() : 'N/A',
+          reg.status || 'registered'
+        ];
+        tableRows.push(registrationData);
+      });
+
+      autoTable(doc, {
+        startY: 60,
+        head: [tableColumn],
+        body: tableRows,
+        theme: 'striped',
+        headStyles: { fillColor: [102, 126, 234] }
+      });
+
+      doc.save(`event_report_${new Date().toISOString().split('T')[0]}.pdf`);
     } else {
       alert(`${reportFilters.format.toUpperCase()} report generation not yet implemented. CSV export is available.`);
     }
@@ -895,7 +965,12 @@ export default function AdminDashboard() {
                             const eventDate = new Date(event.eventDate);
                             const startDate = new Date(reportFilters.startDate);
                             const endDate = new Date(reportFilters.endDate);
-                            return eventDate >= startDate && eventDate <= endDate;
+                            endDate.setHours(23, 59, 59, 999);
+                            
+                            const isInDateRange = eventDate >= startDate && eventDate <= endDate;
+                            const isTypeMatch = reportFilters.eventType === 'all' || event.category === reportFilters.eventType;
+                            
+                            return isInDateRange && isTypeMatch;
                           })
                           .map(e => `${e.title},${new Date(e.eventDate).toLocaleDateString()},${e.registered}/${e.capacity},${e.revenue || 0},${Math.round((e.registered / (e.capacity || 1)) * 100)}%`)
                           .join('\n');
@@ -927,8 +1002,12 @@ export default function AdminDashboard() {
                           const eventDate = new Date(event.eventDate);
                           const startDate = new Date(reportFilters.startDate);
                           const endDate = new Date(reportFilters.endDate);
+                          endDate.setHours(23, 59, 59, 999);
+                          
                           const isInDateRange = eventDate >= startDate && eventDate <= endDate;
-                          return isInDateRange;
+                          const isTypeMatch = reportFilters.eventType === 'all' || event.category === reportFilters.eventType;
+                          
+                          return isInDateRange && isTypeMatch;
                         })
                         .map(event => (
                           <tr key={event._id}>
