@@ -304,7 +304,47 @@ export default function AdminDashboard() {
       alert(`Role changed for ${user.name}`);
     }
   };
+const acceptRegistration = async (id) => {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/registrations/accept/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
+    if (res.ok) {
+      alert("Registration Accepted");
+      fetchDashboardData(); // refresh table
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const rejectRegistration = async (id) => {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/registrations/reject/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (res.ok) {
+      alert("Registration Rejected");
+      fetchDashboardData();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
   // Handle report generation
   const handleGenerateReport = () => {
     if (!stats?.events) {
@@ -789,9 +829,35 @@ export default function AdminDashboard() {
                           <td>{user.events}</td>
                           <td>{new Date(user.joined).toLocaleDateString()}</td>
                           <td>
-                            <button className="action-btn" onClick={() => handleUserAction('edit', user)}>✏️</button>
-                            <button className="action-btn" onClick={() => handleUserAction('delete', user)}>🗑️</button>
-                          </td>
+  <button
+    onClick={() => acceptRegistration(user.id)}
+    style={{
+      background: "#22c55e",
+      color: "white",
+      border: "none",
+      padding: "5px 10px",
+      borderRadius: "5px",
+      marginRight: "6px",
+      cursor: "pointer"
+    }}
+  >
+    Accept
+  </button>
+
+  <button
+    onClick={() => rejectRegistration(user.id)}
+    style={{
+      background: "#ef4444",
+      color: "white",
+      border: "none",
+      padding: "5px 10px",
+      borderRadius: "5px",
+      cursor: "pointer"
+    }}
+  >
+    Reject
+  </button>
+</td>
                         </tr>
                       ))}
                     </tbody>
