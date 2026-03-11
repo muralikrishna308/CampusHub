@@ -102,10 +102,19 @@ export default function Events() {
                 if (response.ok) {
                     const data = await response.json();
                     // Filter out registrations where event was deleted (event is null)
-                    const registeredEventIds = data
-                        .filter(reg => reg.event && reg.event._id)
-                        .map(reg => reg.event._id);
-                    setRegisteredEvents(registeredEventIds);
+                    // const registeredEventIds = data
+                    //     .filter(reg => reg.event && reg.event._id)
+                    //     .map(reg => reg.event._id);
+                    // setRegisteredEvents(registeredEventIds);
+                    const registrationsMap = {};
+
+data.forEach(reg => {
+  if (reg.event && reg.event._id) {
+    registrationsMap[reg.event._id] = reg.status;
+  }
+});
+
+setRegisteredEvents(registrationsMap);
                 }
             } catch (err) {
                 console.error('Error fetching registrations:', err);
@@ -146,7 +155,11 @@ export default function Events() {
 
     const handleRegistrationSuccess = () => {
         if (selectedEvent) {
-            setRegisteredEvents(prev => [...prev, selectedEvent._id]);
+            // setRegisteredEvents(prev => [...prev, selectedEvent._id]);
+            setRegisteredEvents(prev => ({
+  ...prev,
+  [selectedEvent._id]: "pending"
+}));
         }
         setShowRegistrationForm(false);
     };
@@ -272,9 +285,15 @@ export default function Events() {
                                             {CATEGORIES.find(c => c.id === event.category)?.emoji}{' '}
                                             {CATEGORIES.find(c => c.id === event.category)?.name || event.category}
                                         </span>
-                                        {registeredEvents.includes(event._id) && (
-                                            <span className="registered-badge">✔ Registered</span>
-                                        )}
+                                     {registeredEvents[event._id] && (
+  <span className="registered-badge">
+    {registeredEvents[event._id] === "pending"
+      ? "⏳ Pending"
+      : registeredEvents[event._id] === "accepted"
+      ? "✔ Registered"
+      : "❌ Rejected"}
+  </span>
+)}
                                     </div>
 
                                     <div className="event-card-body">
@@ -301,15 +320,25 @@ export default function Events() {
                                                 )}
                                             </div>
                                             <button
-                                                className={`register-btn ${registeredEvents.includes(event._id) ? 'registered' : ''}`}
+                                                // className={`register-btn ${registeredEvents.includes(event._id) ? 'registered' : ''}`}
+                                                className={`register-btn ${registeredEvents[event._id] ? 'registered' : ''}`}
                                                 onClick={e => { e.stopPropagation(); handleRegister(event._id); }}
                                                 disabled={spotsLeft(event) === 0}
                                             >
-                                                {registeredEvents.includes(event._id)
+                                                 {/* {registeredEvents.includes(event._id)
                                                     ? '✔ Registered'
                                                     : spotsLeft(event) === 0
                                                         ? 'Full'
-                                                        : 'Register'}
+                                                        : 'Register'} */}
+                                                        {registeredEvents[event._id] === "pending"
+  ? "⏳ Pending Approval"
+  : registeredEvents[event._id] === "accepted"
+  ? "✔ Registered"
+  : registeredEvents[event._id] === "rejected"
+  ? "❌ Rejected"
+  : spotsLeft(event) === 0
+  ? "Full"
+  : "Register"}
                                             </button>
                                         </div>
                                     </div>
