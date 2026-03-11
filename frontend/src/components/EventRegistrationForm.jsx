@@ -101,8 +101,8 @@ const EventRegistrationForm = ({ event, onClose, onSuccess }) => {
         return;
       }
 
-      setSuccess('✅ Successfully registered for the event!');
-      
+      // setSuccess('✅ Successfully registered for the event!');
+      setSuccess(data.msg || 'Registration request sent. Waiting for admin approval.');
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();

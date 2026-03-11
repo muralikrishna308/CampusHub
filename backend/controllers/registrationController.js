@@ -42,22 +42,25 @@ exports.registerForEvent = async (req, res) => {
       gender
     });
     // ✅ SEND EMAIL HERE
-    console.log("Sending email to:", email);
-await sendEmail(
-  email,
-  "Event Registration Successful 🎉",
-  `Hello ${firstName},
+//     console.log("Sending email to:", email);
+// await sendEmail(
+//   email,
+//   "Event Registration Successful 🎉",
+//   `Hello ${firstName},
 
-You have successfully registered for the event: ${event.title}.
+// You have successfully registered for the event: ${event.title}.
 
-Thank you for registering!`
-);
+// Thank you for registering!`
+// );
 
     // Populate the registration with event and admin info
     await registration.populate('event', 'title eventDate location');
     await registration.populate('admin', 'name email');
 
-    res.status(201).json({ msg: 'Successfully registered for the event', registration });
+    res.status(201).json({
+  msg: "Registration request sent. Waiting for admin approval.",
+  registration
+});
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -149,6 +152,70 @@ exports.cancelRegistration = async (req, res) => {
     await Registration.findByIdAndDelete(registrationId);
 
     res.json({ msg: 'Registration cancelled successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+//Accept registration
+exports.acceptRegistration = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event", "title");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    registration.status = "accepted";
+    await registration.save();
+
+    // Send email after admin approval
+    await sendEmail(
+      registration.email,
+      "Event Registration Approved 🎉",
+      `Hello ${registration.firstName},
+
+Your registration for the event "${registration.event.title}" has been approved by the admin.
+
+See you at the event!`
+    );
+
+    res.json({ msg: "Registration accepted successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+//Reject registration
+exports.rejectRegistration = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event", "title");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    registration.status = "rejected";
+    await registration.save();
+
+    // Send rejection email
+    await sendEmail(
+      registration.email,
+      "Event Registration Rejected",
+      `Hello ${registration.firstName},
+
+Unfortunately your registration for "${registration.event.title}" was not approved by the admin.`
+    );
+
+    res.json({ msg: "Registration rejected successfully" });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
