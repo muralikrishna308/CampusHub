@@ -213,3 +213,102 @@ exports.cancelRegistration = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+// Accept registration (Admin)
+exports.acceptRegistration = async (req, res) => {
+  try {
+
+    const { registrationId } = req.params;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event", "title")
+      .populate("user", "email name");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    registration.status = "accepted";
+    await registration.save();
+
+    // Send email
+    try {
+      await sendEmail(
+        registration.email || registration.user.email,
+        "Registration Accepted 🎉",
+        `
+Hello ${registration.firstName || registration.user.name},
+
+Your registration for the event has been ACCEPTED.
+
+Event: ${registration.event.title}
+
+See you at the event!
+
+Campus Event Hub Team
+`
+      );
+    } catch (err) {
+      console.log("Email error:", err.message);
+    }
+
+    res.json({
+      msg: "Registration accepted successfully",
+      registration
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+// Reject registration (Admin)
+exports.rejectRegistration = async (req, res) => {
+  try {
+
+    const { registrationId } = req.params;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event", "title")
+      .populate("user", "email name");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    registration.status = "rejected";
+    await registration.save();
+
+    // Send email
+    try {
+      await sendEmail(
+        registration.email || registration.user.email,
+        "Registration Rejected",
+        `
+Hello ${registration.firstName || registration.user.name},
+
+We are sorry. Your registration for the event was not approved.
+
+Event: ${registration.event.title}
+
+For more details contact the organizer.
+
+Campus Event Hub Team
+`
+      );
+    } catch (err) {
+      console.log("Email error:", err.message);
+    }
+
+    res.json({
+      msg: "Registration rejected successfully",
+      registration
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};

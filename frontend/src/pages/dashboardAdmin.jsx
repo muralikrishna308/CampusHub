@@ -85,22 +85,32 @@ export default function AdminDashboard() {
       }
 
       // Transform participants to user format
-      const uniqueUsers = Array.from(
-        new Map(
-          participants.map(p => [
-            p.email,
-            {
-              id: p._id || p.email,
-              name: p.firstName ? `${p.firstName} ${p.lastName}` : p.name,
-              email: p.email,
-              role: 'student',
-              events: 1,
-              joined: p.createdAt,
-              status: p.status
-            }
-          ])
-        ).values()
-      );
+      // const uniqueUsers = Array.from(
+      //   new Map(
+      //     participants.map(p => [
+      //       p.email,
+      //       {
+      //         id: p._id || p.email,
+      //         name: p.firstName ? `${p.firstName} ${p.lastName}` : p.name,
+      //         email: p.email,
+      //         role: 'student',
+      //         events: 1,
+      //         joined: p.createdAt,
+      //         status: p.status
+      //       }
+      //     ])
+      //   ).values()
+      // );
+      const registrationUsers = participants.map(p => ({
+  id: p._id,
+  name: `${p.firstName} ${p.lastName}`,
+  email: p.email,
+  role: "student",
+  events: p.event?.title,
+  joined: p.createdAt,
+  status: p.status
+}));
+
 
       // Filter out cancelled registrations for stats accuracy
       const activeRegistrations = participants.filter(p => p.status !== 'cancelled');
@@ -130,7 +140,7 @@ export default function AdminDashboard() {
         totalRevenue: totalRevenueValue,
         growth: 0,
         events: enrichedEvents,
-        users: uniqueUsers,
+        users: registrationUsers,
         recentActivity: []
       });
       setLoading(false);
