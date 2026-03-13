@@ -16,7 +16,7 @@ export default function AdminDashboard() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [setShowReportModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -355,14 +355,12 @@ const rejectRegistration = async (id) => {
     console.error(error);
   }
 };
-  // Handle report generation
   const handleGenerateReport = () => {
     if (!stats?.events) {
       alert('No data available to generate report');
       return;
     }
 
-    // Filter events by date range and type
     const filteredEvents = stats.events.filter(event => {
       const eventDate = new Date(event.eventDate);
       const startDate = new Date(reportFilters.startDate);
@@ -376,92 +374,138 @@ const rejectRegistration = async (id) => {
     });
 
     if (filteredEvents.length === 0) {
-      alert('No events in the selected date range');
+      alert('No events found for the selected filters');
       return;
     }
 
-    // Prepare report data
     const totalReg = filteredEvents.reduce((sum, e) => sum + (e.registered || 0), 0);
     const totalRev = filteredEvents.reduce((sum, e) => sum + (e.revenue || 0), 0);
-    const avgConversion = Math.round(
-      (totalReg / filteredEvents.reduce((sum, e) => sum + (e.capacity || 1), 0)) * 100
+    const filteredEventIds = filteredEvents.map(e => e._id);
+    const relevantRegistrations = allRegistrations.filter(reg => 
+      reg.event && filteredEventIds.includes(reg.event._id || reg.event)
     );
 
     if (reportFilters.format === 'csv') {
-      // Generate CSV
-      const headers = ['Event Name', 'Date', 'Location', 'Registrations', 'Capacity', 'Revenue', 'Conversion Rate'];
-      const rows = filteredEvents.map(event => [
-        event.title,
-        new Date(event.eventDate).toLocaleDateString(),
-        event.location,
-        event.registered || 0,
-        event.capacity || 0,
-        event.revenue || 0,
-        event.capacity ? Math.round(((event.registered || 0) / event.capacity) * 100) + '%' : '0%'
+      // Professional Comprehensive CSV
+      const headers = [
+        'No.', 
+        'First Name', 
+        'Last Name', 
+        'Email', 
+        'Phone', 
+        'College', 
+        'Department', 
+        'Year', 
+        'City', 
+        'Gender',
+        'Event Title', 
+        'Event Date', 
+        'Registration Status',
+        'Registered At'
+      ];
+      
+      const rows = relevantRegistrations.map((reg, index) => [
+        index + 1,
+        reg.firstName || 'N/A',
+        reg.lastName || 'N/A',
+        reg.email || 'N/A',
+        reg.phone || 'N/A',
+        reg.college || 'N/A',
+        reg.department || 'N/A',
+        reg.year || 'N/A',
+        reg.city || 'N/A',
+        reg.gender || 'N/A',
+        reg.event?.title || 'Unknown Event',
+        reg.event?.eventDate ? new Date(reg.event.eventDate).toLocaleDateString() : 'N/A',
+        reg.status || 'pending',
+        reg.createdAt ? new Date(reg.createdAt).toLocaleString() : 'N/A'
       ]);
 
-      let csv = headers.join(',') + '\n';
-      csv += rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-      csv += '\n\nSUMMARY\n';
+      let csv = `Event Registrations Report\n`;
+      csv += `Generated on,${new Date().toLocaleString()}\n`;
+      csv += `Date Range,${reportFilters.startDate} to ${reportFilters.endDate}\n`;
+      csv += `Category,${reportFilters.eventType}\n\n`;
+      
+      csv += `SUMMARY\n`;
       csv += `Total Events,${filteredEvents.length}\n`;
       csv += `Total Registrations,${totalReg}\n`;
-      csv += `Total Revenue,$${totalRev.toLocaleString()}\n`;
-      csv += `Average Conversion Rate,${avgConversion}%\n`;
+      csv += `Total Revenue,$${totalRev.toLocaleString()}\n\n`;
+      
+      csv += headers.join(',') + '\n';
+      csv += rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `event_report_${new Date().toISOString().split('T')[0]}.csv`;
+      link.setAttribute('href', url);
+      link.setAttribute('download', `comprehensive_report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } else if (reportFilters.format === 'pdf') {
-      const doc = new jsPDF();
+    } else {
+      // Professional Landscape PDF for more columns
+      const doc = new jsPDF('l', 'mm', 'a4');
       
-      doc.setFontSize(18);
-      doc.text('Event Registrations Report', 14, 22);
+      doc.setFontSize(22);
+      doc.setTextColor(63, 81, 181);
+      doc.text('Comprehensive Event Registrations Report', 14, 22);
       
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+      doc.text(`Generated: ${new Date().toLocaleString()} | Filter: ${reportFilters.startDate} to ${reportFilters.endDate}`, 14, 30);
       
-      doc.text(`Total Events: ${filteredEvents.length}`, 14, 40);
-      doc.text(`Total Registrations: ${totalReg}`, 14, 46);
-      doc.text(`Total Revenue: $${totalRev.toLocaleString()}`, 14, 52);
+      doc.setDrawColor(200);
+      doc.line(14, 34, 282, 34);
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text('KEY METRICS', 14, 42);
+      
+      doc.setFontSize(10);
+      doc.text(`Total Events: ${filteredEvents.length}`, 14, 48);
+      doc.text(`Total Registrations: ${totalReg}`, 60, 48);
+      doc.text(`Total Revenue: $${totalRev.toLocaleString()}`, 110, 48);
 
-      const filteredEventIds = filteredEvents.map(e => e._id);
-      const relevantRegistrations = allRegistrations.filter(reg => 
-        reg.event && filteredEventIds.includes(reg.event._id || reg.event)
-      );
-
-      const tableColumn = ["No.", "Participant Name", "Email", "College", "Event Title", "Event Date", "Status"];
-      const tableRows = [];
-
-      relevantRegistrations.forEach((reg, index) => {
-        const eventData = reg.event || {};
-        const registrationData = [
-          index + 1,
-          reg.firstName ? `${reg.firstName} ${reg.lastName || ''}` : (reg.user?.name || 'Unknown'),
-          reg.email || reg.user?.email || 'N/A',
-          reg.college || 'N/A',
-          eventData.title || 'Unknown Event',
-          eventData.eventDate ? new Date(eventData.eventDate).toLocaleDateString() : 'N/A',
-          reg.status || 'registered'
-        ];
-        tableRows.push(registrationData);
-      });
+      const tableColumn = [
+        "No.", "Name", "Email", "Phone", "College/Dept", "Year", "Event", "Status", "Date"
+      ];
+      
+      const tableRows = relevantRegistrations.map((reg, index) => [
+        index + 1,
+        `${reg.firstName || ''} ${reg.lastName || ''}`,
+        reg.email || 'N/A',
+        reg.phone || 'N/A',
+        `${reg.college || 'N/A'}${reg.department ? ' / ' + reg.department : ''}`,
+        reg.year || 'N/A',
+        reg.event?.title || 'Unknown',
+        reg.status?.toUpperCase() || 'PENDING',
+        reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : 'N/A'
+      ]);
 
       autoTable(doc, {
-        startY: 60,
+        startY: 55,
         head: [tableColumn],
         body: tableRows,
         theme: 'striped',
-        headStyles: { fillColor: [102, 126, 234] }
+        headStyles: { fillColor: [63, 81, 181], fontSize: 9, cellPadding: 2 },
+        bodyStyles: { fontSize: 8, cellPadding: 2 },
+        alternateRowStyles: { fillColor: [245, 247, 255] },
+        margin: { left: 14, right: 14 },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 45 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 50 },
+          5: { cellWidth: 15 },
+          6: { cellWidth: 40 },
+          7: { cellWidth: 20 },
+          8: { cellWidth: 20 }
+        }
       });
 
-      doc.save(`event_report_${new Date().toISOString().split('T')[0]}.pdf`);
-    } else {
-      alert(`${reportFilters.format.toUpperCase()} report generation not yet implemented. CSV export is available.`);
+      doc.save(`comprehensive_report_${new Date().toISOString().split('T')[0]}.pdf`);
     }
   };
 
@@ -839,35 +883,51 @@ const rejectRegistration = async (id) => {
                           <td>{user.events}</td>
                           <td>{new Date(user.joined).toLocaleDateString()}</td>
                           <td>
-  <button
-    onClick={() => acceptRegistration(user.id)}
-    style={{
-      background: "#22c55e",
-      color: "white",
-      border: "none",
-      padding: "5px 10px",
-      borderRadius: "5px",
-      marginRight: "6px",
-      cursor: "pointer"
-    }}
-  >
-    Accept
-  </button>
+                            {user.status === 'pending' || !user.status ? (
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button
+                                  onClick={() => acceptRegistration(user.id)}
+                                  style={{
+                                    background: "#22c55e",
+                                    color: "white",
+                                    border: "none",
+                                    padding: "5px 10px",
+                                    borderRadius: "5px",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  Accept
+                                </button>
 
-  <button
-    onClick={() => rejectRegistration(user.id)}
-    style={{
-      background: "#ef4444",
-      color: "white",
-      border: "none",
-      padding: "5px 10px",
-      borderRadius: "5px",
-      cursor: "pointer"
-    }}
-  >
-    Reject
-  </button>
-</td>
+                                <button
+                                  onClick={() => rejectRegistration(user.id)}
+                                  style={{
+                                    background: "#ef4444",
+                                    color: "white",
+                                    border: "none",
+                                    padding: "5px 10px",
+                                    borderRadius: "5px",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <span className={`status-badge ${user.status}`} style={{
+                                padding: '4px 12px',
+                                borderRadius: '50px',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                textTransform: 'capitalize',
+                                backgroundColor: user.status === 'accepted' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                color: user.status === 'accepted' ? '#22c55e' : '#ef4444',
+                                border: user.status === 'accepted' ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
+                              }}>
+                                {user.status}
+                              </span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1382,6 +1442,84 @@ const rejectRegistration = async (id) => {
                   Edit Event
                 </button>
                 <button className="btn-secondary">View Registrations</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="modal-overlay" onClick={() => setShowReportModal(false)}>
+          <div className="modal-content report-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowReportModal(false)}>×</button>
+            <h2>Export Event Report</h2>
+            
+            <div className="modal-form">
+              <div className="form-group">
+                <label>Date Range</label>
+                <div className="form-row">
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.7rem', opacity: 0.7 }}>From</label>
+                    <input 
+                      type="date" 
+                      value={reportFilters.startDate} 
+                      onChange={(e) => setReportFilters({...reportFilters, startDate: e.target.value})}
+                      className="date-input"
+                    />
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.7rem', opacity: 0.7 }}>To</label>
+                    <input 
+                      type="date" 
+                      value={reportFilters.endDate} 
+                      onChange={(e) => setReportFilters({...reportFilters, endDate: e.target.value})}
+                      className="date-input"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Event Category</label>
+                <select 
+                  value={reportFilters.eventType}
+                  onChange={(e) => setReportFilters({...reportFilters, eventType: e.target.value})}
+                  className="filter-select"
+                  style={{ width: '100%', padding: '0.6rem' }}
+                >
+                  <option value="all">All Categories</option>
+                  <option value="tech">Technology</option>
+                  <option value="music">Music</option>
+                  <option value="workshop">Workshops</option>
+                  <option value="networking">Networking</option>
+                  <option value="charity">Charity</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Export Format</label>
+                <select 
+                  value={reportFilters.format}
+                  onChange={(e) => setReportFilters({...reportFilters, format: e.target.value})}
+                  className="filter-select"
+                  style={{ width: '100%', padding: '0.6rem' }}
+                >
+                  <option value="pdf">PDF Document</option>
+                  <option value="csv">CSV File</option>
+                </select>
+              </div>
+
+              <div className="form-actions" style={{ marginTop: '1.5rem' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowReportModal(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn-primary" onClick={() => {
+                  handleGenerateReport();
+                  setShowReportModal(false);
+                }}>
+                  Generate Report
+                </button>
               </div>
             </div>
           </div>

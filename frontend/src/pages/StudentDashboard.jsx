@@ -7,6 +7,7 @@ import EventCard from "../components/EventCard";
 import ProfileForm from "../components/ProfileForm";
 import "../styles/dashboard.css";
 import Chatbot from "../components/chatbot";
+import Calendar from "../components/Calendar";
 
 export default function StudentDashboard() {
     const navigate = useNavigate();
@@ -82,23 +83,23 @@ export default function StudentDashboard() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    // Filter out registrations where the event was deleted
-                    const validRegistrations = data.filter(reg => reg.event && reg.event._id);
-                    setStudentRegistrations(validRegistrations);
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Filter out registrations where the event was deleted
+                        const validRegistrations = data.filter(reg => reg.event && reg.event._id);
+                        setStudentRegistrations(validRegistrations);
 
-                    // Calculate stats based on valid registrations only
-                    const nowDate = new Date();
-                    const upcoming = validRegistrations.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
-                    const completed = validRegistrations.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
+                        // Calculate stats based on valid registrations only
+                        const nowDate = new Date();
+                        const upcoming = validRegistrations.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
+                        const completed = validRegistrations.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
 
-                    setStats({
-                        totalRegistrations: validRegistrations.length,
-                        upcomingEvents: upcoming,
-                        completedEvents: completed
-                    });
-                }
+                        setStats({
+                            totalRegistrations: validRegistrations.length,
+                            upcomingEvents: upcoming,
+                            completedEvents: completed
+                        });
+                    }
             } catch (err) {
                 console.error('Error fetching registrations:', err);
             }
@@ -183,7 +184,7 @@ export default function StudentDashboard() {
 
             <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <main className="main-content">
-                <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" id={user?.id} />
+                <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" id={user?.id} registrations={studentRegistrations} />
 
                 <div className="welcome-section">
                     <div style={{
@@ -432,19 +433,34 @@ export default function StudentDashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <span style={{
-                                                background: isUpcoming ? 'rgba(16, 185, 129, 0.12)' : 'rgba(102,126,234,0.12)',
-                                                color: isUpcoming ? '#10b981' : '#667eea',
-                                                border: isUpcoming ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(102,126,234,0.25)',
-                                                padding: '6px 14px',
-                                                borderRadius: '50px',
-                                                fontSize: '12px',
-                                                fontWeight: '700',
-                                                whiteSpace: 'nowrap',
-                                                marginLeft: '16px'
-                                            }}>
-                                                {isUpcoming ? '🚀 Upcoming' : '✅ Completed'}
-                                            </span>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', marginLeft: '16px' }}>
+                                                <span style={{
+                                                    background: registration.status === 'accepted' ? 'rgba(34, 197, 94, 0.12)' : registration.status === 'rejected' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 171, 0, 0.12)',
+                                                    color: registration.status === 'accepted' ? '#22c55e' : registration.status === 'rejected' ? '#ef4444' : '#ffab00',
+                                                    border: registration.status === 'accepted' ? '1px solid rgba(34, 197, 94, 0.25)' : registration.status === 'rejected' ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(255, 171, 0, 0.25)',
+                                                    padding: '4px 12px',
+                                                    borderRadius: '50px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '800',
+                                                    whiteSpace: 'nowrap',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.02em'
+                                                }}>
+                                                    {registration.status === 'accepted' ? '● Accepted' : registration.status === 'rejected' ? '● Rejected' : '● Pending'}
+                                                </span>
+                                                <span style={{
+                                                    background: isUpcoming ? 'rgba(16, 185, 129, 0.12)' : 'rgba(102,126,234,0.12)',
+                                                    color: isUpcoming ? '#10b981' : '#667eea',
+                                                    border: isUpcoming ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(102,126,234,0.25)',
+                                                    padding: '4px 12px',
+                                                    borderRadius: '50px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '700',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {isUpcoming ? '🚀 Upcoming' : '✅ Completed'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 );
