@@ -111,6 +111,7 @@ export default function AdminDashboard() {
   status: p.status
 }));
 
+
       // Filter out cancelled registrations for stats accuracy
       const activeRegistrations = participants.filter(p => p.status !== 'cancelled');
       const totalActiveRegistrations = activeRegistrations.length;
