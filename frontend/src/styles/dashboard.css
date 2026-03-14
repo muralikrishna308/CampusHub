@@ -738,6 +738,34 @@ body {
   color: #fff;
 }
 
+.header-icon {
+  font-size: 1.25rem;
+  stroke-width: 2.2;
+}
+
+.calendar-btn {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(168, 85, 247, 0.1)) !important;
+  color: #a855f7 !important;
+  border-color: rgba(168, 85, 247, 0.2) !important;
+}
+
+.calendar-btn:hover {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(102, 126, 234, 0.2)) !important;
+  border-color: #a855f7 !important;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.3) !important;
+  transform: translateY(-2px) scale(1.05);
+}
+
+.bell-btn {
+  color: #667eea !important;
+}
+
+.bell-btn:hover {
+  border-color: #667eea !important;
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.3) !important;
+  transform: translateY(-2px) scale(1.05);
+}
+
 .sidebar-overlay {
   display: none;
   position: fixed;

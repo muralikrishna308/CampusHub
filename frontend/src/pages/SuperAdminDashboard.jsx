@@ -3,6 +3,8 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
 import Chatbot from '../components/chatbot';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 /* Dummy event images*/
 const eventImages = {
@@ -29,10 +31,94 @@ export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [reportFilters, setReportFilters] = useState({
     startDate: '2024-03-01',
-    endDate: '2024-03-31',
+    endDate: '2027-03-31',
     eventType: 'all',
     format: 'pdf',
   });
+
+  const handleGenerateReport = () => {
+    if (!stats || !stats.events) return;
+    
+    const filteredEvents = stats.events.filter(ev => {
+      const evDate = new Date(ev.date);
+      const start = new Date(reportFilters.startDate);
+      const end = new Date(reportFilters.endDate);
+      const matchesDate = evDate >= start && evDate <= end;
+      const matchesType = reportFilters.eventType === 'all' || ev.category.toLowerCase() === reportFilters.eventType.toLowerCase();
+      return matchesDate && matchesType;
+    });
+
+    if (filteredEvents.length === 0) {
+      alert('No data found for the selected filters.');
+      return;
+    }
+
+    if (reportFilters.format === 'excel') {
+      // CSV/Excel Export
+      const headers = ["Event Title", "Category", "Date", "Location", "Registrations", "Capacity", "Revenue", "Status"];
+      const rows = filteredEvents.map(ev => [
+        ev.title,
+        ev.category,
+        new Date(ev.date).toLocaleDateString(),
+        ev.location,
+        ev.registered,
+        ev.capacity,
+        `${ev.revenue} Rs`,
+        ev.status
+      ]);
+
+      let csvContent = "data:text/csv;charset=utf-8," 
+        + "Event Analytics Report\n"
+        + `Generated on: ${new Date().toLocaleString()}\n`
+        + `Filters: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}\n\n`
+        + headers.join(",") + "\n"
+        + rows.map(e => e.join(",")).join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `campus_hub_report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // PDF Export
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.setTextColor(102, 126, 234);
+      doc.text('CampusHub Analytics Report', 14, 22);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+      doc.text(`Range: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}`, 14, 35);
+      
+      doc.setDrawColor(200);
+      doc.line(14, 40, 196, 40);
+
+      const tableColumn = ["Event", "Category", "Date", "Reg/Cap", "Revenue", "Status"];
+      const tableRows = filteredEvents.map(ev => [
+        ev.title,
+        ev.category,
+        new Date(ev.date).toLocaleDateString(),
+        `${ev.registered}/${ev.capacity}`,
+        `${ev.revenue.toLocaleString()} Rs`,
+        ev.status
+      ]);
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 45,
+        theme: 'grid',
+        headStyles: { fillColor: [102, 126, 234] },
+        styles: { fontSize: 9 }
+      });
+
+      doc.save(`campus_hub_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  };
 
   /*Data fetch*/
   const fetchDashboardData = useCallback(async () => {
@@ -473,8 +559,7 @@ export default function SuperAdminDashboard() {
                   </table>
                 </div>
 
-                <button className="sa-btn-primary sa-generate-btn"
-                  onClick={() => alert(`Generating ${reportFilters.format.toUpperCase()} report…`)}>
+                <button className="sa-btn-primary sa-generate-btn" onClick={handleGenerateReport}>
                   Generate Report ↓
                 </button>
               </>

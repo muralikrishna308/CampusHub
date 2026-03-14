@@ -321,7 +321,7 @@
 //                                             </div>
 //                                             <button
 //                                                 // className={`register-btn ${registeredEvents.includes(event._id) ? 'registered' : ''}`}
-//                                                 className={`register-btn ${registeredEvents[event._id] ? 'registered' : ''}`}
+//                                                 className={`register-btn ${registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected' ? 'registered' : ''}`}
 //                                                 onClick={e => { e.stopPropagation(); handleRegister(event._id); }}
 //                                                 disabled={spotsLeft(event) === 0}
 //                                             >
@@ -744,9 +744,9 @@ setRegisteredEvents(registrationsMap);
                                             </div>
                                             <button
                                                 // className={`register-btn ${registeredEvents.includes(event._id) ? 'registered' : ''}`}
-                                                className={`register-btn ${registeredEvents[event._id] ? 'registered' : ''}`}
+                                                className={`register-btn ${registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected' ? 'registered' : ''}`}
                                                 onClick={e => { e.stopPropagation(); handleRegister(event._id); }}
-                                                disabled={spotsLeft(event) === 0}
+                                                disabled={spotsLeft(event) === 0 || (registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected')}
                                             >
                                                  {/* {registeredEvents.includes(event._id)
                                                     ? '✔ Registered'
@@ -758,7 +758,7 @@ setRegisteredEvents(registrationsMap);
   : registeredEvents[event._id] === "accepted"
   ? "✔ Registered"
   : registeredEvents[event._id] === "rejected"
-  ? "❌ Rejected"
+  ? "Re-register"
   : spotsLeft(event) === 0
   ? "Full"
   : "Register"}
@@ -820,8 +820,10 @@ setRegisteredEvents(registrationsMap);
                                 </div>
 
                                 <div className="ev-modal-actions">
-                                    {registeredEvents[selectedEvent._id] ? (
-                                        <button className="register-btn registered large" disabled>✔ Already Registered</button>
+                                    {registeredEvents[selectedEvent._id] && registeredEvents[selectedEvent._id] !== 'rejected' ? (
+                                        <button className="register-btn registered large" disabled>
+                                            {registeredEvents[selectedEvent._id] === 'pending' ? '⏳ Pending Approval' : '✔ Already Registered'}
+                                        </button>
                                     ) : spotsLeft(selectedEvent) === 0 ? (
                                         <button className="register-btn full large" disabled>Event Full</button>
                                     ) : (
