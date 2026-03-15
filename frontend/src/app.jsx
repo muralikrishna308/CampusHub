@@ -8,6 +8,8 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import Events from "./pages/Events";
 import MyRegistrations from "./pages/MyRegistrations";
 import ForgotPassword from "./pages/ForgotPassword";
+import Profile from "./pages/ProfilePage";
+
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -16,6 +18,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
@@ -29,6 +32,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin"
             element={
@@ -37,6 +41,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/super-admin"
             element={
@@ -45,6 +50,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/participants"
             element={
@@ -53,6 +59,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/registrations"
             element={
@@ -61,6 +68,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/events"
             element={
@@ -69,6 +77,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute role={"student"}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>
