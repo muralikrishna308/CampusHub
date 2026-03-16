@@ -34,6 +34,16 @@ exports.registerForEvent = async (req, res) => {
     });
 
     if (existingRegistration) {
+      if (existingRegistration.status === 'rejected') {
+        // If it was rejected, we allow them to try again by updating it back to pending
+        existingRegistration.status = 'pending';
+        // You might want to update other fields if they were changed
+        await existingRegistration.save();
+        return res.status(200).json({ 
+          msg: "Registration re-submitted for approval", 
+          registration: existingRegistration 
+        });
+      }
       return res.status(400).json({ msg: "You are already registered for this event" });
     }
 
@@ -213,3 +223,111 @@ exports.cancelRegistration = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Accept registration (admin)
+exports.acceptRegistration = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    const adminId = req.user.id;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event")
+      .populate("user", "email name");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    // Ensure the admin making the request is the one who owns the event
+    if (registration.event.admin.toString() !== adminId && req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Unauthorized to accept this registration" });
+    }
+
+    registration.status = "accepted";
+    await registration.save();
+
+    // Send email notification
+    try {
+      await sendEmail(
+        registration.email || registration.user.email,
+        "Event Registration Accepted! ✅",
+        `
+Hello ${registration.firstName || registration.user.name},
+
+Great news! Your registration for the event "${registration.event.title}" has been accepted.
+
+Event Details
+-------------------------
+Event Name: ${registration.event.title}
+Date: ${new Date(registration.event.eventDate).toDateString()}
+Location: ${registration.event.location}
+
+We look forward to seeing you there!
+
+Best Regards,
+Campus Event Hub Team
+`
+      );
+    } catch (emailError) {
+      console.log("Acceptance email failed:", emailError.message);
+    }
+
+    res.json({ msg: "Registration accepted successfully", registration });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+// Reject registration (admin)
+exports.rejectRegistration = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    const adminId = req.user.id;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event")
+      .populate("user", "email name");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    if (registration.event.admin.toString() !== adminId && req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Unauthorized to reject this registration" });
+    }
+
+    registration.status = "rejected";
+    await registration.save();
+
+    // Send email notification
+    try {
+      await sendEmail(
+        registration.email || registration.user.email,
+        "Event Registration Update: Rejected ❌",
+        `
+Hello ${registration.firstName || registration.user.name},
+
+Unfortunately, your registration for the event "${registration.event.title}" has been rejected.
+
+If you have any questions, please contact the event organizer.
+
+Best Regards,
+Campus Event Hub Team
+`
+      );
+    } catch (emailError) {
+      console.log("Rejection email failed:", emailError.message);
+    }
+
+    res.json({ msg: "Registration rejected successfully", registration });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+

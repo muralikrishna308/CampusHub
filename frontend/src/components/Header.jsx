@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import Calendar from "./Calendar";
+import { FiCalendar, FiBell } from "react-icons/fi";
+import { AuthContext } from "../context/AuthContext";
 
 const NOTIFICATIONS = [
     { id: 1, icon: '📅', message: 'Tech Conference starts in 2 days', time: '5 min ago', unread: true },
@@ -7,9 +10,37 @@ const NOTIFICATIONS = [
     { id: 4, icon: '🔔', message: 'Reminder: Sports Day tomorrow', time: '1 day ago', unread: false },
 ];
 
-const Header = ({ userName, userRole, id }) => {
+const Header = ({ userName, userRole, id, registrations: initialRegistrations = [] }) => {
+    const { token } = useContext(AuthContext);
     const [showNotifs, setShowNotifs] = useState(false);
+    const [showCalendar, setShowCalendar] = useState(false);
     const [notifs, setNotifs] = useState(NOTIFICATIONS);
+    const [registrations, setRegistrations] = useState(initialRegistrations);
+
+    useEffect(() => {
+        // Only fetch if we don't have registrations passed as props and we have a student token
+        if (initialRegistrations.length === 0 && token && userRole === "Student") {
+            const fetchRegistrations = async () => {
+                try {
+                    const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const validRegistrations = data.filter(reg => reg.event && reg.event._id);
+                        setRegistrations(validRegistrations);
+                    }
+                } catch (err) {
+                    console.error('Error fetching registrations in Header:', err);
+                }
+            };
+            fetchRegistrations();
+        } else if (initialRegistrations.length > 0) {
+            setRegistrations(initialRegistrations);
+        }
+    }, [initialRegistrations, token, userRole]);
 
     const unreadCount = notifs.filter(n => n.unread).length;
 
@@ -36,13 +67,36 @@ const Header = ({ userName, userRole, id }) => {
 
             {/* Right – notifications + profile */}
             <div className="header-right-section">
+                {/* Calendar Icon-btn */}
+                <div className="header-notif-wrapper">
+                    <button
+                        className="header-icon-btn calendar-btn"
+                        onClick={() => {
+                            setShowCalendar(!showCalendar);
+                            setShowNotifs(false);
+                        }}
+                        title="View Event Calendar"
+                    >
+                        <FiCalendar className="header-icon" />
+                    </button>
+
+                    {showCalendar && (
+                        <div className="header-notif-dropdown calendar-dropdown" style={{ width: 'auto', padding: '0' }}>
+                            <Calendar registrations={registrations} />
+                        </div>
+                    )}
+                </div>
+
                 {/* Notification bell */}
                 <div className="header-notif-wrapper">
                     <button
-                        className="header-icon-btn"
-                        onClick={() => setShowNotifs(!showNotifs)}
+                        className="header-icon-btn bell-btn"
+                        onClick={() => {
+                            setShowNotifs(!showNotifs);
+                            setShowCalendar(false);
+                        }}
                     >
-                        🔔
+                        <FiBell className="header-icon" />
                         {unreadCount > 0 && (
                             <span className="header-notif-badge">{unreadCount}</span>
                         )}
