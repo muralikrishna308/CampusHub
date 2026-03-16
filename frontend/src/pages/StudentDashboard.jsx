@@ -120,11 +120,12 @@ export default function StudentDashboard() {
                 });
                 if (response.ok) {
                     const data = await response.json();
+                    const FALLBACK = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><rect fill="url(#g)" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="48">📅</text></svg>');
                     const transformedEvents = data.slice(0, 3).map(ev => ({
                         ...ev,
-                        image: ev.image ?
-                            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${ev.image}`) :
-                            'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80'
+                        image: ev.image
+                            ? (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${encodeURIComponent(ev.image)}`)
+                            : FALLBACK
                     }));
                     setFeaturedEvents(transformedEvents);
                 }
@@ -347,11 +348,12 @@ export default function StudentDashboard() {
                                         backgroundImage: `url(${event.image})`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
-                                        backgroundColor: 'rgba(102,126,234,0.1)',
+                                        backgroundColor: 'rgba(102,126,234,0.15)',
+                                        backgroundRepeat: 'no-repeat',
                                         position: 'relative'
                                     }}>
                                         <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(102,126,234,0.9)', color: '#fff', fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '50px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            {event.category || 'Tech'}
+                                            {({'tech':'💻 Technology','music':'🎵 Music','workshop':'🛠️ Workshop','cultural':'🎭 Cultural','sports':'⚽ Sports','other':'🌟 Other'})[event.category] || event.category || 'Tech'}
                                         </div>
                                     </div>
                                     <div style={{ padding: '16px' }}>

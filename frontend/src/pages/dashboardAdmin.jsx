@@ -6,6 +6,18 @@ import Chatbot from '../components/chatbot';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Map raw DB category values to human-readable labels
+const CATEGORY_LABELS = {
+  tech: '💻 Technology',
+  music: '🎵 Music',
+  workshop: '🛠️ Workshop',
+  cultural: '🎭 Cultural',
+  sports: '⚽ Sports',
+  other: '🌟 Other',
+};
+
+const getCategoryLabel = (cat) => CATEGORY_LABELS[cat?.toLowerCase()] || cat || 'Other';
+
 export default function AdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -102,14 +114,14 @@ export default function AdminDashboard() {
       //   ).values()
       // );
       const registrationUsers = participants.map(p => ({
-  id: p._id,
-  name: `${p.firstName} ${p.lastName}`,
-  email: p.email,
-  role: "student",
-  events: p.event?.title,
-  joined: p.createdAt,
-  status: p.status
-}));
+        id: p._id,
+        name: `${p.firstName} ${p.lastName}`,
+        email: p.email,
+        role: "student",
+        events: p.event?.title,
+        joined: p.createdAt,
+        status: p.status
+      }));
 
 
       // Filter out cancelled registrations for stats accuracy
@@ -118,13 +130,14 @@ export default function AdminDashboard() {
 
       // Enrich events with registration data
       const enrichedEvents = events.map(event => {
-        const eventRegistrations = activeRegistrations.filter(p => 
+        const eventRegistrations = activeRegistrations.filter(p =>
           (p.event?._id || p.event) === event._id
         );
         const registeredCount = eventRegistrations.length;
         const revenueAmount = registeredCount * (event.ticketPrice || 0);
         return {
           ...event,
+          category: (event.category || 'other').toLowerCase(),
           registered: registeredCount,
           revenue: revenueAmount
         };
@@ -241,15 +254,7 @@ export default function AdminDashboard() {
     e.preventDefault();
 
     try {
-      const formData = new FormData();
-      formData.append('title', eventForm.title);
-      formData.append('description', eventForm.description);
-      formData.append('eventDate', new Date(eventForm.eventDate + 'T00:00:00').toISOString());
-      formData.append('location', eventForm.location);
-      formData.append('registrationEndDate', new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString());
-      formData.append('ticketPrice', eventForm.ticketPrice || 0);
-
-      const response = await fetch(`http://localhost:5000/api/events/${eventForm._id}`, {
+      const response = await fetch(`http://localhost:5000/api/dashboard/admin/events/${eventForm._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -261,7 +266,8 @@ export default function AdminDashboard() {
           eventDate: new Date(eventForm.eventDate + 'T00:00:00').toISOString(),
           location: eventForm.location,
           registrationEndDate: new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString(),
-          ticketPrice: Number(eventForm.ticketPrice) || 0
+          ticketPrice: Number(eventForm.ticketPrice) || 0,
+          category: eventForm.category || 'other'
         })
       });
 
@@ -295,7 +301,7 @@ export default function AdminDashboard() {
 
         if (response.ok) {
           alert('Event deleted successfully!');
-          fetchDashboardData(); 
+          fetchDashboardData();
         } else {
           alert('Failed to delete event');
         }
@@ -314,47 +320,47 @@ export default function AdminDashboard() {
       alert(`Role changed for ${user.name}`);
     }
   };
-const acceptRegistration = async (id) => {
-  try {
-    const res = await fetch(
-      `http://localhost:5000/api/registrations/accept/${id}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const acceptRegistration = async (id) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/registrations/accept/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        alert("Registration Accepted");
+        fetchDashboardData(); // refresh table
       }
-    );
-
-    if (res.ok) {
-      alert("Registration Accepted");
-      fetchDashboardData(); // refresh table
+    } catch (error) {
+      console.error(error);
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
 
-const rejectRegistration = async (id) => {
-  try {
-    const res = await fetch(
-      `http://localhost:5000/api/registrations/reject/${id}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const rejectRegistration = async (id) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/registrations/reject/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        alert("Registration Rejected");
+        fetchDashboardData();
       }
-    );
-
-    if (res.ok) {
-      alert("Registration Rejected");
-      fetchDashboardData();
+    } catch (error) {
+      console.error(error);
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
   const handleGenerateReport = () => {
     if (!stats?.events) {
       alert('No data available to generate report');
@@ -366,10 +372,10 @@ const rejectRegistration = async (id) => {
       const startDate = new Date(reportFilters.startDate);
       const endDate = new Date(reportFilters.endDate);
       endDate.setHours(23, 59, 59, 999);
-      
+
       const isInDateRange = eventDate >= startDate && eventDate <= endDate;
       const isTypeMatch = reportFilters.eventType === 'all' || event.category === reportFilters.eventType;
-      
+
       return isInDateRange && isTypeMatch;
     });
 
@@ -381,29 +387,29 @@ const rejectRegistration = async (id) => {
     const totalReg = filteredEvents.reduce((sum, e) => sum + (e.registered || 0), 0);
     const totalRev = filteredEvents.reduce((sum, e) => sum + (e.revenue || 0), 0);
     const filteredEventIds = filteredEvents.map(e => e._id);
-    const relevantRegistrations = allRegistrations.filter(reg => 
+    const relevantRegistrations = allRegistrations.filter(reg =>
       reg.event && filteredEventIds.includes(reg.event._id || reg.event)
     );
 
     if (reportFilters.format === 'csv') {
       // Professional Comprehensive CSV
       const headers = [
-        'No.', 
-        'First Name', 
-        'Last Name', 
-        'Email', 
-        'Phone', 
-        'College', 
-        'Department', 
-        'Year', 
-        'City', 
+        'No.',
+        'First Name',
+        'Last Name',
+        'Email',
+        'Phone',
+        'College',
+        'Department',
+        'Year',
+        'City',
         'Gender',
-        'Event Title', 
-        'Event Date', 
+        'Event Title',
+        'Event Date',
         'Registration Status',
         'Registered At'
       ];
-      
+
       const rows = relevantRegistrations.map((reg, index) => [
         index + 1,
         reg.firstName || 'N/A',
@@ -425,12 +431,12 @@ const rejectRegistration = async (id) => {
       csv += `Generated on,${new Date().toLocaleString()}\n`;
       csv += `Date Range,${reportFilters.startDate} to ${reportFilters.endDate}\n`;
       csv += `Category,${reportFilters.eventType}\n\n`;
-      
+
       csv += `SUMMARY\n`;
       csv += `Total Events,${filteredEvents.length}\n`;
       csv += `Total Registrations,${totalReg}\n`;
       csv += `Total Revenue,$${totalRev.toLocaleString()}\n\n`;
-      
+
       csv += headers.join(',') + '\n';
       csv += rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
@@ -446,22 +452,22 @@ const rejectRegistration = async (id) => {
     } else {
       // Professional Landscape PDF for more columns
       const doc = new jsPDF('l', 'mm', 'a4');
-      
+
       doc.setFontSize(22);
       doc.setTextColor(63, 81, 181);
       doc.text('Comprehensive Event Registrations Report', 14, 22);
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text(`Generated: ${new Date().toLocaleString()} | Filter: ${reportFilters.startDate} to ${reportFilters.endDate}`, 14, 30);
-      
+
       doc.setDrawColor(200);
       doc.line(14, 34, 282, 34);
-      
+
       doc.setFontSize(12);
       doc.setTextColor(0);
       doc.text('KEY METRICS', 14, 42);
-      
+
       doc.setFontSize(10);
       doc.text(`Total Events: ${filteredEvents.length}`, 14, 48);
       doc.text(`Total Registrations: ${totalReg}`, 60, 48);
@@ -470,7 +476,7 @@ const rejectRegistration = async (id) => {
       const tableColumn = [
         "No.", "Name", "Email", "Phone", "College/Dept", "Year", "Event", "Status", "Date"
       ];
-      
+
       const tableRows = relevantRegistrations.map((reg, index) => [
         index + 1,
         `${reg.firstName || ''} ${reg.lastName || ''}`,
@@ -733,11 +739,13 @@ const rejectRegistration = async (id) => {
                       className="search-input"
                     />
                     <select className="filter-select">
-                      <option>All Categories</option>
-                      <option>Technology</option>
-                      <option>Music</option>
-                      <option>Education</option>
-                      <option>Networking</option>
+                      <option value="">All Categories</option>
+                      <option value="tech">💻 Technology</option>
+                      <option value="music">🎵 Music</option>
+                      <option value="workshop">🛠️ Workshop</option>
+                      <option value="cultural">🎭 Cultural</option>
+                      <option value="sports">⚽ Sports</option>
+                      <option value="other">🌟 Other</option>
                     </select>
                     <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
                       + New Event
@@ -763,10 +771,23 @@ const rejectRegistration = async (id) => {
                         <tr key={event._id}>
                           <td>
                             <div className="event-cell">
-                              <img
-                                src={`http://localhost:5000/uploads/${event.image}`}
-                                alt={event.title}
-                              />
+                              {event.image ? (
+                                <img
+                                  src={`http://localhost:5000/uploads/${encodeURIComponent(event.image)}`}
+                                  alt={event.title}
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextElementSibling.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              <div style={{
+                                display: event.image ? 'none' : 'flex',
+                                width: '40px', height: '40px', borderRadius: '8px',
+                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                alignItems: 'center', justifyContent: 'center',
+                                fontSize: '18px', flexShrink: 0
+                              }}>📅</div>
                               <span>{event.title}</span>
                             </div>
                           </td>
@@ -1017,11 +1038,12 @@ const rejectRegistration = async (id) => {
                       onChange={(e) => setReportFilters({ ...reportFilters, eventType: e.target.value })}
                     >
                       <option value="all">All Events</option>
-                      <option value="tech">Technology</option>
-                      <option value="music">Music</option>
-                      <option value="workshop">Workshops</option>
-                      <option value="networking">Networking</option>
-                      <option value="charity">Charity</option>
+                      <option value="tech">💻 Technology</option>
+                      <option value="music">🎵 Music</option>
+                      <option value="workshop">🛠️ Workshop</option>
+                      <option value="cultural">🎭 Cultural</option>
+                      <option value="sports">⚽ Sports</option>
+                      <option value="other">🌟 Other</option>
                     </select>
                   </div>
 
@@ -1102,10 +1124,10 @@ const rejectRegistration = async (id) => {
                             const startDate = new Date(reportFilters.startDate);
                             const endDate = new Date(reportFilters.endDate);
                             endDate.setHours(23, 59, 59, 999);
-                            
+
                             const isInDateRange = eventDate >= startDate && eventDate <= endDate;
                             const isTypeMatch = reportFilters.eventType === 'all' || event.category === reportFilters.eventType;
-                            
+
                             return isInDateRange && isTypeMatch;
                           })
                           .map(e => `${e.title},${new Date(e.eventDate).toLocaleDateString()},${e.registered}/${e.capacity},${e.revenue || 0},${Math.round((e.registered / (e.capacity || 1)) * 100)}%`)
@@ -1139,10 +1161,10 @@ const rejectRegistration = async (id) => {
                           const startDate = new Date(reportFilters.startDate);
                           const endDate = new Date(reportFilters.endDate);
                           endDate.setHours(23, 59, 59, 999);
-                          
+
                           const isInDateRange = eventDate >= startDate && eventDate <= endDate;
                           const isTypeMatch = reportFilters.eventType === 'all' || event.category === reportFilters.eventType;
-                          
+
                           return isInDateRange && isTypeMatch;
                         })
                         .map(event => (
@@ -1264,11 +1286,12 @@ const rejectRegistration = async (id) => {
               </div>
 
               <div className="form-group">
-                <label>Event Image</label>
+                <label>Event Image *</label>
                 <div className="image-upload-container">
                   <input
                     type="file"
                     accept="image/*"
+                    required
                     onChange={(e) => {
                       const file = e.target.files[0];
                       if (file) {
@@ -1371,6 +1394,22 @@ const rejectRegistration = async (id) => {
                 </div>
               </div>
 
+              <div className="form-group">
+                <label>Category *</label>
+                <select
+                  value={eventForm.category || 'other'}
+                  onChange={(e) => setEventForm({ ...eventForm, category: e.target.value })}
+                  required
+                >
+                  <option value="tech">💻 Technology</option>
+                  <option value="music">🎵 Music</option>
+                  <option value="workshop">🛠️ Workshop</option>
+                  <option value="cultural">🎭 Cultural</option>
+                  <option value="sports">⚽ Sports</option>
+                  <option value="other">🌟 Other</option>
+                </select>
+              </div>
+
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>
                   Cancel
@@ -1402,7 +1441,7 @@ const rejectRegistration = async (id) => {
               <div className="event-meta">
                 <span>📅 {new Date(selectedEvent.eventDate).toLocaleDateString()}</span>
                 <span>📍 {selectedEvent.location}</span>
-                <span>🏷️ {selectedEvent.category}</span>
+                <span>🏷️ {getCategoryLabel(selectedEvent.category)}</span>
               </div>
 
               <p className="event-description">{selectedEvent.description}</p>
@@ -1454,54 +1493,55 @@ const rejectRegistration = async (id) => {
           <div className="modal-content report-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowReportModal(false)}>×</button>
             <h2>Export Event Report</h2>
-            
+
             <div className="modal-form">
               <div className="form-group">
                 <label>Date Range</label>
                 <div className="form-row">
                   <div className="form-group" style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.7rem', opacity: 0.7 }}>From</label>
-                    <input 
-                      type="date" 
-                      value={reportFilters.startDate} 
-                      onChange={(e) => setReportFilters({...reportFilters, startDate: e.target.value})}
+                    <input
+                      type="date"
+                      value={reportFilters.startDate}
+                      onChange={(e) => setReportFilters({ ...reportFilters, startDate: e.target.value })}
                       className="date-input"
                     />
                   </div>
                   <div className="form-group" style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.7rem', opacity: 0.7 }}>To</label>
-                    <input 
-                      type="date" 
-                      value={reportFilters.endDate} 
-                      onChange={(e) => setReportFilters({...reportFilters, endDate: e.target.value})}
+                    <input
+                      type="date"
+                      value={reportFilters.endDate}
+                      onChange={(e) => setReportFilters({ ...reportFilters, endDate: e.target.value })}
                       className="date-input"
                     />
                   </div>
                 </div>
               </div>
-              
+
               <div className="form-group">
                 <label>Event Category</label>
-                <select 
+                <select
                   value={reportFilters.eventType}
-                  onChange={(e) => setReportFilters({...reportFilters, eventType: e.target.value})}
+                  onChange={(e) => setReportFilters({ ...reportFilters, eventType: e.target.value })}
                   className="filter-select"
                   style={{ width: '100%', padding: '0.6rem' }}
                 >
                   <option value="all">All Categories</option>
-                  <option value="tech">Technology</option>
-                  <option value="music">Music</option>
-                  <option value="workshop">Workshops</option>
-                  <option value="networking">Networking</option>
-                  <option value="charity">Charity</option>
+                  <option value="tech">💻 Technology</option>
+                  <option value="music">🎵 Music</option>
+                  <option value="workshop">🛠️ Workshop</option>
+                  <option value="cultural">🎭 Cultural</option>
+                  <option value="sports">⚽ Sports</option>
+                  <option value="other">🌟 Other</option>
                 </select>
               </div>
 
               <div className="form-group">
                 <label>Export Format</label>
-                <select 
+                <select
                   value={reportFilters.format}
-                  onChange={(e) => setReportFilters({...reportFilters, format: e.target.value})}
+                  onChange={(e) => setReportFilters({ ...reportFilters, format: e.target.value })}
                   className="filter-select"
                   style={{ width: '100%', padding: '0.6rem' }}
                 >
@@ -1594,16 +1634,23 @@ function StatCard({ title, value, icon, trend, trendType = 'positive', onClick }
 
 // Event Card Component
 function EventCard({ event, onClick, onEdit }) {
+  const imageUrl = event.image
+    ? `http://localhost:5000/uploads/${encodeURIComponent(event.image)}`
+    : null;
+
   return (
     <div className="event-card" onClick={onClick}>
       <div className="event-image-container">
         <img
-          src={`http://localhost:5000/uploads/${event.image}`}
+          src={imageUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22%3E%3Crect fill=%22%236366f1%22 width=%22100%25%22 height=%22100%25%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2248%22%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E'}
           alt={event.title}
           className="event-image"
+          onError={(e) => {
+            e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22%3E%3Crect fill=%22%236366f1%22 width=%22100%25%22 height=%22100%25%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2248%22%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E';
+          }}
         />
         <span className={`event-status ${event.status}`}>{event.status}</span>
-        <span className="event-category">{event.category}</span>
+        <span className="event-category">{getCategoryLabel(event.category)}</span>
       </div>
 
       <div className="event-details">

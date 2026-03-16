@@ -10,7 +10,6 @@ exports.createEvent = async (req, res) => {
       location,
       registrationEndDate,
       ticketPrice,
-      image,
       category
     } = req.body;
 
@@ -21,7 +20,8 @@ exports.createEvent = async (req, res) => {
       location,
       registrationEndDate,
       ticketPrice,
-      image,
+      // Use the multer-uploaded file name, NOT req.body.image
+      image: req.file ? req.file.filename : null,
       category,
       admin: req.user?.id
     });
@@ -33,6 +33,7 @@ exports.createEvent = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 // Get All Events
 exports.getAllEvents = async (req, res) => {

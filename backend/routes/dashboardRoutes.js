@@ -49,6 +49,44 @@ router.get(
 );
 
 
+// ---------------- UPDATE EVENT ----------------
+router.put(
+  '/admin/events/:id',
+  auth,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const event = await Event.findById(req.params.id);
+
+      if (!event) {
+        return res.status(404).json({ msg: 'Event not found' });
+      }
+
+      if (event.admin.toString() !== req.user.id) {
+        return res.status(403).json({ msg: 'Not authorized' });
+      }
+
+      const { title, description, eventDate, location, registrationEndDate, ticketPrice, category } = req.body;
+
+      if (title) event.title = title;
+      if (description) event.description = description;
+      if (eventDate) event.eventDate = eventDate;
+      if (location) event.location = location;
+      if (registrationEndDate) event.registrationEndDate = registrationEndDate;
+      if (ticketPrice !== undefined) event.ticketPrice = Number(ticketPrice) || 0;
+      if (category) event.category = category;
+
+      await event.save();
+
+      res.json(event);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: 'Server error' });
+    }
+  }
+);
+
+
 // ---------------- DELETE EVENT ----------------
 router.delete(
   '/admin/events/:id',
