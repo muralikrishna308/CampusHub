@@ -54,17 +54,15 @@ router.put(
   '/admin/events/:id',
   auth,
   requireRole('admin'),
+  upload.single('image'),
   async (req, res) => {
     try {
       const event = await Event.findById(req.params.id);
 
-      if (!event) {
-        return res.status(404).json({ msg: 'Event not found' });
-      }
+      if (!event) return res.status(404).json({ msg: 'Event not found' });
 
-      if (event.admin.toString() !== req.user.id) {
+      if (event.admin.toString() !== req.user.id)
         return res.status(403).json({ msg: 'Not authorized' });
-      }
 
       const { title, description, eventDate, location, registrationEndDate, ticketPrice, category } = req.body;
 
@@ -76,8 +74,13 @@ router.put(
       if (ticketPrice !== undefined) event.ticketPrice = Number(ticketPrice) || 0;
       if (category) event.category = category;
 
-      await event.save();
+      if (req.file) {
+        event.image = req.file.filename;          // new image uploaded
+      } else if (req.body.removeImage === 'true') {
+        event.image = null;                       // user removed the image
+      }
 
+      await event.save();
       res.json(event);
     } catch (err) {
       console.error(err);

@@ -36,6 +36,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allRegistrations, setAllRegistrations] = useState([]);
+  const [newImagePreview, setNewImagePreview] = useState(null);
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -254,26 +255,43 @@ export default function AdminDashboard() {
     e.preventDefault();
 
     try {
+      // Use FormData so we can optionally include a new image file
+      const formData = new FormData();
+      formData.append('title', eventForm.title);
+      formData.append('description', eventForm.description);
+      formData.append('eventDate', new Date(eventForm.eventDate + 'T00:00:00').toISOString());
+      formData.append('location', eventForm.location);
+      formData.append('registrationEndDate', new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString());
+      formData.append('ticketPrice', Number(eventForm.ticketPrice) || 0);
+      formData.append('category', eventForm.category || 'other');
+
+      // If user wants to remove the image entirely
+      if (eventForm.removeImage) {
+        formData.append('removeImage', 'true');
+      }
+
+      // Only attach a new image if the user picked one
+      if (eventForm.newImage) {
+        formData.append('image', eventForm.newImage);
+      }
+
       const response = await fetch(`http://localhost:5000/api/dashboard/admin/events/${eventForm._id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
+          // NOTE: Do NOT set Content-Type here — browser sets it automatically with the correct multipart boundary
         },
-        body: JSON.stringify({
-          title: eventForm.title,
-          description: eventForm.description,
-          eventDate: new Date(eventForm.eventDate + 'T00:00:00').toISOString(),
-          location: eventForm.location,
-          registrationEndDate: new Date(eventForm.registrationEndDate + 'T23:59:59').toISOString(),
-          ticketPrice: Number(eventForm.ticketPrice) || 0,
-          category: eventForm.category || 'other'
-        })
+        body: formData
       });
 
       if (response.ok) {
         alert('Event updated successfully!');
         setShowEditModal(false);
+        // Cleanup preview URL
+        if (newImagePreview) {
+          URL.revokeObjectURL(newImagePreview);
+          setNewImagePreview(null);
+        }
         fetchDashboardData();
       } else {
         const error = await response.text();
@@ -1322,9 +1340,9 @@ export default function AdminDashboard() {
 
       {/* Edit Event Modal */}
       {showEditModal && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowEditModal(false); if (newImagePreview) { URL.revokeObjectURL(newImagePreview); setNewImagePreview(null); } }}>
           <div className="modal-content edit-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowEditModal(false)}>×</button>
+            <button className="modal-close" onClick={() => { setShowEditModal(false); if (newImagePreview) { URL.revokeObjectURL(newImagePreview); setNewImagePreview(null); } }}>×</button>
             <h2>Edit Event</h2>
 
             <form onSubmit={handleUpdateEvent} className="modal-form">
@@ -1410,6 +1428,93 @@ export default function AdminDashboard() {
                 </select>
               </div>
 
+              <div className="form-group">
+                <label>Event Image</label>
+
+                {/* ── Current image (shown only when no new image is chosen and not removed) ── */}
+                {(eventForm.image && !eventForm.removeImage && !newImagePreview) && (
+                  <div className="edit-img-current">
+                    <img
+                      src={`http://localhost:5000/uploads/${encodeURIComponent(eventForm.image)}`}
+                      alt="Current event"
+                      className="edit-img-thumb"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div className="edit-img-info">
+                      <span className="edit-img-label">Current image</span>
+                      <button
+                        type="button"
+                        className="edit-img-remove-btn"
+                        onClick={() => setEventForm({ ...eventForm, removeImage: true, newImage: null })}
+                      >
+                        🗑️ Remove image
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Removed state ── */}
+                {eventForm.removeImage && !newImagePreview && (
+                  <div className="edit-img-removed">
+                    <span>🚫 Image will be removed on save.</span>
+                    <button
+                      type="button"
+                      className="edit-img-undo-btn"
+                      onClick={() => setEventForm({ ...eventForm, removeImage: false })}
+                    >
+                      ↩ Undo
+                    </button>
+                  </div>
+                )}
+
+                {/* ── New-image live preview ── */}
+                {newImagePreview && (
+                  <div className="edit-img-preview-wrap">
+                    <img
+                      src={newImagePreview}
+                      alt="New image preview"
+                      className="edit-img-preview"
+                    />
+                    <div className="edit-img-preview-overlay">
+                      <span className="edit-img-new-badge">New image</span>
+                      <button
+                        type="button"
+                        className="edit-img-remove-btn"
+                        onClick={() => {
+                          URL.revokeObjectURL(newImagePreview);
+                          setNewImagePreview(null);
+                          setEventForm({ ...eventForm, newImage: null });
+                        }}
+                      >
+                        ✕ Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Upload / replace button ── */}
+                <label className="edit-img-upload-label" htmlFor="edit-image-input">
+                  <span>📷</span>
+                  {newImagePreview ? 'Choose a different image' : (eventForm.image && !eventForm.removeImage) ? 'Replace image' : 'Upload image'}
+                  <input
+                    id="edit-image-input"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      // Revoke old object URL if any
+                      if (newImagePreview) URL.revokeObjectURL(newImagePreview);
+                      const preview = URL.createObjectURL(file);
+                      setNewImagePreview(preview);
+                      setEventForm({ ...eventForm, newImage: file, removeImage: false });
+                    }}
+                  />
+                </label>
+                <p className="image-upload-hint">Supported formats: JPG, PNG, GIF · Max 5 MB · Leave unchanged to keep current image</p>
+              </div>
+
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>
                   Cancel
@@ -1430,9 +1535,10 @@ export default function AdminDashboard() {
             <button className="modal-close" onClick={() => setSelectedEvent(null)}>×</button>
 
             <img
-              src={`http://localhost:5000/uploads/${selectedEvent.image}`}
+              src={selectedEvent.image ? `http://localhost:5000/uploads/${encodeURIComponent(selectedEvent.image)}` : ''}
               alt={selectedEvent.title}
               className="modal-image"
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
 
             <div className="modal-details">
