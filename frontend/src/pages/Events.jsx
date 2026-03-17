@@ -437,6 +437,7 @@ const CATEGORIES = [
     { id: 'workshop', name: 'Workshops', emoji: '🛠️' },
     { id: 'cultural', name: 'Cultural', emoji: '🎭' },
     { id: 'sports', name: 'Sports', emoji: '⚽' },
+    { id: 'other', name: 'Other', emoji: '📌' },
 ];
 
 const categoryColors = {
@@ -445,6 +446,7 @@ const categoryColors = {
     workshop: '#ea580c',
     cultural: '#16a34a',
     sports: '#dc2626',
+    other: '#7c3aed',
     default: '#6b7280',
 };
 
@@ -485,7 +487,7 @@ export default function Events() {
                             (event.image.startsWith('http') ? event.image : `http://localhost:5000/uploads/${event.image}`) :
                             'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80',
                         date: event.eventDate,
-                        category: event.category || 'tech',
+                        category: (event.category || 'other').toLowerCase(),
                         speaker: event.admin?.name || 'Admin',
                         capacity: event.capacity || 100,
                         registered: event.registered || 0,

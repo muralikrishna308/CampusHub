@@ -158,7 +158,8 @@ exports.createEvent = async (req, res) => {
       eventDate,
       location,
       registrationEndDate,
-      ticketPrice
+      ticketPrice,
+      category
     } = req.body;
 
     const event = new Event({
@@ -168,6 +169,7 @@ exports.createEvent = async (req, res) => {
       location,
       registrationEndDate,
       ticketPrice: ticketPrice || null,
+      category: category || 'other',
       image: req.file ? req.file.filename : null,
       admin: req.user.id
     });

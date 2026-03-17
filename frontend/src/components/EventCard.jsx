@@ -1,9 +1,11 @@
 import React from "react";
 
+const FALLBACK_IMG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><rect fill="url(#g)" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="48">📅</text></svg>');
+
 const EventCard = ({ title, category, location, joined, image }) => {
-    const imageUrl = image ?
-        (image.startsWith('http') ? image : `http://localhost:5000/uploads/${image}`) :
-        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80';
+    const imageUrl = image
+        ? (image.startsWith('http') ? image : `http://localhost:5000/uploads/${encodeURIComponent(image)}`)
+        : FALLBACK_IMG;
 
     return (
         <div className="card">
