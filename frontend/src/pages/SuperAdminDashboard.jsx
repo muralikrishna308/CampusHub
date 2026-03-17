@@ -150,7 +150,7 @@ export default function SuperAdminDashboard() {
         events: data.events.map(ev => ({
           ...ev,
           image: ev.image ?
-            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${ev.image}`) :
+            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${encodeURIComponent(ev.image)}`) :
             eventImages.tech,
           date: ev.eventDate,
           registered: ev.registered || 0,

@@ -323,11 +323,41 @@ function EditModal({ user, onClose, onSave }) {
 function ProfilePage() {
   const auth = useAuth();
   const [profile, setProfile] = useState(() => normalizeUser(auth?.user));
+  const [profileStats, setProfileStats] = useState({ registrations: 0, eventsAttended: 0 });
 
   // Keep profile in sync if auth.user changes (e.g. after save-to-backend)
   React.useEffect(() => {
     if (auth?.user) setProfile(normalizeUser(auth.user));
   }, [auth?.user]);
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      if (!auth?.token) return;
+      try {
+        const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+          headers: { 'Authorization': `Bearer ${auth.token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const validRegs = data.filter(reg => reg.event && reg.event._id);
+          const totalRegistrations = validRegs.length;
+          
+          // events with dates in the past and accepted
+          const now = new Date();
+          const attendedEvents = validRegs.filter(reg => {
+            const isPastEvent = new Date(reg.event.eventDate) < now;
+            return isPastEvent && reg.status === 'accepted';
+          }).length;
+          
+          setProfileStats({ registrations: totalRegistrations, eventsAttended: attendedEvents });
+        }
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      }
+    };
+    fetchStats();
+  }, [auth?.token]);
+
   const [editing, setEditing] = useState(false);
 
   if (!profile) return (
@@ -438,10 +468,10 @@ function ProfilePage() {
               <StatCard label="Member Since" value={profile.joinedDate} icon={
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               } />
-              <StatCard label="Registered Events" value={profile.registrations} icon={
+              <StatCard label="Registered Events" value={profileStats.registrations} icon={
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
               } />
-              <StatCard label="Events Attended" value={profile.eventsAttended} icon={
+              <StatCard label="Events Attended" value={profileStats.eventsAttended} icon={
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4"/></svg>
               } />
             </div>
