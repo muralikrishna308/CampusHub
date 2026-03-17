@@ -5,6 +5,14 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import './MyRegistrations.css';
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
+const getSafeImageUrl = (image) => {
+    if (!image) return 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80';
+    if (image.startsWith('http')) return image;
+    return `${API_URL}/uploads/${encodeURIComponent(image)}`;
+};
+
 const CATEGORIES = [
     { id: 'all', name: 'All', emoji: '🌟' },
     { id: 'tech', name: 'Technology', emoji: '💻' },
@@ -31,7 +39,7 @@ const MyRegistrations = () => {
         const fetchUserData = async () => {
             if (!token) return;
             try {
-                const profileRes = await fetch('http://localhost:5000/api/auth/profile', {
+                const profileRes = await fetch(`${API_URL}/api/auth/profile`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (profileRes.ok) {
@@ -40,7 +48,7 @@ const MyRegistrations = () => {
                 }
 
                 setLoading(true);
-                const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -51,9 +59,7 @@ const MyRegistrations = () => {
                             ...reg,
                             event: {
                                 ...reg.event,
-                                image: reg.event.image ?
-                                    (reg.event.image.startsWith('http') ? reg.event.image : `http://localhost:5000/uploads/${encodeURIComponent(reg.event.image)}`) :
-                                    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80'
+                                image: getSafeImageUrl(reg.event.image)
                             }
                         }));
                     setRegistrations(validRegs);

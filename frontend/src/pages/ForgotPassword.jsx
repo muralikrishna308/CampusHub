@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ForgotPassword.css';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API = process.env.REACT_APP_API || 'http://localhost:5000';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
@@ -35,6 +35,7 @@ const ForgotPassword = () => {
         setError('');
         if (!email.trim()) { setError('Please enter your email.'); return; }
         setLoading(true);
+        console.log('Sending OTP to:', email.trim(), 'at', `${API}/api/auth/forgot-password/send-otp`);
         try {
             const res = await fetch(`${API}/api/auth/forgot-password/send-otp`, {
                 method: 'POST',
@@ -45,7 +46,8 @@ const ForgotPassword = () => {
             if (!res.ok) { setError(data.msg || 'Failed to send OTP'); return; }
             setStep('otp');
             setResendTimer(60);
-        } catch {
+        } catch (err) {
+            console.error('Send OTP error:', err);
             setError('Network error. Make sure the server is running.');
         } finally {
             setLoading(false);
@@ -95,7 +97,8 @@ const ForgotPassword = () => {
             const data = await res.json();
             if (!res.ok) { setError(data.msg || 'OTP verification failed'); return; }
             setStep('reset');
-        } catch {
+        } catch (err) {
+            console.error('Verify OTP error:', err);
             setError('Network error. Make sure the server is running.');
         } finally {
             setLoading(false);
@@ -140,7 +143,8 @@ const ForgotPassword = () => {
             const data = await res.json();
             if (!res.ok) { setError(data.msg || 'Password reset failed'); return; }
             setStep('success');
-        } catch {
+        } catch (err) {
+            console.error('Reset password error:', err);
             setError('Network error. Make sure the server is running.');
         } finally {
             setLoading(false);

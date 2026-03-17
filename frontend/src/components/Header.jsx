@@ -2,27 +2,58 @@ import React, { useState, useEffect, useContext } from "react";
 import Calendar from "./Calendar";
 import { FiCalendar, FiBell } from "react-icons/fi";
 import { AuthContext } from "../context/AuthContext";
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
 
-const NOTIFICATIONS = [
-    { id: 1, icon: '📅', message: 'Tech Conference starts in 2 days', time: '5 min ago', unread: true },
-    { id: 2, icon: '✅', message: 'Registration confirmed for Music Fest', time: '1 hour ago', unread: true },
-    { id: 3, icon: '🎉', message: 'New event added: AI Workshop 2026', time: '3 hours ago', unread: true },
-    { id: 4, icon: '🔔', message: 'Reminder: Sports Day tomorrow', time: '1 day ago', unread: false },
-];
 
 const Header = ({ userName, userRole, id, registrations: initialRegistrations = [] }) => {
     const { token } = useContext(AuthContext);
     const [showNotifs, setShowNotifs] = useState(false);
     const [showCalendar, setShowCalendar] = useState(false);
-    const [notifs, setNotifs] = useState(NOTIFICATIONS);
+    const [notifs, setNotifs] = useState([]);
     const [registrations, setRegistrations] = useState(initialRegistrations);
+
+    // Helper: format relative time
+    const formatTimeAgo = (date) => {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        return `${Math.floor(hours / 24)}d ago`;
+    };
+
+    // Fetch real notifications from backend
+    useEffect(() => {
+        if (!token) return;
+        const fetchNotifications = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/notifications`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setNotifs(data.map(n => ({
+                        id: n._id,
+                        icon: n.icon || '🔔',
+                        message: n.message,
+                        time: formatTimeAgo(new Date(n.createdAt)),
+                        unread: !n.isRead,
+                    })));
+                }
+            } catch (err) {
+                console.error('Error fetching notifications:', err);
+            }
+        };
+        fetchNotifications();
+    }, [token]);
 
     useEffect(() => {
         // Only fetch if we don't have registrations passed as props and we have a student token
         if (initialRegistrations.length === 0 && token && userRole === "Student") {
             const fetchRegistrations = async () => {
                 try {
-                    const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                    const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
@@ -44,12 +75,28 @@ const Header = ({ userName, userRole, id, registrations: initialRegistrations = 
 
     const unreadCount = notifs.filter(n => n.unread).length;
 
-    const markAsRead = (nId) => {
+    const markAsRead = async (nId) => {
         setNotifs(prev => prev.map(n => n.id === nId ? { ...n, unread: false } : n));
+        try {
+            await fetch(`${API_URL}/api/notifications/read/${nId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (err) {
+            console.error('Error marking notification as read:', err);
+        }
     };
 
-    const markAllRead = () => {
+    const markAllRead = async () => {
         setNotifs(prev => prev.map(n => ({ ...n, unread: false })));
+        try {
+            await fetch(`${API_URL}/api/notifications/read-all`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (err) {
+            console.error('Error marking all notifications as read:', err);
+        }
     };
 
     const initials = userName

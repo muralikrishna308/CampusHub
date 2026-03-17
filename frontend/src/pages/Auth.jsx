@@ -4,6 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import './Auth.css';
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
 const Auth = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -293,7 +295,7 @@ const Auth = () => {
             
             <div className="social-buttons">
               <button className="social-btn google-btn" type="button" onClick={() => {
-                window.location.href = `${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/google`;
+                window.location.href = `${API_URL}/api/auth/google`;
               }}>
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

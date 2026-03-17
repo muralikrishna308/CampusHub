@@ -15,6 +15,14 @@ const eventImages = {
   charity: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80',
 };
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
+const getSafeImageUrl = (image, category = 'tech') => {
+  if (!image) return eventImages[category.toLowerCase()] || eventImages.tech;
+  if (image.startsWith('http')) return image;
+  return `${API_URL}/uploads/${encodeURIComponent(image)}`;
+};
+
 const trendData = []; // Unused, kept as empty for potential future local use
 
 export default function SuperAdminDashboard() {
@@ -126,7 +134,7 @@ export default function SuperAdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/dashboard/admin', {
+      const response = await fetch(`${API_URL}/api/dashboard/admin`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -149,9 +157,7 @@ export default function SuperAdminDashboard() {
         trends: data.trends || [],
         events: data.events.map(ev => ({
           ...ev,
-          image: ev.image ?
-            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${encodeURIComponent(ev.image)}`) :
-            eventImages.tech,
+          image: getSafeImageUrl(ev.image, ev.category),
           date: ev.eventDate,
           registered: ev.registered || 0,
           capacity: ev.capacity || 100,
@@ -197,14 +203,34 @@ export default function SuperAdminDashboard() {
     return Math.floor(seconds) + " seconds ago";
   };
 
-  const fetchNotifications = useCallback(() => {
-    setNotifications([
-      { id: 1, message: 'Tech Conference starts in 2 days', read: false, time: '5 min ago' },
-      { id: 2, message: 'New user registered: Sarah Johnson', read: false, time: '1 hr ago' },
-      { id: 3, message: 'Payment received: $500 from Event Corp', read: false, time: '3 hrs ago' },
-      { id: 4, message: 'Event capacity reached: Music Festival', read: true, time: '1 day ago' },
-    ]);
-  }, []);
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const formatTimeAgo = (date) => {
+          const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+          if (seconds < 60) return 'just now';
+          const minutes = Math.floor(seconds / 60);
+          if (minutes < 60) return `${minutes}m ago`;
+          const hours = Math.floor(minutes / 60);
+          if (hours < 24) return `${hours}h ago`;
+          return `${Math.floor(hours / 24)}d ago`;
+        };
+        setNotifications(data.map(n => ({
+          id: n._id,
+          message: n.message,
+          read: n.isRead,
+          time: formatTimeAgo(n.createdAt),
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }, [token]);
 
   useEffect(() => { fetchDashboardData(); fetchNotifications(); }, [fetchDashboardData, fetchNotifications]);
 
@@ -221,7 +247,17 @@ export default function SuperAdminDashboard() {
   }, []);
 
   const handleLogout = () => { logout(); navigate('/login'); };
-  const markRead = id => setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+  const markRead = async (id) => {
+    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+    try {
+      await fetch(`${API_URL}/api/notifications/read/${id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  };
   const unreadCount = notifications.filter(n => !n.read).length;
 
   if (error) return (

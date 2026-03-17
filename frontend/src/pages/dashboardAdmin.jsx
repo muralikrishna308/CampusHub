@@ -18,6 +18,14 @@ const CATEGORY_LABELS = {
 
 const getCategoryLabel = (cat) => CATEGORY_LABELS[cat?.toLowerCase()] || cat || 'Other';
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
+const getSafeImageUrl = (image) => {
+  if (!image) return '';
+  if (image.startsWith('http')) return image;
+  return `${API_URL}/uploads/${encodeURIComponent(image)}`;
+};
+
 export default function AdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -67,7 +75,7 @@ export default function AdminDashboard() {
 
       // Fetch events
       const eventsResponse = await fetch(
-        "http://localhost:5000/api/dashboard/admin/events",
+        `${API_URL}/api/dashboard/admin/events`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -81,7 +89,7 @@ export default function AdminDashboard() {
       let totalRegistrations = 0;
       try {
         const registrationsResponse = await fetch(
-          "http://localhost:5000/api/registrations/admin/all",
+          `${API_URL}/api/registrations/admin/all`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -168,13 +176,34 @@ export default function AdminDashboard() {
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
-    setNotifications([
-      { id: 1, type: 'event', message: 'Tech Conference starts in 2 days', read: false, time: '5 min ago' },
-      { id: 2, type: 'user', message: 'New user registered: Sarah Johnson', read: false, time: '1 hour ago' },
-      { id: 3, type: 'payment', message: 'Payment received: $500 from Event Corp', read: false, time: '3 hours ago' },
-      { id: 4, type: 'alert', message: 'Event capacity reached: Music Festival', read: true, time: '1 day ago' },
-    ]);
-  }, []);
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const formatTimeAgo = (date) => {
+          const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+          if (seconds < 60) return 'just now';
+          const minutes = Math.floor(seconds / 60);
+          if (minutes < 60) return `${minutes}m ago`;
+          const hours = Math.floor(minutes / 60);
+          if (hours < 24) return `${hours}h ago`;
+          return `${Math.floor(hours / 24)}d ago`;
+        };
+        setNotifications(data.map(n => ({
+          id: n._id,
+          type: n.type || 'alert',
+          message: n.message,
+          read: n.isRead,
+          time: formatTimeAgo(n.createdAt),
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }, [token]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -210,7 +239,7 @@ export default function AdminDashboard() {
       }
 
       const response = await fetch(
-        'http://localhost:5000/api/dashboard/create-event',
+        `${API_URL}/api/dashboard/create-event`,
         {
           method: 'POST',
           headers: {
@@ -275,7 +304,7 @@ export default function AdminDashboard() {
         formData.append('image', eventForm.newImage);
       }
 
-      const response = await fetch(`http://localhost:5000/api/dashboard/admin/events/${eventForm._id}`, {
+      const response = await fetch(`${API_URL}/api/dashboard/admin/events/${eventForm._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -308,7 +337,7 @@ export default function AdminDashboard() {
     if (window.confirm('Are you sure you want to delete this event?')) {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/dashboard/admin/events/${eventId}`,
+          `${API_URL}/api/dashboard/admin/events/${eventId}`,
           {
             method: 'DELETE',
             headers: {
@@ -341,7 +370,7 @@ export default function AdminDashboard() {
   const acceptRegistration = async (id) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/registrations/accept/${id}`,
+        `${API_URL}/api/registrations/accept/${id}`,
         {
           method: "PUT",
           headers: {
@@ -362,7 +391,7 @@ export default function AdminDashboard() {
   const rejectRegistration = async (id) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/registrations/reject/${id}`,
+        `${API_URL}/api/registrations/reject/${id}`,
         {
           method: "PUT",
           headers: {
@@ -791,7 +820,7 @@ export default function AdminDashboard() {
                             <div className="event-cell">
                               {event.image ? (
                                 <img
-                                  src={`http://localhost:5000/uploads/${encodeURIComponent(event.image)}`}
+                                  src={getSafeImageUrl(event.image)}
                                   alt={event.title}
                                   onError={(e) => {
                                     e.target.style.display = 'none';
@@ -1435,7 +1464,7 @@ export default function AdminDashboard() {
                 {(eventForm.image && !eventForm.removeImage && !newImagePreview) && (
                   <div className="edit-img-current">
                     <img
-                      src={`http://localhost:5000/uploads/${encodeURIComponent(eventForm.image)}`}
+                      src={getSafeImageUrl(eventForm.image)}
                       alt="Current event"
                       className="edit-img-thumb"
                       onError={(e) => { e.target.style.display = 'none'; }}
@@ -1535,7 +1564,7 @@ export default function AdminDashboard() {
             <button className="modal-close" onClick={() => setSelectedEvent(null)}>×</button>
 
             <img
-              src={selectedEvent.image ? `http://localhost:5000/uploads/${encodeURIComponent(selectedEvent.image)}` : ''}
+              src={getSafeImageUrl(selectedEvent.image)}
               alt={selectedEvent.title}
               className="modal-image"
               onError={(e) => { e.target.style.display = 'none'; }}
@@ -1740,9 +1769,7 @@ function StatCard({ title, value, icon, trend, trendType = 'positive', onClick }
 
 // Event Card Component
 function EventCard({ event, onClick, onEdit }) {
-  const imageUrl = event.image
-    ? `http://localhost:5000/uploads/${encodeURIComponent(event.image)}`
-    : null;
+  const imageUrl = getSafeImageUrl(event.image);
 
   return (
     <div className="event-card" onClick={onClick}>
