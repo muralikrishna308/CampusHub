@@ -1,6 +1,13 @@
 const Registration = require('../models/Registration');
 const Event = require('../models/Event');
 const sendEmail = require('../utils/sendemail');
+const { 
+  getRegistrationConfirmationEmail, 
+  getRegistrationAcceptedEmail, 
+  getRegistrationRejectedEmail,
+  getAdminRegistrationAlertEmail
+} = require('../utils/emailTemplates');
+const Notification = require('../models/Notification');
 
 // Register for an event
 exports.registerForEvent = async (req, res) => {
@@ -72,31 +79,12 @@ exports.registerForEvent = async (req, res) => {
 
     // 5️⃣ Send confirmation email
     try {
+      const emailHtml = getRegistrationConfirmationEmail(firstName, event);
       await sendEmail(
         email,
         "Event Registration Successful 🎉",
-        `
-Hello ${firstName},
-
-You have successfully registered for the event.
-
-Event Details
--------------------------
-Event Name: ${event.title}
-Date: ${new Date(event.eventDate).toDateString()}
-Location: ${event.location}
-Ticket Price: ₹${event.ticketPrice || 0}
-
-Registration Details
--------------------------
-Name: ${firstName} ${lastName}
-Email: ${email}
-
-Please arrive at least 15 minutes before the event start time.
-
-Best Regards,
-Campus Event Hub Team
-`
+        `Hello ${firstName}, you have successfully registered for ${event.title}.`,
+        emailHtml
       );
     } catch (emailError) {
       console.log("Email sending failed:", emailError.message);
@@ -105,6 +93,28 @@ Campus Event Hub Team
     // 6️⃣ Populate fields
     await registration.populate("event", "title eventDate location");
     await registration.populate("admin", "name email");
+
+    // 7️⃣ Send notification and email to the admin
+    try {
+      await Notification.create({
+        user: event.admin._id,
+        type: 'registration',
+        icon: '📝',
+        message: `${firstName} ${lastName} registered for "${event.title}"`,
+      });
+
+      // Send professional email alert to admin
+      const adminEmailHtml = getAdminRegistrationAlertEmail(event.admin.name, `${firstName} ${lastName}`, event.title);
+      await sendEmail(
+        event.admin.email,
+        `New Registration: ${event.title} 📝`,
+        `${firstName} ${lastName} has registered for your event "${event.title}".`,
+        adminEmailHtml
+      );
+
+    } catch (notifErr) {
+      console.log('Admin alert failed:', notifErr.message);
+    }
 
     res.status(201).json({
       msg: "Successfully registered for the event",
@@ -246,27 +256,26 @@ exports.acceptRegistration = async (req, res) => {
     registration.status = "accepted";
     await registration.save();
 
+    // Notify the student
+    try {
+      await Notification.create({
+        user: registration.user._id || registration.user,
+        type: 'registration',
+        icon: '✅',
+        message: `Your registration for "${registration.event.title}" has been accepted!`,
+      });
+    } catch (notifErr) {
+      console.log('Notification creation failed:', notifErr.message);
+    }
+
     // Send email notification
     try {
+      const acceptanceHtml = getRegistrationAcceptedEmail(registration.firstName || registration.user.name, registration.event);
       await sendEmail(
         registration.email || registration.user.email,
         "Event Registration Accepted! ✅",
-        `
-Hello ${registration.firstName || registration.user.name},
-
-Great news! Your registration for the event "${registration.event.title}" has been accepted.
-
-Event Details
--------------------------
-Event Name: ${registration.event.title}
-Date: ${new Date(registration.event.eventDate).toDateString()}
-Location: ${registration.event.location}
-
-We look forward to seeing you there!
-
-Best Regards,
-Campus Event Hub Team
-`
+        `Hello, your registration for ${registration.event.title} has been accepted!`,
+        acceptanceHtml
       );
     } catch (emailError) {
       console.log("Acceptance email failed:", emailError.message);
@@ -303,21 +312,26 @@ exports.rejectRegistration = async (req, res) => {
     registration.status = "rejected";
     await registration.save();
 
+    // Notify the student
+    try {
+      await Notification.create({
+        user: registration.user._id || registration.user,
+        type: 'registration',
+        icon: '❌',
+        message: `Your registration for "${registration.event.title}" was not accepted.`,
+      });
+    } catch (notifErr) {
+      console.log('Notification creation failed:', notifErr.message);
+    }
+
     // Send email notification
     try {
+      const rejectionHtml = getRegistrationRejectedEmail(registration.firstName || registration.user.name, registration.event);
       await sendEmail(
         registration.email || registration.user.email,
         "Event Registration Update: Rejected ❌",
-        `
-Hello ${registration.firstName || registration.user.name},
-
-Unfortunately, your registration for the event "${registration.event.title}" has been rejected.
-
-If you have any questions, please contact the event organizer.
-
-Best Regards,
-Campus Event Hub Team
-`
+        `Hello, unfortunately your registration for ${registration.event.title} has been rejected.`,
+        rejectionHtml
       );
     } catch (emailError) {
       console.log("Rejection email failed:", emailError.message);

@@ -1,31 +1,36 @@
 const nodemailer = require("nodemailer");
 
-const sendEmail = async (to, subject, text) => {
+const sendEmail = async (to, subject, text, html = null) => {
   try {
+    console.log(`[Email] Attempting to send to: ${to} (HTML: ${!!html})`);
+    
+    // Using 'service: gmail' is the standard for Gmail SMTP
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
+      service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false
       }
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `Campus Event Hub <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,
+      html
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully");
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Email] Success! Message ID: ${info.messageId}`);
+    return info;
   } catch (error) {
-    console.error("Email sending failed:", error);
+    console.error(`[Email] CRITICAL ERROR: ${error.message}`);
+    // Check for common auth errors
+    if (error.message.includes('Invalid login')) {
+      console.error("[Email] Hint: Check your EMAIL_USER and EMAIL_PASS (App Password) in .env");
+    }
+    throw error; // Let the controller handle the response
   }
 };
 

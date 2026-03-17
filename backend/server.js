@@ -20,8 +20,13 @@ const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const registrationRoutes = require("./routes/registrationRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const initReminderJob = require("./utils/reminderJob");
 
 app.use("/api/auth", authRoutes);
+
+// Start scheduled jobs
+initReminderJob();
 
 // google oauth endpoints
 app.get(
@@ -42,6 +47,7 @@ app.get(
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/registrations", registrationRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/uploads", express.static("uploads"));
 
 const PORT = process.env.PORT || 5000;

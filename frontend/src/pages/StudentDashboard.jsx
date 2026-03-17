@@ -9,6 +9,15 @@ import "../styles/dashboard.css";
 import Chatbot from "../components/chatbot";
 import Calendar from "../components/Calendar";
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
+const getSafeImageUrl = (image) => {
+    const FALLBACK = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><rect fill="url(#g)" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="48">📅</text></svg>');
+    if (!image) return FALLBACK;
+    if (image.startsWith('http')) return image;
+    return `${API_URL}/uploads/${encodeURIComponent(image)}`;
+};
+
 export default function StudentDashboard() {
     const navigate = useNavigate();
     const { user, token } = useContext(AuthContext);
@@ -30,7 +39,7 @@ export default function StudentDashboard() {
         const checkProfileStatus = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/auth/profile/check', {
+                const response = await fetch(`${API_URL}/api/auth/profile/check`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -56,7 +65,7 @@ export default function StudentDashboard() {
         const fetchProfile = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/auth/profile', {
+                const response = await fetch(`${API_URL}/api/auth/profile`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -78,7 +87,7 @@ export default function StudentDashboard() {
         const fetchRegistrations = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -113,19 +122,16 @@ export default function StudentDashboard() {
         const fetchEvents = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/events/all', {
+                const response = await fetch(`${API_URL}/api/events/all`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    const FALLBACK = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><rect fill="url(#g)" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="48">📅</text></svg>');
                     const transformedEvents = data.slice(0, 3).map(ev => ({
                         ...ev,
-                        image: ev.image
-                            ? (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${encodeURIComponent(ev.image)}`)
-                            : FALLBACK
+                        image: getSafeImageUrl(ev.image)
                     }));
                     setFeaturedEvents(transformedEvents);
                 }
@@ -139,9 +145,18 @@ export default function StudentDashboard() {
         fetchEvents();
     }, [token]);
 
-    const handleProfileComplete = () => {
+    const handleProfileComplete = (updatedData) => {
         setProfileComplete(true);
         setShowProfileForm(false);
+        // Immediately update the displayed profile data so the dashboard reflects the new values
+        if (updatedData) {
+            setStudentProfile(prev => ({
+                ...prev,
+                ...updatedData,
+                // collegeName can come back as 'collegeName' from the form
+                college: updatedData.collegeName || updatedData.college || prev?.college,
+            }));
+        }
     };
 
     if (loading) {

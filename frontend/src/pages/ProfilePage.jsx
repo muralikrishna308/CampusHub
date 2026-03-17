@@ -5,6 +5,8 @@ import "../styles/dashboard.css";
 
 const useAuth = () => useContext(AuthContext);
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
 // ─── Normalize backend user → profile shape ───────────────────────────────────
 // Handles common field name variations your backend might return.
 // Add/rename fields here to match your actual API response.
@@ -334,7 +336,7 @@ function ProfilePage() {
     const fetchStats = async () => {
       if (!auth?.token) return;
       try {
-        const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+        const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
           headers: { 'Authorization': `Bearer ${auth.token}` }
         });
         if (response.ok) {

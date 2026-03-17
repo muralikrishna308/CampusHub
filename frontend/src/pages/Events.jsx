@@ -430,6 +430,14 @@ import Header from '../components/Header';
 import './Events.css';
 import '../styles/dashboard.css';
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
+const getSafeImageUrl = (image) => {
+    if (!image) return 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80';
+    if (image.startsWith('http')) return image;
+    return `${API_URL}/uploads/${encodeURIComponent(image)}`;
+};
+
 const CATEGORIES = [
     { id: 'all', name: 'All Events', emoji: '🌟' },
     { id: 'tech', name: 'Technology', emoji: '💻' },
@@ -471,7 +479,7 @@ export default function Events() {
         const fetchEvents = async () => {
             setLoading(true);
             try {
-                const response = await fetch('http://localhost:5000/api/events/all', {
+                const response = await fetch(`${API_URL}/api/events/all`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -483,9 +491,7 @@ export default function Events() {
                     const transformedEvents = data.map(event => ({
                         ...event,
                         _id: event._id,
-                        image: event.image ?
-                        (event.image.startsWith('http') ? event.image : `http://localhost:5000/uploads/${encodeURIComponent(event.image)}`) :
-                            'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80',
+                        image: getSafeImageUrl(event.image),
                         date: event.eventDate,
                         category: (event.category || 'other').toLowerCase(),
                         speaker: event.admin?.name || 'Admin',
@@ -518,7 +524,7 @@ export default function Events() {
         const fetchRegistrations = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

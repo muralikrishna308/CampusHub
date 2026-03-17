@@ -5,6 +5,8 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import "./AdminDashboard.css";
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const { user, token } = useContext(AuthContext);
@@ -19,7 +21,7 @@ export default function AdminDashboard() {
         const fetchEvents = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/dashboard/admin/events', {
+                const response = await fetch(`${API_URL}/api/dashboard/admin/events`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -49,7 +51,7 @@ export default function AdminDashboard() {
             setLoadingRegistrations(true);
             try {
                 const response = await fetch(
-                    `http://localhost:5000/api/registrations/event/${selectedEvent}`,
+                    `${API_URL}/api/registrations/event/${selectedEvent}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`
