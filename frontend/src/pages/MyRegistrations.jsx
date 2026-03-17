@@ -52,7 +52,7 @@ const MyRegistrations = () => {
                             event: {
                                 ...reg.event,
                                 image: reg.event.image ?
-                                    (reg.event.image.startsWith('http') ? reg.event.image : `http://localhost:5000/uploads/${reg.event.image}`) :
+                                    (reg.event.image.startsWith('http') ? reg.event.image : `http://localhost:5000/uploads/${encodeURIComponent(reg.event.image)}`) :
                                     'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80'
                             }
                         }));
