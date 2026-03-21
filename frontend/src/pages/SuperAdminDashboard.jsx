@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Chatbot from '../components/chatbot';
 
 /* Dummy event images*/
 const eventImages = {
@@ -46,7 +47,7 @@ export default function SuperAdminDashboard() {
 
   const handleGenerateReport = () => {
     if (!stats || !stats.events) return;
-    
+
     const filteredEvents = stats.events.filter(ev => {
       const evDate = new Date(ev.date);
       const start = new Date(reportFilters.startDate);
@@ -75,7 +76,7 @@ export default function SuperAdminDashboard() {
         ev.status
       ]);
 
-      let csvContent = "data:text/csv;charset=utf-8," 
+      let csvContent = "data:text/csv;charset=utf-8,"
         + "Event Analytics Report\n"
         + `Generated on: ${new Date().toLocaleString()}\n`
         + `Filters: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}\n\n`
@@ -92,16 +93,16 @@ export default function SuperAdminDashboard() {
     } else {
       // PDF Export
       const doc = new jsPDF();
-      
+
       doc.setFontSize(20);
       doc.setTextColor(102, 126, 234);
       doc.text('CampusHub Analytics Report', 14, 22);
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
       doc.text(`Range: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}`, 14, 35);
-      
+
       doc.setDrawColor(200);
       doc.line(14, 40, 196, 40);
 
@@ -384,7 +385,7 @@ export default function SuperAdminDashboard() {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <button 
+          <button
             className={`sa-mobile-toggle ${showMobileMenu ? '--open' : ''}`}
             onClick={() => setShowMobileMenu(v => !v)}
             aria-label="Toggle menu"
@@ -779,6 +780,7 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       )}
+      <Chatbot />
     </div>
   );
 }

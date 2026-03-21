@@ -12,7 +12,6 @@ import Profile from "./pages/ProfilePage";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Chatbot from "./components/chatbot";
 
 function App() {
   return (
@@ -88,7 +87,6 @@ function App() {
           />
 
         </Routes>
-        <Chatbot />
       </AuthProvider>
     </BrowserRouter>
   );

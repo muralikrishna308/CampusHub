@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Chatbot from '../components/chatbot';
 
 // Map raw DB category values to human-readable labels
 const CATEGORY_LABELS = {
@@ -610,13 +611,13 @@ export default function AdminDashboard() {
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-left">
-          <button 
-            className="mobile-menu-toggle" 
+          <button
+            className="mobile-menu-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle Navigation"
           >
             <svg width="22" height="15" viewBox="0 0 22 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1.5 1.5H20.5M1.5 7.5H20.5M1.5 13.5H20.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1.5 1.5H20.5M1.5 7.5H20.5M1.5 13.5H20.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
           <h1>Admin Dashboard</h1>
@@ -1793,6 +1794,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      <Chatbot />
     </div>
   );
 }

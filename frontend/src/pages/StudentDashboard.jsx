@@ -7,6 +7,7 @@ import EventCard from "../components/EventCard";
 import ProfileForm from "../components/ProfileForm";
 import "../styles/dashboard.css";
 import Calendar from "../components/Calendar";
+import Chatbot from '../components/chatbot';
 
 const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
 
@@ -91,23 +92,23 @@ export default function StudentDashboard() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                    if (response.ok) {
-                        const data = await response.json();
-                        // Filter out registrations where the event was deleted
-                        const validRegistrations = data.filter(reg => reg.event && reg.event._id);
-                        setStudentRegistrations(validRegistrations);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Filter out registrations where the event was deleted
+                    const validRegistrations = data.filter(reg => reg.event && reg.event._id);
+                    setStudentRegistrations(validRegistrations);
 
-                        // Calculate stats based on valid registrations only
-                        const nowDate = new Date();
-                        const upcoming = validRegistrations.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
-                        const completed = validRegistrations.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
+                    // Calculate stats based on valid registrations only
+                    const nowDate = new Date();
+                    const upcoming = validRegistrations.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
+                    const completed = validRegistrations.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
 
-                        setStats({
-                            totalRegistrations: validRegistrations.length,
-                            upcomingEvents: upcoming,
-                            completedEvents: completed
-                        });
-                    }
+                    setStats({
+                        totalRegistrations: validRegistrations.length,
+                        upcomingEvents: upcoming,
+                        completedEvents: completed
+                    });
+                }
             } catch (err) {
                 console.error('Error fetching registrations:', err);
             }
@@ -183,11 +184,11 @@ export default function StudentDashboard() {
 
             <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <main className="main-content">
-                <Header 
-                    userName={studentProfile?.name || user?.name || "Student"} 
-                    userRole="Student" 
-                    id={user?.id} 
-                    registrations={studentRegistrations} 
+                <Header
+                    userName={studentProfile?.name || user?.name || "Student"}
+                    userRole="Student"
+                    id={user?.id}
+                    registrations={studentRegistrations}
                     onToggle={() => setSidebarOpen(true)}
                 />
 
@@ -331,7 +332,7 @@ export default function StudentDashboard() {
                                         position: 'relative'
                                     }}>
                                         <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(102,126,234,0.9)', color: '#fff', fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '50px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            {({'tech':'💻 Technology','music':'🎵 Music','workshop':'🛠️ Workshop','cultural':'🎭 Cultural','sports':'⚽ Sports','other':'🌟 Other'})[event.category] || event.category || 'Tech'}
+                                            {({ 'tech': '💻 Technology', 'music': '🎵 Music', 'workshop': '🛠️ Workshop', 'cultural': '🎭 Cultural', 'sports': '⚽ Sports', 'other': '🌟 Other' })[event.category] || event.category || 'Tech'}
                                         </div>
                                     </div>
                                     <div style={{ padding: '16px' }}>
@@ -449,6 +450,7 @@ export default function StudentDashboard() {
                     )}
                 </section>
             </main>
+            <Chatbot />
         </div>
     );
 }
