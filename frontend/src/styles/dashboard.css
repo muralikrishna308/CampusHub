@@ -405,7 +405,7 @@ body {
   border: 1px solid var(--c-border);
   border-radius: 18px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(102, 126, 234, 0.06);
-  overflow: hidden;
+  overflow: visible;
   z-index: 9999;
   animation: notifPop 0.2s ease both;
 }
@@ -902,14 +902,14 @@ body {
     align-items: center !important;
     margin: 12px auto 16px !important; /* Centered with auto margins */
     max-width: calc(100% - 24px) !important;
-    width: fit-content !important;
-    padding: 10px 16px !important;
+    width: 100% !important;
+    padding: 10px 20px !important;
     background: rgba(15, 15, 26, 0.85) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 20px !important;
-    /* Elegant pill look */
+    /* Elegant full-width pill look */
     justify-content: space-between !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
   }
@@ -982,6 +982,19 @@ body {
     margin-bottom: 24px !important;
     padding-left: 0 !important;
     gap: 10px !important;
+  }
+  .header-notif-dropdown {
+    position: fixed !important;
+    top: 110px !important;
+    left: 50% !important;
+    right: auto !important;
+    margin: 0 !important;
+    transform: translateX(-50%) !important;
+    width: 92vw !important;
+    max-width: 380px !important;
+    z-index: 9999 !important;
+    overflow: visible !important;
+    border-radius: 18px !important;
   }
 }
 

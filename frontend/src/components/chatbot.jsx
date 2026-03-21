@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { qaList, QUICK_REPLIES, SYNONYMS } from "./Chatbotdata";
 import "../styles/chatbot.css";
 
@@ -145,13 +146,32 @@ const Chatbot = () => {
   };
 
   /* ── JSX ── */
-  return (
-    <div className="cb-wrapper">
+  /* Portaling to body ensures we are never clipped */
+  return createPortal(
+    <div 
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 2147483647,
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
+        padding: '36px'
+      }}
+    >
+      <div 
+        className="cb-wrapper"
+        style={{
+          position: 'relative'
+        }}
+      >
 
       {/* ── FAB ── */}
       <button
         id="chatbot-trigger"
         className={`cb-fab ${isOpen ? "cb-fab--open" : ""}`}
+        style={{ pointerEvents: 'auto' }}
         onClick={isOpen ? () => setIsOpen(false) : openChat}
         aria-label="Toggle chatbot"
       >
@@ -276,7 +296,9 @@ const Chatbot = () => {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 

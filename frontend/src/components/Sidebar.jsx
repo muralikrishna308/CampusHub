@@ -27,7 +27,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
     // Close sidebar on route change (mobile)
     useEffect(() => {
         if (onClose) onClose();
-    }, [location.pathname]);
+    }, [location.pathname, onClose]);
 
     return (
         <>
@@ -42,8 +42,8 @@ const Sidebar = ({ role, isOpen, onClose }) => {
             <aside className={`sidebar${isOpen ? ' open' : ''}`}>
                 <div className="sidebar-logo">
                     {/* Burger icon inside sidebar for mobile close */}
-                    <button className="sidebar-toggle sidebar-internal-toggle" onClick={onClose}>
-                        ☰
+                    <button className="sidebar-toggle sidebar-internal-toggle" onClick={onClose} aria-label="Close Menu">
+                        ✕
                     </button>
                     <div className="logo-icon">🎓</div>
                     <span>CampusHub</span>

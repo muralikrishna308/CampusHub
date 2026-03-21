@@ -6,7 +6,6 @@ import Header from "../components/Header";
 import EventCard from "../components/EventCard";
 import ProfileForm from "../components/ProfileForm";
 import "../styles/dashboard.css";
-import Chatbot from "../components/chatbot";
 import Calendar from "../components/Calendar";
 
 const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
@@ -450,7 +449,6 @@ export default function StudentDashboard() {
                     )}
                 </section>
             </main>
-            <Chatbot />
         </div>
     );
 }

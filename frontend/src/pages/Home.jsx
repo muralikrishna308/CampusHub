@@ -466,7 +466,7 @@ const Home = () => {
       </section>
 
       {/*FOOTER */}
-      <footer 
+      <footer
         className={`lp-footer lp-reveal ${footerInView ? 'lp-reveal--visible' : ''}`}
         ref={footerRef}
       >

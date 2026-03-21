@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
-import Chatbot from '../components/chatbot';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -1794,7 +1793,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      <Chatbot />
     </div>
   );
 }
