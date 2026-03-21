@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
 
 
-const Header = ({ userName, userRole, id, registrations: initialRegistrations = [] }) => {
+const Header = ({ userName, userRole, id, registrations: initialRegistrations = [], onToggle }) => {
     const { token } = useContext(AuthContext);
     const [showNotifs, setShowNotifs] = useState(false);
     const [showCalendar, setShowCalendar] = useState(false);
@@ -107,6 +107,15 @@ const Header = ({ userName, userRole, id, registrations: initialRegistrations = 
         <header className="header">
             {/* Left – greeting */}
             <div className="header-left-section">
+                {onToggle && (
+                    <button 
+                        className="sidebar-toggle header-sidebar-toggle" 
+                        onClick={onToggle}
+                        aria-label="Toggle Menu"
+                    >
+                        ☰
+                    </button>
+                )}
                 <span className="header-greeting">
                     👋 Welcome back, <strong>{userName?.split(' ')[0] || 'Student'}</strong>
                 </span>
@@ -115,7 +124,7 @@ const Header = ({ userName, userRole, id, registrations: initialRegistrations = 
             {/* Right – notifications + profile */}
             <div className="header-right-section">
                 {/* Calendar Icon-btn */}
-                <div className="header-notif-wrapper">
+                <div className="header-notif-wrapper calendar-btn-wrapper">
                     <button
                         className="header-icon-btn calendar-btn"
                         onClick={() => {
@@ -135,7 +144,7 @@ const Header = ({ userName, userRole, id, registrations: initialRegistrations = 
                 </div>
 
                 {/* Notification bell */}
-                <div className="header-notif-wrapper">
+                <div className="header-notif-wrapper bell-btn-wrapper">
                     <button
                         className="header-icon-btn bell-btn"
                         onClick={() => {
@@ -187,12 +196,12 @@ const Header = ({ userName, userRole, id, registrations: initialRegistrations = 
 
                 {/* Profile */}
                 <div className="header-profile">
+                    <div className="header-profile__avatar">
+                        {initials}
+                    </div>
                     <div className="header-profile__info">
                         <span className="header-profile__name">{userName}</span>
                         <span className="header-profile__role">{userRole}</span>
-                    </div>
-                    <div className="header-profile__avatar">
-                        {initials}
                     </div>
                 </div>
             </div>

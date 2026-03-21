@@ -209,7 +209,7 @@ export default function AdminDashboard() {
                                             background: 'white',
                                             border: '1px solid #EFEFEF',
                                             borderRadius: '12px',
-                                            overflow: 'hidden'
+                                            overflow: 'auto'
                                         }}>
                                             <table style={{
                                                 width: '100%',

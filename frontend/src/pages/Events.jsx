@@ -625,23 +625,19 @@ setRegisteredEvents(registrationsMap);
                 />
             )}
 
-            {/* Mobile sidebar toggle */}
-            <button
-                className="sidebar-toggle"
-                onClick={() => setSidebarOpen(o => !o)}
-                aria-label="Toggle navigation"
-            >
-                ☰
-            </button>
-
             <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <main className="main-content events-main-content">
-                <Header userName={user?.name || 'Student'} userRole="Student" id={user?.id} />
+                <Header 
+                    userName={user?.name || 'Student'} 
+                    userRole="Student" 
+                    id={user?.id} 
+                    onToggle={() => setSidebarOpen(true)}
+                />
 
                 {/* Page Title */}
                 <div className="events-page-header">
-                    <h1 style={{ fontSize: '1.85rem', fontWeight: '800', color: '#fff', letterSpacing: '-0.02em', marginBottom: '4px' }}>📅 All Events</h1>
-                    <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Browse and register for upcoming campus events</p>
+                    <h1>📅 All Events</h1>
+                    <p>Browse and register for upcoming campus events</p>
                 </div>
 
                 {/* Search & Filter */}

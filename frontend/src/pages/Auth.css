@@ -18,6 +18,7 @@ body {
 .auth-container {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: #0B1120;
 }
 
@@ -142,11 +143,13 @@ body {
 .form-section {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
   position: relative;
   background-color: #0B1120;
+  min-height: 100%;
 }
 
 .form-card {
@@ -157,6 +160,7 @@ body {
   max-width: 440px;
   border: 1px solid #2D3748;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  margin: 2rem 0;
 }
 
 .form-title {
@@ -401,6 +405,7 @@ body {
   
   .brand-section {
     padding: 3rem 1.5rem;
+    flex: none;
   }
   
   .brand-title {
@@ -409,6 +414,7 @@ body {
   
   .form-section {
     padding: 2rem 1.5rem;
+    flex: none;
   }
   
   .language-selector {
@@ -490,13 +496,13 @@ body {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Form Container */
 .form-container {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   min-height: 400px;
 }
 
@@ -706,13 +712,7 @@ body {
 /*overrides added for login/register improvements */
 
 /* make sure the card container stays large enough when fields are added */
-.form-container {
-  /* min-height is set dynamically via inline styles in JSX */
-}
 /* card height will size to content; container min-height keeps layout stable */
-.form-card {
-  /*min-height: 550px;*/
-}
 
 /* entry animations that respect slide direction */
 .form-card-enter-right {

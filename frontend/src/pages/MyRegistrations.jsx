@@ -29,6 +29,7 @@ const MyRegistrations = () => {
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [studentProfile, setStudentProfile] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [stats, setStats] = useState({
         total: 0,
         upcoming: 0,
@@ -98,13 +99,14 @@ const MyRegistrations = () => {
 
     return (
         <div className="dashboard-container">
-            <Sidebar role="student" />
+            <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <main className="main-content">
                 <Header
                     userName={studentProfile?.name || user?.name || "Student"}
                     userRole="Student"
                     id={user?.id}
+                    onToggle={() => setSidebarOpen(true)}
                 />
 
                 <div className="myreg-content-wrapper">

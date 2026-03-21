@@ -41,7 +41,11 @@ const Sidebar = ({ role, isOpen, onClose }) => {
 
             <aside className={`sidebar${isOpen ? ' open' : ''}`}>
                 <div className="sidebar-logo">
-                    <span className="logo-icon">🎓</span>
+                    {/* Burger icon inside sidebar for mobile close */}
+                    <button className="sidebar-toggle sidebar-internal-toggle" onClick={onClose}>
+                        ☰
+                    </button>
+                    <div className="logo-icon">🎓</div>
                     <span>CampusHub</span>
                 </div>
 
