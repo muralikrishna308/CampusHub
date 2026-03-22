@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Sidebar from "../components/Sidebar";
@@ -23,6 +23,9 @@ export default function StudentDashboard() {
     const { user, token } = useContext(AuthContext);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showProfileForm, setShowProfileForm] = useState(false);
+
+    const toggleSidebar = useCallback(() => setSidebarOpen(true), []);
+    const closeSidebar = useCallback(() => setSidebarOpen(false), []);
     const [profileComplete, setProfileComplete] = useState(false);
     const [loading, setLoading] = useState(true);
     const [studentRegistrations, setStudentRegistrations] = useState([]);
@@ -162,9 +165,9 @@ export default function StudentDashboard() {
     if (loading) {
         return (
             <div className="dashboard-container">
-                <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
                 <main className="main-content">
-                    <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" onToggle={() => setSidebarOpen(true)} />
+                    <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" onToggle={toggleSidebar} />
                     <div style={{ padding: '40px', textAlign: 'center' }}>
                         <div style={{ fontSize: '18px', color: '#6F767E' }}>Loading your dashboard...</div>
                     </div>
@@ -182,14 +185,14 @@ export default function StudentDashboard() {
                 />
             )}
 
-            <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
             <main className="main-content">
                 <Header
                     userName={studentProfile?.name || user?.name || "Student"}
                     userRole="Student"
                     id={user?.id}
                     registrations={studentRegistrations}
-                    onToggle={() => setSidebarOpen(true)}
+                    onToggle={toggleSidebar}
                 />
 
                 <div className="welcome-section">

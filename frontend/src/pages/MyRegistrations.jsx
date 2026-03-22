@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
@@ -30,6 +30,9 @@ const MyRegistrations = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [studentProfile, setStudentProfile] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    
+    const toggleSidebar = useCallback(() => setSidebarOpen(true), []);
+    const closeSidebar = useCallback(() => setSidebarOpen(false), []);
     const [stats, setStats] = useState({
         total: 0,
         upcoming: 0,
@@ -99,14 +102,14 @@ const MyRegistrations = () => {
 
     return (
         <div className="dashboard-container">
-            <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
 
             <main className="main-content">
                 <Header
                     userName={studentProfile?.name || user?.name || "Student"}
                     userRole="Student"
                     id={user?.id}
-                    onToggle={() => setSidebarOpen(true)}
+                    onToggle={toggleSidebar}
                 />
 
                 <div className="myreg-content-wrapper">

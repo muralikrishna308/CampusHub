@@ -329,6 +329,9 @@ function ProfilePage() {
   const [profileStats, setProfileStats] = useState({ registrations: 0, eventsAttended: 0 });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const toggleSidebar = React.useCallback(() => setSidebarOpen(true), []);
+  const closeSidebar = React.useCallback(() => setSidebarOpen(false), []);
+
   // Keep profile in sync if auth.user changes (e.g. after save-to-backend)
   React.useEffect(() => {
     if (auth?.user) setProfile(normalizeUser(auth.user));
@@ -383,14 +386,14 @@ function ProfilePage() {
       `}</style>
 
       <div className="dashboard-container">
-        <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
 
         <main className="main-content" style={{ fontFamily: "'DM Sans', sans-serif", color: "#e5e7eb" }}>
           <Header
             userName={profile.name}
             userRole={profile.role}
             id={auth?.user?.id}
-            onToggle={() => setSidebarOpen(true)}
+            onToggle={toggleSidebar}
           />
 
           {/* ── Hero card ── */}

@@ -709,7 +709,7 @@
     justify-content: flex-start !important;
     padding: 1.5rem !important;
     gap: 0.25rem !important;
-    z-index: 1001 !important;
+    z-index: 10001 !important; /* Higher than chatbot (9999) */
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5) !important;
     border-right: 1px solid var(--c-border) !important;

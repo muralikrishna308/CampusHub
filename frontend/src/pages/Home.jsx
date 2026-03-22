@@ -119,6 +119,9 @@ const Home = () => {
           </button>
 
           <nav className={`lp-nav__links ${menuOpen ? 'lp-nav__links--open' : ''}`}>
+            {/* Dedicated close button for mobile only */}
+            <button className="lp-nav__mobile-close" onClick={() => setMenuOpen(false)}>✕</button>
+
             {['features', 'events', 'testimonials', 'contact'].map(s => (
               <button key={s} className="lp-nav__link" onClick={() => scrollTo(s)}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}

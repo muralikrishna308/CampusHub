@@ -26,8 +26,14 @@ const Sidebar = ({ role, isOpen, onClose }) => {
 
     // Close sidebar on route change (mobile)
     useEffect(() => {
-        if (onClose) onClose();
-    }, [location.pathname, onClose]);
+        // We only want to close the sidebar if it was open AND the user navigated
+        if (onClose) {
+            onClose();
+        }
+        // ESLint might complain, but we ONLY want this to run when the pathname changes
+        // Adding onClose to dependencies causes an infinite loop if the parent doesn't use useCallback
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]);
 
     return (
         <>
