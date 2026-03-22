@@ -46,6 +46,10 @@ export default function AdminDashboard() {
   const [allRegistrations, setAllRegistrations] = useState([]);
   const [newImagePreview, setNewImagePreview] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [eventSearchTerm, setEventSearchTerm] = useState('');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [eventCategoryFilter, setEventCategoryFilter] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('All Roles');
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -839,8 +843,14 @@ export default function AdminDashboard() {
                       type="text"
                       placeholder="Search events..."
                       className="search-input"
+                      value={eventSearchTerm}
+                      onChange={(e) => setEventSearchTerm(e.target.value)}
                     />
-                    <select className="filter-select">
+                    <select 
+                      className="filter-select"
+                      value={eventCategoryFilter}
+                      onChange={(e) => setEventCategoryFilter(e.target.value)}
+                    >
                       <option value="">All Categories</option>
                       <option value="tech">💻 Technology</option>
                       <option value="music">🎵 Music</option>
@@ -869,7 +879,12 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {stats.events?.map(event => (
+                      {stats.events?.filter(event => {
+                        const matchesSearch = event.title?.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
+                          event.location?.toLowerCase().includes(eventSearchTerm.toLowerCase());
+                        const matchesCategory = !eventCategoryFilter || event.category === eventCategoryFilter;
+                        return matchesSearch && matchesCategory;
+                      }).map(event => (
                         <tr key={event._id}>
                           <td>
                             <div className="event-cell">
@@ -933,12 +948,22 @@ export default function AdminDashboard() {
                 <div className="tab-header">
                   <h2>User Management</h2>
                   <div className="tab-actions">
-                    <input type="text" placeholder="Search users..." className="search-input" />
-                    <select className="filter-select">
+                    <input 
+                      type="text" 
+                      placeholder="Search users..." 
+                      className="search-input" 
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                    />
+                    <select 
+                      className="filter-select"
+                      value={userRoleFilter}
+                      onChange={(e) => setUserRoleFilter(e.target.value)}
+                    >
                       <option>All Roles</option>
-                      <option>Students</option>
-                      <option>Organizers</option>
-                      <option>Admins</option>
+                      <option>student</option>
+                      <option>organizer</option>
+                      <option>admin</option>
                     </select>
                   </div>
                 </div>
@@ -968,7 +993,12 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {stats.users?.map(user => (
+                      {stats.users?.filter(user => {
+                        const matchesSearch = user.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                          user.email?.toLowerCase().includes(userSearchTerm.toLowerCase());
+                        const matchesRole = userRoleFilter === 'All Roles' || user.role === userRoleFilter;
+                        return matchesSearch && matchesRole;
+                      }).map(user => (
                         <tr key={user.id}>
                           <td>
                             <input

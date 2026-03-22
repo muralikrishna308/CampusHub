@@ -30,6 +30,7 @@ const MyRegistrations = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [studentProfile, setStudentProfile] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     
     const toggleSidebar = useCallback(() => setSidebarOpen(true), []);
     const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -84,9 +85,13 @@ const MyRegistrations = () => {
         fetchUserData();
     }, [token]);
 
-    const filteredRegistrations = selectedCategory === 'all'
-        ? registrations
-        : registrations.filter(reg => reg.event.category === selectedCategory);
+    const filteredRegistrations = (registrations || []).filter(reg => {
+        const matchesCategory = selectedCategory === 'all' || reg.event.category === selectedCategory;
+        const matchesSearch = !searchTerm || 
+            reg.event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            reg.event.location?.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
 
     const getCatColor = (catId) => {
         const colors = {
@@ -124,6 +129,23 @@ const MyRegistrations = () => {
                     {/* Toolbar: Filters + Results Count */}
                     <div className="myreg-toolbar">
                         <div className="myreg-filters">
+                            <input
+                                type="text"
+                                placeholder="🔍 Search registrations..."
+                                className="myreg-search-input"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{
+                                    padding: '8px 16px',
+                                    borderRadius: '50px',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    color: 'white',
+                                    marginRight: '16px',
+                                    outline: 'none',
+                                    width: '250px'
+                                }}
+                            />
                             {CATEGORIES.map(cat => (
                                 <button
                                     key={cat.id}

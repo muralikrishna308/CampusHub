@@ -44,6 +44,9 @@ export default function SuperAdminDashboard() {
     format: 'pdf',
   });
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [eventSearchTerm, setEventSearchTerm] = useState('');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [eventCategoryFilter, setEventCategoryFilter] = useState('All Categories');
 
   const handleGenerateReport = () => {
     if (!stats || !stats.events) return;
@@ -508,8 +511,18 @@ export default function SuperAdminDashboard() {
                 <div className="sa-tabhead">
                   <SectionHead title="Event Registry" pill={`${stats.events.length} events`} />
                   <div className="sa-filter-bar">
-                    <input className="sa-search" type="text" placeholder="🔍  Search events…" />
-                    <select className="sa-select">
+                    <input 
+                      className="sa-search" 
+                      type="text" 
+                      placeholder="🔍  Search events…" 
+                      value={eventSearchTerm}
+                      onChange={(e) => setEventSearchTerm(e.target.value)}
+                    />
+                    <select 
+                      className="sa-select"
+                      value={eventCategoryFilter}
+                      onChange={(e) => setEventCategoryFilter(e.target.value)}
+                    >
                       <option>All Categories</option>
                       <option>Technology</option>
                       <option>Music</option>
@@ -527,7 +540,13 @@ export default function SuperAdminDashboard() {
                       <th>Registrations</th><th>Revenue</th><th>Status</th><th>Details</th>
                     </tr></thead>
                     <tbody>
-                      {stats.events.map(ev => (
+                      {stats.events.filter(ev => {
+                        const matchesSearch = ev.title?.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
+                          ev.location?.toLowerCase().includes(eventSearchTerm.toLowerCase());
+                        const matchesCategory = eventCategoryFilter === 'All Categories' || 
+                          ev.category?.toLowerCase() === eventCategoryFilter.toLowerCase();
+                        return matchesSearch && matchesCategory;
+                      }).map(ev => (
                         <tr key={ev._id}>
                           <td>
                             <div className="sa-cell-event">
@@ -562,7 +581,14 @@ export default function SuperAdminDashboard() {
               <>
                 <div className="sa-tabhead">
                   <SectionHead title="User Directory" pill={`${stats.users.length} users`} />
-                  <input className="sa-search" style={{ maxWidth: '360px' }} type="text" placeholder="🔍  Search by name or email…" />
+                  <input 
+                    className="sa-search" 
+                    style={{ maxWidth: '360px' }} 
+                    type="text" 
+                    placeholder="🔍  Search by name or email…" 
+                    value={userSearchTerm}
+                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                  />
                 </div>
 
                 <div className="sa-table-box">
@@ -571,7 +597,10 @@ export default function SuperAdminDashboard() {
                       <th>User</th><th>Email</th><th>Role</th><th>Events</th><th>Joined</th>
                     </tr></thead>
                     <tbody>
-                      {stats.users.map(u => (
+                      {stats.users.filter(u => 
+                        u.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                        u.email?.toLowerCase().includes(userSearchTerm.toLowerCase())
+                      ).map(u => (
                         <tr key={u.id}>
                           <td>
                             <div className="sa-cell-event">
