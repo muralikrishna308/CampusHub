@@ -72,6 +72,7 @@ const Home = () => {
   const [testiRef, testiInView] = useInView(0.15);
   const [ctaRef, ctaInView] = useInView(0.2);
   const [contactRef, contactInView] = useInView(0.1);
+  const [footerRef, footerInView] = useInView(0.05);
 
   /* animated counters (fire once statsInView) */
   const students = useCounter(50000, 2200, statsInView);
@@ -465,7 +466,10 @@ const Home = () => {
       </section>
 
       {/*FOOTER */}
-      <footer className="lp-footer lp-footer--reveal">
+      <footer
+        className={`lp-footer lp-reveal ${footerInView ? 'lp-reveal--visible' : ''}`}
+        ref={footerRef}
+      >
         <div className="lp-footer__inner">
           <div className="lp-footer__brand">
             <p className="lp-footer__logo">

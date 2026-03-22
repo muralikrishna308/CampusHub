@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
 import "../styles/dashboard.css";
 
 const useAuth = () => useContext(AuthContext);
@@ -326,6 +327,7 @@ function ProfilePage() {
   const auth = useAuth();
   const [profile, setProfile] = useState(() => normalizeUser(auth?.user));
   const [profileStats, setProfileStats] = useState({ registrations: 0, eventsAttended: 0 });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keep profile in sync if auth.user changes (e.g. after save-to-backend)
   React.useEffect(() => {
@@ -381,9 +383,15 @@ function ProfilePage() {
       `}</style>
 
       <div className="dashboard-container">
-        <Sidebar role="student" />
+        <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         <main className="main-content" style={{ fontFamily: "'DM Sans', sans-serif", color: "#e5e7eb" }}>
+          <Header
+            userName={profile.name}
+            userRole={profile.role}
+            id={auth?.user?.id}
+            onToggle={() => setSidebarOpen(true)}
+          />
 
           {/* ── Hero card ── */}
           <div style={{
@@ -466,7 +474,7 @@ function ProfilePage() {
             </div>
 
             {/* Stats row */}
-            <div style={{ display: "flex", gap: "12px", marginTop: "22px", flexWrap: "wrap" }}>
+            <div className="profile-stats-grid">
               <StatCard label="Member Since" value={profile.joinedDate} icon={
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               } />
@@ -480,10 +488,10 @@ function ProfilePage() {
           </div>
 
           {/* ── Two column grid ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div className="profile-section-grid">
 
             <Section title="Personal Information">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
+              <div className="profile-info-grid">
                 <InfoField label="Email" value={profile.email} icon={
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 } />
@@ -498,7 +506,7 @@ function ProfilePage() {
 
             {/* Academic Info */}
             <Section title="Academic Information">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
+              <div className="profile-info-grid">
                 <InfoField label="College" value={profile.college} icon={
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
                 } />
@@ -516,7 +524,7 @@ function ProfilePage() {
           </div>
 
           {/* ── About + Interests ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div className="profile-section-grid">
             <Section title="About Me">
               {profile.bio ? (
                 <p style={{ fontSize: "14px", color: "#9ca3af", lineHeight: "1.7", margin: 0 }}>{profile.bio}</p>

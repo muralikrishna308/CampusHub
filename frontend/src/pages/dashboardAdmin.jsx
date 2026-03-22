@@ -2,9 +2,9 @@ import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
-import Chatbot from '../components/chatbot';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Chatbot from '../components/chatbot';
 
 // Map raw DB category values to human-readable labels
 const CATEGORY_LABELS = {
@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allRegistrations, setAllRegistrations] = useState([]);
   const [newImagePreview, setNewImagePreview] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -204,6 +205,32 @@ export default function AdminDashboard() {
       console.error('Error fetching notifications:', err);
     }
   }, [token]);
+
+  const markNotificationAsRead = async (id) => {
+    try {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+      await fetch(`${API_URL}/api/notifications/read/${id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchNotifications();
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      await fetch(`${API_URL}/api/notifications/read-all`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchNotifications();
+    } catch (err) {
+      console.error('Error marking all as read:', err);
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -568,12 +595,7 @@ export default function AdminDashboard() {
     navigate('/login');
   };
 
-  // Mark notification as read
-  const markNotificationAsRead = (id) => {
-    setNotifications(notifications.map(n =>
-      n.id === id ? { ...n, read: true } : n
-    ));
-  };
+  // Mark notification as read (moved to unified logic earlier)
   if (error) {
     return (
       <div className="error-container">
@@ -589,8 +611,21 @@ export default function AdminDashboard() {
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-left">
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Navigation"
+          >
+            <svg width="22" height="15" viewBox="0 0 22 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.5 1.5H20.5M1.5 7.5H20.5M1.5 13.5H20.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
           <h1>Admin Dashboard</h1>
-          <div className="user-badge">
+        </div>
+
+        <div className="header-right">
+          {/* User Badge - compact pill */}
+          <div className="user-badge header-user-pill">
             <span className="user-avatar">
               {user?.name?.[0] || user?.email?.[0] || 'A'}
             </span>
@@ -599,9 +634,7 @@ export default function AdminDashboard() {
               <span className="user-role">{user?.role || 'Administrator'}</span>
             </span>
           </div>
-        </div>
 
-        <div className="header-right">
           <div className="notification-wrapper">
             <button
               className="btn-icon"
@@ -617,58 +650,80 @@ export default function AdminDashboard() {
 
             {showNotifications && (
               <div className="notification-dropdown">
-                <h4>Notifications</h4>
-                {notifications.length === 0 ? (
-                  <p>No notifications</p>
-                ) : (
-                  notifications.map(notification => (
-                    <div
-                      key={notification.id}
-                      className={`notification-item ${notification.read ? 'read' : 'unread'}`}
-                      onClick={() => markNotificationAsRead(notification.id)}
-                    >
-                      <p>{notification.message}</p>
-                      <small>{notification.time}</small>
-                    </div>
-                  ))
-                )}
+                <div className="notification-dropdown-header">
+                  <h4>Notifications</h4>
+                  <button className="mark-read-btn" onClick={markAllAsRead}>Mark all read</button>
+                </div>
+                <div className="notification-list">
+                  {notifications.length === 0 ? (
+                    <p className="no-notifications">No new notifications</p>
+                  ) : (
+                    notifications.map(notification => (
+                      <div
+                        key={notification.id}
+                        className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                        onClick={() => markNotificationAsRead(notification.id)}
+                      >
+                        <p>{notification.message}</p>
+                        <small>{notification.time}</small>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          <button className="btn-icon" onClick={() => setShowSettingsModal(true)}>⚙️</button>
+          {/* Settings & Sign out - visible on tablet/desktop */}
+          <button className="btn-icon header-settings-btn" onClick={() => setShowSettingsModal(true)}>⚙️</button>
           <button onClick={handleLogout} className="btn-logout">
             <span>🚪</span>
-            Sign out
+            <span className="logout-text">Sign out</span>
           </button>
         </div>
       </header>
 
-      {/* Tab Navigation */}
-      <div className="admin-tabs">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="admin-menu-overlay" onClick={() => setMobileMenuOpen(false)}></div>
+      )}
+
+      {/* Tab Navigation / Drawer on mobile */}
+      <div className={`admin-tabs ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="admin-menu-header">
+          <h3>Menu</h3>
+          <button className="menu-close-btn" onClick={() => setMobileMenuOpen(false)}>✕</button>
+        </div>
         <button
           className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
+          onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
         >
           📊 Overview
         </button>
         <button
           className={`tab-btn ${activeTab === 'events' ? 'active' : ''}`}
-          onClick={() => setActiveTab('events')}
+          onClick={() => { setActiveTab('events'); setMobileMenuOpen(false); }}
         >
           📅 Events
         </button>
         <button
           className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
+          onClick={() => { setActiveTab('users'); setMobileMenuOpen(false); }}
         >
           👥 Users
         </button>
         <button
           className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
-          onClick={() => setActiveTab('reports')}
+          onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
         >
           📈 Reports
+        </button>
+        {/* Mobile-only additional nav buttons */}
+        <button className="tab-btn tab-mobile-only" onClick={() => { setShowSettingsModal(true); setMobileMenuOpen(false); }}>
+          ⚙️ Settings
+        </button>
+        <button className="tab-btn tab-mobile-only logout-tab-btn" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
+          🚪 Sign out
         </button>
       </div>
 

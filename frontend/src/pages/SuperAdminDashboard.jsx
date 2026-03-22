@@ -2,9 +2,9 @@ import React, { useContext, useEffect, useState, useCallback, useRef } from 'rea
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
-import Chatbot from '../components/chatbot';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Chatbot from '../components/chatbot';
 
 /* Dummy event images*/
 const eventImages = {
@@ -43,10 +43,11 @@ export default function SuperAdminDashboard() {
     eventType: 'all',
     format: 'pdf',
   });
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleGenerateReport = () => {
     if (!stats || !stats.events) return;
-    
+
     const filteredEvents = stats.events.filter(ev => {
       const evDate = new Date(ev.date);
       const start = new Date(reportFilters.startDate);
@@ -75,7 +76,7 @@ export default function SuperAdminDashboard() {
         ev.status
       ]);
 
-      let csvContent = "data:text/csv;charset=utf-8," 
+      let csvContent = "data:text/csv;charset=utf-8,"
         + "Event Analytics Report\n"
         + `Generated on: ${new Date().toLocaleString()}\n`
         + `Filters: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}\n\n`
@@ -92,16 +93,16 @@ export default function SuperAdminDashboard() {
     } else {
       // PDF Export
       const doc = new jsPDF();
-      
+
       doc.setFontSize(20);
       doc.setTextColor(102, 126, 234);
       doc.text('CampusHub Analytics Report', 14, 22);
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
       doc.text(`Range: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}`, 14, 35);
-      
+
       doc.setDrawColor(200);
       doc.line(14, 40, 196, 40);
 
@@ -295,7 +296,7 @@ export default function SuperAdminDashboard() {
             </div>
           </div>
 
-          {/* Right controls */}
+          {/* Right controls - Desktop */}
           <div className="sa-header-controls">
             {/* Notifications */}
             <div className="sa-notif-wrap" ref={notifRef}>
@@ -342,8 +343,98 @@ export default function SuperAdminDashboard() {
 
             <button className="sa-logout-btn" onClick={handleLogout}>Sign out →</button>
           </div>
+
+          {/* MOBILE HEADER ACTIONS */}
+          <div className="sa-mobile-header-actions">
+            <div className="sa-mobile-profile">
+              <div className="sa-mobile-avatar">{user?.name?.[0] || user?.email?.[0] || 'A'}</div>
+              <div className="sa-mobile-user-info">
+                <span className="sa-mobile-user-name">{user?.name || user?.email || 'Administrator'}</span>
+                <span className="sa-mobile-user-role">Super Admin</span>
+              </div>
+            </div>
+
+            <div className="sa-mobile-action-stack">
+              {/* Notification Bell Symbol */}
+              <div className="sa-notif-wrap --mobile" ref={notifRef}>
+                <button className="sa-icon-btn --mobile" onClick={() => setShowNotifications(v => !v)}>
+                  🔔
+                  {unreadCount > 0 && <span className="sa-badge-dot">{unreadCount}</span>}
+                </button>
+                {showNotifications && (
+                  <div className="sa-notif-panel --mobile">
+                    <div className="sa-notif-head">
+                      <span className="sa-notif-title">Notifications</span>
+                      <span className="sa-notif-new">{unreadCount} new</span>
+                    </div>
+                    <div className="sa-notif-list">
+                      {notifications.map(n => (
+                        <div key={n.id} className={`sa-notif-item ${n.read ? '--read' : '--unread'}`} onClick={() => markRead(n.id)}>
+                          <span className="sa-notif-dot-ind" />
+                          <div>
+                            <p className="sa-notif-msg">{n.message}</p>
+                            <small className="sa-notif-time">{n.time}</small>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className={`sa-mobile-toggle ${showMobileMenu ? '--open' : ''}`}
+            onClick={() => setShowMobileMenu(v => !v)}
+            aria-label="Toggle menu"
+          >
+            <span className="sa-burger-line" />
+            <span className="sa-burger-line" />
+            <span className="sa-burger-line" />
+          </button>
         </div>
       </header>
+
+      {/* MOBILE NAV OVERLAY */}
+      <div className={`sa-mobile-nav ${showMobileMenu ? '--visible' : ''}`}>
+        <div className="sa-mobile-nav-inner">
+          <button className="sa-mobile-nav-close" onClick={() => setShowMobileMenu(false)} aria-label="Close menu">✕</button>
+
+          <div className="sa-mobile-nav-group">
+            <p className="sa-mobile-nav-label">Dashboard Navigation</p>
+            {[
+              { id: 'overview', icon: '📊', label: 'Overview' },
+              { id: 'events', icon: '📅', label: 'Events' },
+              { id: 'users', icon: '👥', label: 'Users' },
+              { id: 'reports', icon: '📈', label: 'Analytics' },
+            ].map(t => (
+              <button
+                key={t.id}
+                className={`sa-mobile-nav-item ${activeTab === t.id ? '--active' : ''}`}
+                onClick={() => { setActiveTab(t.id); setShowMobileMenu(false); }}
+              >
+                <span className="sa-nav-icon">{t.icon}</span>
+                <span className="sa-nav-label">{t.label}</span>
+                {activeTab === t.id && <span className="sa-nav-active-ind">●</span>}
+              </button>
+            ))}
+          </div>
+
+          <div className="sa-mobile-nav-group">
+            <p className="sa-mobile-nav-label">Account</p>
+            <button className="sa-mobile-nav-item" onClick={() => { setShowSettings(true); setShowMobileMenu(false); }}>
+              <span className="sa-nav-icon">⚙️</span>
+              <span className="sa-nav-label">Settings</span>
+            </button>
+            <button className="sa-mobile-nav-item --logout" onClick={handleLogout}>
+              <span className="sa-nav-icon">🚪</span>
+              <span className="sa-nav-label">Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* TAB BAR */}
       <div className="sa-tabbar">

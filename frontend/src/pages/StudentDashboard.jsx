@@ -6,8 +6,8 @@ import Header from "../components/Header";
 import EventCard from "../components/EventCard";
 import ProfileForm from "../components/ProfileForm";
 import "../styles/dashboard.css";
-import Chatbot from "../components/chatbot";
 import Calendar from "../components/Calendar";
+import Chatbot from '../components/chatbot';
 
 const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
 
@@ -92,23 +92,23 @@ export default function StudentDashboard() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                    if (response.ok) {
-                        const data = await response.json();
-                        // Filter out registrations where the event was deleted
-                        const validRegistrations = data.filter(reg => reg.event && reg.event._id);
-                        setStudentRegistrations(validRegistrations);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Filter out registrations where the event was deleted
+                    const validRegistrations = data.filter(reg => reg.event && reg.event._id);
+                    setStudentRegistrations(validRegistrations);
 
-                        // Calculate stats based on valid registrations only
-                        const nowDate = new Date();
-                        const upcoming = validRegistrations.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
-                        const completed = validRegistrations.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
+                    // Calculate stats based on valid registrations only
+                    const nowDate = new Date();
+                    const upcoming = validRegistrations.filter(reg => new Date(reg.event?.eventDate) > nowDate).length;
+                    const completed = validRegistrations.filter(reg => new Date(reg.event?.eventDate) < nowDate).length;
 
-                        setStats({
-                            totalRegistrations: validRegistrations.length,
-                            upcomingEvents: upcoming,
-                            completedEvents: completed
-                        });
-                    }
+                    setStats({
+                        totalRegistrations: validRegistrations.length,
+                        upcomingEvents: upcoming,
+                        completedEvents: completed
+                    });
+                }
             } catch (err) {
                 console.error('Error fetching registrations:', err);
             }
@@ -162,16 +162,9 @@ export default function StudentDashboard() {
     if (loading) {
         return (
             <div className="dashboard-container">
-                {/* Mobile sidebar toggle */}
-                <button
-                    className="sidebar-toggle"
-                    onClick={() => setSidebarOpen(o => !o)}
-                    aria-label="Toggle navigation"
-                >
-                    ☰
-                </button>
                 <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <main className="main-content">
+                    <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" onToggle={() => setSidebarOpen(true)} />
                     <div style={{ padding: '40px', textAlign: 'center' }}>
                         <div style={{ fontSize: '18px', color: '#6F767E' }}>Loading your dashboard...</div>
                     </div>
@@ -189,28 +182,18 @@ export default function StudentDashboard() {
                 />
             )}
 
-            {/* Mobile sidebar toggle */}
-            <button
-                className="sidebar-toggle"
-                onClick={() => setSidebarOpen(o => !o)}
-                aria-label="Toggle navigation"
-            >
-                ☰
-            </button>
-
             <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <main className="main-content">
-                <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" id={user?.id} registrations={studentRegistrations} />
+                <Header
+                    userName={studentProfile?.name || user?.name || "Student"}
+                    userRole="Student"
+                    id={user?.id}
+                    registrations={studentRegistrations}
+                    onToggle={() => setSidebarOpen(true)}
+                />
 
                 <div className="welcome-section">
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'start',
-                        marginBottom: '20px',
-                        flexWrap: 'wrap',
-                        gap: '12px'
-                    }}>
+                    <div className="welcome-header">
                         <div>
                             <h1>Welcome back, {(studentProfile?.name?.split(' ')[0]) || (user?.name?.split(' ')[0]) || 'Student'}! 👋</h1>
                             <p>
@@ -221,33 +204,14 @@ export default function StudentDashboard() {
                         </div>
                         <button
                             onClick={() => setShowProfileForm(true)}
-                            style={{
-                                padding: '10px 16px',
-                                backgroundColor: 'var(--primary)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: '600',
-                                fontSize: '14px',
-                                transition: 'all 0.2s ease',
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0
-                            }}
-                            onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-                            onMouseLeave={(e) => e.target.style.opacity = '1'}
+                            className="update-profile-btn"
                         >
                             ✏️ Update Profile
                         </button>
                     </div>
 
                     {/* Stats Cards */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                        gap: '20px',
-                        marginBottom: '40px'
-                    }}>
+                    <div className="stats-grid">
                         {/* Total Registrations Card */}
                         <div style={{
                             background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
@@ -317,8 +281,8 @@ export default function StudentDashboard() {
                 </div>
 
                 <section>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, #667eea, #a855f7)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>🎯 Featured Events</h2>
+                    <div className="section-header">
+                        <h2 className="section-title">🎯 Featured Events</h2>
                         <button
                             style={{
                                 color: 'var(--primary)',
@@ -368,7 +332,7 @@ export default function StudentDashboard() {
                                         position: 'relative'
                                     }}>
                                         <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(102,126,234,0.9)', color: '#fff', fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '50px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            {({'tech':'💻 Technology','music':'🎵 Music','workshop':'🛠️ Workshop','cultural':'🎭 Cultural','sports':'⚽ Sports','other':'🌟 Other'})[event.category] || event.category || 'Tech'}
+                                            {({ 'tech': '💻 Technology', 'music': '🎵 Music', 'workshop': '🛠️ Workshop', 'cultural': '🎭 Cultural', 'sports': '⚽ Sports', 'other': '🌟 Other' })[event.category] || event.category || 'Tech'}
                                         </div>
                                     </div>
                                     <div style={{ padding: '16px' }}>
