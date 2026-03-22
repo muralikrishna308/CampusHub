@@ -127,6 +127,11 @@ const Home = () => {
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
+
+            <div className="lp-nav__mobile-cta">
+              <button className="lp-btn lp-btn--ghost" onClick={() => navigate('/login')}>Sign In</button>
+              <button className="lp-btn lp-btn--primary" onClick={() => navigate('/register')}>Get Started →</button>
+            </div>
           </nav>
 
           <div className="lp-nav__cta">
