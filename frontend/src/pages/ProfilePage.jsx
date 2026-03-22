@@ -202,10 +202,22 @@ function EditModal({ user, onClose, onSave }) {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-          {[["Name", "name"], ["Phone", "phone"], ["Location", "location"]].map(([lbl, key]) => (
+          {[
+            ["Name", "name"],
+            ["Phone", "phone"],
+            ["Location", "location"],
+            ["College", "college"],
+            ["Department", "department"],
+            ["Year", "year"]
+          ].map(([lbl, key]) => (
             <div key={key}>
               <label style={labelStyle}>{lbl}</label>
-              <input style={inputStyle} value={form[key] || ""} onChange={e => set(key, e.target.value)} />
+              <input 
+                type={key === "year" ? "number" : "text"}
+                style={inputStyle} 
+                value={form[key] || ""} 
+                onChange={e => set(key, e.target.value)} 
+              />
             </div>
           ))}
         </div>
@@ -329,6 +341,9 @@ function ProfilePage() {
   const [profileStats, setProfileStats] = useState({ registrations: 0, eventsAttended: 0 });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const toggleSidebar = React.useCallback(() => setSidebarOpen(true), []);
+  const closeSidebar = React.useCallback(() => setSidebarOpen(false), []);
+
   // Keep profile in sync if auth.user changes (e.g. after save-to-backend)
   React.useEffect(() => {
     if (auth?.user) setProfile(normalizeUser(auth.user));
@@ -364,11 +379,35 @@ function ProfilePage() {
 
   const [editing, setEditing] = useState(false);
 
-  if (!profile) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0a0f1a", color: "#6b7280", fontFamily: "'DM Sans', sans-serif" }}>
-      Loading profile...
-    </div>
-  );
+  if (!profile) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0a0f1a", color: "#6b7280", fontFamily: "'DM Sans', sans-serif" }}>
+        Loading profile...
+      </div>
+    );
+  }
+
+  const handleSave = async (form) => {
+    try {
+      // Map frontend fields to backend
+      const payload = {
+        name: form.name,
+        phone: form.phone,
+        address: form.location, // Mapping location to address for the backend
+        department: form.department,
+        year: form.year ? parseInt(form.year) : undefined,
+        bio: form.bio,
+        interests: form.interests,
+        college: form.college
+      };
+      
+      await auth.updateUser(payload);
+      setEditing(false);
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      alert('Error saving changes. Please try again.');
+    }
+  };
 
   const initials = profile.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
@@ -383,14 +422,14 @@ function ProfilePage() {
       `}</style>
 
       <div className="dashboard-container">
-        <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
 
         <main className="main-content" style={{ fontFamily: "'DM Sans', sans-serif", color: "#e5e7eb" }}>
           <Header
             userName={profile.name}
             userRole={profile.role}
             id={auth?.user?.id}
-            onToggle={() => setSidebarOpen(true)}
+            onToggle={toggleSidebar}
           />
 
           {/* ── Hero card ── */}
@@ -547,7 +586,7 @@ function ProfilePage() {
         </main>
       </div>
 
-      {editing && <EditModal user={profile} onClose={() => setEditing(false)} onSave={setProfile} />}
+      {editing && <EditModal user={profile} onClose={() => setEditing(false)} onSave={handleSave} />}
     </>
   );
 }

@@ -11,6 +11,11 @@ export default function AdminDashboard() {
     const navigate = useNavigate();
     const { user, token } = useContext(AuthContext);
     const [loading, setLoading] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    
+    const toggleSidebar = React.useCallback(() => setSidebarOpen(true), []);
+    const closeSidebar = React.useCallback(() => setSidebarOpen(false), []);
+
     const [adminEvents, setAdminEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [registrations, setRegistrations] = useState([]);
@@ -77,8 +82,9 @@ export default function AdminDashboard() {
     if (loading) {
         return (
             <div className="dashboard-container">
-                <Sidebar role="admin" />
+                <Sidebar role="admin" isOpen={sidebarOpen} onClose={closeSidebar} />
                 <main className="main-content">
+                    <Header userName={user?.name || "Admin"} userRole="Admin" onToggle={toggleSidebar} />
                     <div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>
                 </main>
             </div>
@@ -87,9 +93,14 @@ export default function AdminDashboard() {
 
     return (
         <div className="dashboard-container">
-            <Sidebar role="admin" />
+            <Sidebar role="admin" isOpen={sidebarOpen} onClose={closeSidebar} />
             <main className="main-content">
-                <Header userName={user?.name || "Admin"} userRole="Admin" id={user?.id} />
+                <Header 
+                    userName={user?.name || "Admin"} 
+                    userRole="Admin" 
+                    id={user?.id} 
+                    onToggle={toggleSidebar}
+                />
 
                 <div className="admin-section">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>

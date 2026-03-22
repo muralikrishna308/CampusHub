@@ -119,11 +119,19 @@ const Home = () => {
           </button>
 
           <nav className={`lp-nav__links ${menuOpen ? 'lp-nav__links--open' : ''}`}>
+            {/* Dedicated close button for mobile only */}
+            <button className="lp-nav__mobile-close" onClick={() => setMenuOpen(false)}>✕</button>
+
             {['features', 'events', 'testimonials', 'contact'].map(s => (
               <button key={s} className="lp-nav__link" onClick={() => scrollTo(s)}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
+
+            <div className="lp-nav__mobile-cta">
+              <button className="lp-btn lp-btn--ghost" onClick={() => navigate('/login')}>Sign In</button>
+              <button className="lp-btn lp-btn--primary" onClick={() => navigate('/register')}>Get Started →</button>
+            </div>
           </nav>
 
           <div className="lp-nav__cta">

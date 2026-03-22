@@ -462,6 +462,9 @@ export default function Events() {
     const navigate = useNavigate();
     const { user, token } = useContext(AuthContext);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    
+    const toggleSidebar = useCallback(() => setSidebarOpen(true), []);
+    const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
     const [events, setEvents] = useState([]);
     const [filteredEvents, setFilteredEvents] = useState([]);
@@ -625,13 +628,13 @@ setRegisteredEvents(registrationsMap);
                 />
             )}
 
-            <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
             <main className="main-content events-main-content">
                 <Header 
                     userName={user?.name || 'Student'} 
                     userRole="Student" 
                     id={user?.id} 
-                    onToggle={() => setSidebarOpen(true)}
+                    onToggle={toggleSidebar}
                 />
 
                 {/* Page Title */}

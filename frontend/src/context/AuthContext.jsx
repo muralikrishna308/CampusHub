@@ -99,8 +99,28 @@ export function AuthProvider({ children }) {
     navigate('/');
   };
 
+  const updateUser = async (updatedUser) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/profile/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedUser)
+      });
+      if (!res.ok) throw res;
+      const data = await res.json();
+      setUser(data.user);
+      return data.user;
+    } catch (err) {
+      console.error('Update user error', err);
+      throw err;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, loginWithToken, logout, register, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, loginWithToken, logout, register, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
