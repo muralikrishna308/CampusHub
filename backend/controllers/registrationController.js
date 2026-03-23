@@ -1,9 +1,9 @@
 const Registration = require('../models/Registration');
 const Event = require('../models/Event');
 const sendEmail = require('../utils/sendemail');
-const { 
-  getRegistrationConfirmationEmail, 
-  getRegistrationAcceptedEmail, 
+const {
+  getRegistrationConfirmationEmail,
+  getRegistrationAcceptedEmail,
   getRegistrationRejectedEmail,
   getAdminRegistrationAlertEmail
 } = require('../utils/emailTemplates');
@@ -46,9 +46,9 @@ exports.registerForEvent = async (req, res) => {
         existingRegistration.status = 'pending';
         // You might want to update other fields if they were changed
         await existingRegistration.save();
-        return res.status(200).json({ 
-          msg: "Registration re-submitted for approval", 
-          registration: existingRegistration 
+        return res.status(200).json({
+          msg: "Registration re-submitted for approval",
+          registration: existingRegistration
         });
       }
       return res.status(400).json({ msg: "You are already registered for this event" });
@@ -103,14 +103,18 @@ exports.registerForEvent = async (req, res) => {
         message: `${firstName} ${lastName} registered for "${event.title}"`,
       });
 
-      // Send professional email alert to admin
-      const adminEmailHtml = getAdminRegistrationAlertEmail(event.admin.name, `${firstName} ${lastName}`, event.title);
-      await sendEmail(
-        event.admin.email,
-        `New Registration: ${event.title} 📝`,
-        `${firstName} ${lastName} has registered for your event "${event.title}".`,
-        adminEmailHtml
-      );
+      // Send professional email alert to admin only if it's not the same as the credentials owner
+      if (event.admin.email && event.admin.email !== process.env.EMAIL_USER) {
+        const adminEmailHtml = getAdminRegistrationAlertEmail(event.admin.name, `${firstName} ${lastName}`, event.title);
+        await sendEmail(
+          event.admin.email,
+          `New Registration: ${event.title} 📝`,
+          `${firstName} ${lastName} has registered for your event "${event.title}".`,
+          adminEmailHtml
+        );
+      } else {
+        console.log(`[Admin Alert] Notification sent in-app; skipping email to credentials owner (${event.admin.email})`);
+      }
 
     } catch (notifErr) {
       console.log('Admin alert failed:', notifErr.message);

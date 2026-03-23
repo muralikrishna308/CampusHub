@@ -2,6 +2,10 @@ const nodemailer = require("nodemailer");
 
 const sendEmail = async (to, subject, text, html = null) => {
   try {
+    if (!to) {
+      console.warn("[Email] Warning: Recipient address ('to') is missing. Skipping email.");
+      return null;
+    }
     console.log(`[Email] Attempting to send to: ${to} (HTML: ${!!html})`);
     
     // Using 'service: gmail' is the standard for Gmail SMTP
