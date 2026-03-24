@@ -50,6 +50,7 @@ export default function AdminDashboard() {
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [eventCategoryFilter, setEventCategoryFilter] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('All Roles');
+  const [feedbackEventFilter, setFeedbackEventFilter] = useState('all');
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -717,6 +718,12 @@ export default function AdminDashboard() {
           👥 Users
         </button>
         <button
+          className={`tab-btn ${activeTab === 'feedbacks' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('feedbacks'); setMobileMenuOpen(false); }}
+        >
+          ⭐ Feedbacks
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
           onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
         >
@@ -918,6 +925,18 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td>
+                            {new Date(event.eventDate) < new Date() && (
+                              <button
+                                className="action-btn"
+                                onClick={() => {
+                                  setActiveTab('feedbacks');
+                                  setFeedbackEventFilter(event._id);
+                                }}
+                                title="View Feedbacks"
+                              >
+                                ⭐
+                              </button>
+                            )}
                             <button className="action-btn" onClick={() => {
                               const formattedEvent = {
                                 ...event,
@@ -1094,6 +1113,95 @@ export default function AdminDashboard() {
                     <button className="btn-danger">Bulk Delete</button>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Feedbacks Tab */}
+            {activeTab === 'feedbacks' && (
+              <div className="feedbacks-tab">
+                <div className="tab-header" style={{ marginBottom: '24px' }}>
+                  <h2>Event Feedbacks</h2>
+                  <div className="tab-actions">
+                    <select 
+                      className="filter-select"
+                      value={feedbackEventFilter}
+                      onChange={(e) => setFeedbackEventFilter(e.target.value)}
+                      style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--c-border)', background: 'var(--c-dark2)', color: 'var(--c-text)' }}
+                    >
+                      <option value="all">All Completed Events</option>
+                      {stats.events?.filter(e => new Date(e.eventDate) < new Date()).map(e => (
+                        <option key={e._id} value={e._id}>{e.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="feedbacks-grid" style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                  gap: '24px'
+                }}>
+                  {allRegistrations?.filter(reg => {
+                    // Must have rating and feedback
+                    if (!reg.rating || !reg.feedback) return false;
+                    // Event must be completed
+                    const eventDate = new Date(reg.event?.eventDate || stats.events.find(e => e._id === reg.event)?.eventDate);
+                    if (eventDate >= new Date()) return false;
+                    // Must match filter
+                    const eventId = reg.event?._id || reg.event;
+                    return feedbackEventFilter === 'all' || eventId === feedbackEventFilter;
+                  }).length === 0 ? (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--c-muted)' }}>
+                      <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px', opacity: 0.5 }}>📝</span>
+                      <p>No feedbacks found for the selected filter.</p>
+                    </div>
+                  ) : allRegistrations?.filter(reg => {
+                    if (!reg.rating || !reg.feedback) return false;
+                    const eventDate = new Date(reg.event?.eventDate || stats.events.find(e => e._id === reg.event)?.eventDate);
+                    if (eventDate >= new Date()) return false;
+                    const eventId = reg.event?._id || reg.event;
+                    return feedbackEventFilter === 'all' || eventId === feedbackEventFilter;
+                  }).map((reg, index) => {
+                    const eventTitle = reg.event?.title || stats.events.find(e => e._id === reg.event)?.title || 'Unknown Event';
+                    return (
+                      <div key={index} className="feedback-card" style={{
+                        background: 'var(--c-card)',
+                        padding: '24px',
+                        borderRadius: 'var(--radius-lg)',
+                        boxShadow: 'var(--shadow-md)',
+                        border: '1px solid var(--c-border)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#fff' }}>{reg.firstName} {reg.lastName}</h4>
+                            <span style={{ fontSize: '12px', color: 'var(--c-muted)', fontWeight: '500' }}>For: {eventTitle}</span>
+                          </div>
+                          <div style={{ color: '#fbbf24', letterSpacing: '2px', fontSize: '18px' }}>
+                            {"★".repeat(reg.rating)}{"☆".repeat(5 - reg.rating)}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Experience</div>
+                            <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.eventExperience || <span style={{color:'var(--c-muted)', fontStyle:'italic'}}>N/A</span>}</div>
+                          </div>
+                          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Dissatisfactions</div>
+                            <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.dissatisfactions || <span style={{color:'var(--c-muted)', fontStyle:'italic'}}>N/A</span>}</div>
+                          </div>
+                          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Improvements</div>
+                            <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.improvements || <span style={{color:'var(--c-muted)', fontStyle:'italic'}}>N/A</span>}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

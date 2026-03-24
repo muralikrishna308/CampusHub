@@ -349,3 +349,57 @@ exports.rejectRegistration = async (req, res) => {
   }
 };
 
+// Submit feedback for a completed event
+exports.submitFeedback = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    const { rating, feedback } = req.body;
+    const userId = req.user.id;
+
+    const registration = await Registration.findById(registrationId).populate("event");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    // Check if the registration belongs to the user
+    if (registration.user.toString() !== userId) {
+      return res.status(403).json({ msg: "Unauthorized to submit feedback for this registration" });
+    }
+
+    // Check if the event date has passed
+    const currentDate = new Date();
+    const eventDate = new Date(registration.event.eventDate);
+
+    if (currentDate <= eventDate) {
+      return res.status(400).json({ msg: "Cannot submit feedback for an event that has not yet completed." });
+    }
+
+    // Check if the user's registration was accepted or attended
+    if (registration.status !== 'accepted' && registration.status !== 'attended') {
+      return res.status(400).json({ msg: "You can only submit feedback for events you were approved for." });
+    }
+
+    // Set feedback and rating
+    registration.rating = rating;
+    registration.feedback = {
+      eventExperience: feedback?.eventExperience || '',
+      dissatisfactions: feedback?.dissatisfactions || '',
+      improvements: feedback?.improvements || ''
+    };
+    
+    // Optionally automatically mark them as attended if they submit feedback
+    if (registration.status === 'accepted') {
+       registration.status = 'attended';
+    }
+
+    await registration.save();
+
+    res.json({ msg: "Feedback submitted successfully", registration });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
