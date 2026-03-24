@@ -458,6 +458,20 @@ const categoryColors = {
     default: '#6b7280',
 };
 
+const isRegistrationClosed = (eventDateStr) => {
+    if (!eventDateStr) return false;
+    const eventDate = new Date(eventDateStr);
+    eventDate.setHours(0, 0, 0, 0);
+    
+    // "Tomorrow" relative to current time
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    // If event is tomorrow or earlier, registration is closed
+    return eventDate <= tomorrow;
+};
+
 export default function Events() {
     const navigate = useNavigate();
     const { user, token } = useContext(AuthContext);
@@ -750,17 +764,13 @@ setRegisteredEvents(registrationsMap);
                                                 )}
                                             </div>
                                             <button
-                                                // className={`register-btn ${registeredEvents.includes(event._id) ? 'registered' : ''}`}
                                                 className={`register-btn ${registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected' ? 'registered' : ''}`}
                                                 onClick={e => { e.stopPropagation(); handleRegister(event._id); }}
-                                                disabled={spotsLeft(event) === 0 || (registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected')}
+                                                disabled={isRegistrationClosed(event.date) || spotsLeft(event) === 0 || (registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected')}
                                             >
-                                                 {/* {registeredEvents.includes(event._id)
-                                                    ? '✔ Registered'
-                                                    : spotsLeft(event) === 0
-                                                        ? 'Full'
-                                                        : 'Register'} */}
-                                                        {registeredEvents[event._id] === "pending"
+                                                        {isRegistrationClosed(event.date)
+  ? "Event Completed"
+  : registeredEvents[event._id] === "pending"
   ? "⏳ Pending Approval"
   : registeredEvents[event._id] === "accepted"
   ? "✔ Registered"
@@ -827,7 +837,9 @@ setRegisteredEvents(registrationsMap);
                                 </div>
 
                                 <div className="ev-modal-actions">
-                                    {registeredEvents[selectedEvent._id] && registeredEvents[selectedEvent._id] !== 'rejected' ? (
+                                    {isRegistrationClosed(selectedEvent.date) ? (
+                                        <button className="register-btn full large" disabled>Event Completed</button>
+                                    ) : registeredEvents[selectedEvent._id] && registeredEvents[selectedEvent._id] !== 'rejected' ? (
                                         <button className="register-btn registered large" disabled>
                                             {registeredEvents[selectedEvent._id] === 'pending' ? '⏳ Pending Approval' : '✔ Already Registered'}
                                         </button>
