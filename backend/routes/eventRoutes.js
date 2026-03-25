@@ -5,11 +5,6 @@ const Event = require("../models/Event");
 const { createEvent, getAllEvents, getEventById } = require("../controllers/Eventcontroller");
 const auth = require("../middleware/auth");
 
-router.get("/:id", auth, getEventById);
-router.get("/events", getAllEvents);
-// Create Event
-router.post("/create", auth, createEvent);
-router.get("/events", getAllEvents);
 // Get All Events
 router.get("/all", auth, async (req, res) => {
   try {
@@ -19,5 +14,12 @@ router.get("/all", auth, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// Other static routes
+router.get("/events", getAllEvents);
+router.post("/create", auth, createEvent);
+
+// Dynamic ID MUST be last
+router.get("/:id", auth, getEventById);
 
 module.exports = router;   // ✅ EXPORT ROUTER

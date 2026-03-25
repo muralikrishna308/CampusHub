@@ -29,6 +29,9 @@ const CommentItem = ({ comment, replies, onReply, onLike, onDelete, currentUser 
     const [replyText, setReplyText] = useState('');
     const [showReplies, setShowReplies] = useState(false);
 
+    const getUserId = (u) => u?.id || u?._id;
+    const currentUserId = getUserId(currentUser);
+
     const handleReplySubmit = (e) => {
         e.preventDefault();
         if (replyText.trim()) {
@@ -52,7 +55,7 @@ const CommentItem = ({ comment, replies, onReply, onLike, onDelete, currentUser 
                 <div className="yt-comment-text">{comment.text}</div>
                 <div className="yt-comment-actions">
                     <button 
-                        className={`yt-action-btn ${comment.likes?.includes(currentUser.id) ? 'liked' : ''}`}
+                        className={`yt-action-btn ${comment.likes?.includes(currentUserId) ? 'liked' : ''}`}
                         onClick={() => onLike(comment._id)}
                     >
                         👍 {comment.likes?.length || ''}
@@ -60,7 +63,7 @@ const CommentItem = ({ comment, replies, onReply, onLike, onDelete, currentUser 
                     <button className="yt-action-btn" onClick={() => setIsReplying(!isReplying)}>
                         REPLY
                     </button>
-                    {(currentUser.id === comment.user || currentUser.role === 'admin') && (
+                    {(currentUserId === comment.user || currentUser.role === 'admin') && (
                         <button className="yt-action-btn" onClick={() => onDelete(comment._id)}>
                             DELETE
                         </button>
@@ -118,12 +121,12 @@ const CommentItem = ({ comment, replies, onReply, onLike, onDelete, currentUser 
                                                 <div className="yt-comment-text">{reply.text}</div>
                                                 <div className="yt-comment-actions">
                                                     <button 
-                                                        className={`yt-action-btn ${reply.likes?.includes(currentUser.id) ? 'liked' : ''}`}
+                                                        className={`yt-action-btn ${reply.likes?.includes(currentUserId) ? 'liked' : ''}`}
                                                         onClick={() => onLike(reply._id)}
                                                     >
                                                         👍 {reply.likes?.length || ''}
                                                     </button>
-                                                    {(currentUser.id === reply.user || currentUser.role === 'admin') && (
+                                                    {(currentUserId === reply.user || currentUser.role === 'admin') && (
                                                         <button className="yt-action-btn" onClick={() => onDelete(reply._id)}>
                                                             DELETE
                                                         </button>
