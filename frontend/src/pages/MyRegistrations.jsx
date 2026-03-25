@@ -31,7 +31,7 @@ const MyRegistrations = () => {
     const [studentProfile, setStudentProfile] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     const toggleSidebar = useCallback(() => setSidebarOpen(true), []);
     const closeSidebar = useCallback(() => setSidebarOpen(false), []);
     const [stats, setStats] = useState({
@@ -39,14 +39,6 @@ const MyRegistrations = () => {
         upcoming: 0,
         completed: 0
     });
-
-    const [feedbackModal, setFeedbackModal] = useState({ 
-        isOpen: false, 
-        regId: null, 
-        rating: 5, 
-        feedback: { eventExperience: '', dissatisfactions: '', improvements: '' } 
-    });
-    const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -95,7 +87,7 @@ const MyRegistrations = () => {
 
     const filteredRegistrations = (registrations || []).filter(reg => {
         const matchesCategory = selectedCategory === 'all' || reg.event.category === selectedCategory;
-        const matchesSearch = !searchTerm || 
+        const matchesSearch = !searchTerm ||
             reg.event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             reg.event.location?.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesCategory && matchesSearch;
@@ -111,55 +103,6 @@ const MyRegistrations = () => {
             all: '#a855f7'
         };
         return colors[catId] || '#6366f1';
-    };
-
-    const handleFeedbackSubmit = async () => {
-        if (!feedbackModal.regId || !token) return;
-        setSubmittingFeedback(true);
-        try {
-            const response = await fetch(`${API_URL}/api/registrations/${feedbackModal.regId}/feedback`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    rating: feedbackModal.rating,
-                    feedback: feedbackModal.feedback
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                
-                // Update local state registrations to show the new feedback immediately
-                setRegistrations(prevRegistrations => 
-                    prevRegistrations.map(reg => {
-                        if (reg._id === feedbackModal.regId) {
-                            return { ...reg, rating: data.registration.rating, feedback: data.registration.feedback, status: data.registration.status };
-                        }
-                        return reg;
-                    })
-                );
-                
-                // Close modal
-                setFeedbackModal({ 
-                    isOpen: false, 
-                    regId: null, 
-                    rating: 5, 
-                    feedback: { eventExperience: '', dissatisfactions: '', improvements: '' } 
-                });
-                alert("Thank you for your feedback!");
-            } else {
-                const errData = await response.json();
-                alert(errData.msg || "Error submitting feedback");
-            }
-        } catch (error) {
-            console.error(error);
-            alert("Error submitting feedback. Please try again.");
-        } finally {
-            setSubmittingFeedback(false);
-        }
     };
 
     return (
@@ -287,7 +230,7 @@ const MyRegistrations = () => {
                                                 </div>
                                             </div>
 
-                                             <div className="myreg-card__footer">
+                                            <div className="myreg-card__footer">
                                                 <div className="myreg-price-box">
                                                     <span className="myreg-price-label">Ticket Price</span>
                                                     <span className="myreg-price-value">
@@ -303,7 +246,7 @@ const MyRegistrations = () => {
                                                     fontWeight: '700',
                                                     fontSize: '11px'
                                                 }}>
-                                                    <span style={{ fontSize: '10px', marginRight: '4px' }}>●</span> 
+                                                    <span style={{ fontSize: '10px', marginRight: '4px' }}>●</span>
                                                     {reg.status?.toUpperCase() || 'PENDING'}
                                                 </div>
                                             </div>
@@ -316,21 +259,21 @@ const MyRegistrations = () => {
                                                 >
                                                     View Details →
                                                 </button>
-                                                {!isUpcoming && (reg.status === 'accepted' || reg.status === 'attended') && !reg.rating && (
+                                                {!isUpcoming && (reg.status === 'accepted' || reg.status === 'attended') && (
                                                     <button
                                                         className="myreg-card__btn"
                                                         style={{ flex: 1, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none' }}
-                                                        onClick={() => setFeedbackModal({ isOpen: true, regId: reg._id, rating: 5, feedback: { eventExperience: '', dissatisfactions: '', improvements: '' } })}
+                                                        onClick={() => navigate(`/event-discussion/${reg._id}`)}
                                                     >
-                                                        ⭐ Feedback
+                                                        ⭐ Feedback & Discussion
                                                     </button>
                                                 )}
                                             </div>
                                             {!isUpcoming && reg.rating && (
-                                                <div style={{marginTop: '12px', padding: '12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid var(--c-border)'}}>
-                                                    <div style={{display: 'flex', alignItems: 'center'}}>
-                                                        <span style={{color: '#fbbf24', marginRight: '6px', fontSize: '14px', letterSpacing: '2px'}}>{"★".repeat(reg.rating)}{"☆".repeat(5-reg.rating)}</span>
-                                                        <span style={{fontSize: '11px', color: 'var(--text-gray)', fontWeight: '600', textTransform: 'uppercase'}}>Your Rating Submitted</span>
+                                                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid var(--c-border)' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        <span style={{ color: '#fbbf24', marginRight: '6px', fontSize: '14px', letterSpacing: '2px' }}>{"★".repeat(reg.rating)}{"☆".repeat(5 - reg.rating)}</span>
+                                                        <span style={{ fontSize: '11px', color: 'var(--text-gray)', fontWeight: '600', textTransform: 'uppercase' }}>Your Rating Submitted</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -341,118 +284,6 @@ const MyRegistrations = () => {
                         </div>
                     )}
                 </div>
-
-                {/* Feedback Modal */}
-                {feedbackModal.isOpen && (
-                    <div className="feedback-modal-overlay" style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-                        background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', 
-                        alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
-                    }}>
-                        <div className="feedback-modal-content" style={{
-                            background: 'var(--bg-main)', width: '90%', maxWidth: '400px', 
-                            borderRadius: '16px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)',
-                            border: '1px solid var(--c-border)'
-                        }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-dark)' }}>Rate Your Experience</h2>
-                            <p style={{ fontSize: '14px', color: 'var(--text-gray)', marginBottom: '20px' }}>Your feedback helps us improve future events.</p>
-                            
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <button
-                                        key={star}
-                                        type="button"
-                                        onClick={() => setFeedbackModal({...feedbackModal, rating: star})}
-                                        style={{ 
-                                            background: 'none', border: 'none', 
-                                            fontSize: '32px', cursor: 'pointer',
-                                            color: star <= feedbackModal.rating ? '#fbbf24' : '#e2e8f0',
-                                            transition: 'color 0.2s'
-                                        }}
-                                    >
-                                        ★
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '8px', marginBottom: '20px' }}>
-                                <div style={{ marginBottom: '16px' }}>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-dark)', marginBottom: '6px' }}>How was the event?</label>
-                                    <textarea
-                                        value={feedbackModal.feedback.eventExperience}
-                                        onChange={(e) => setFeedbackModal({...feedbackModal, feedback: {...feedbackModal.feedback, eventExperience: e.target.value}})}
-                                        placeholder="Describe your overall experience..."
-                                        style={{
-                                            width: '100%', height: '80px', padding: '12px',
-                                            borderRadius: '8px', border: '1px solid var(--c-border)',
-                                            background: 'rgba(255,255,255,0.03)', color: 'var(--text-dark)',
-                                            resize: 'none', outline: 'none',
-                                            fontSize: '14px', fontFamily: 'inherit'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '16px' }}>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-dark)', marginBottom: '6px' }}>Were there any aspects you were not satisfied with?</label>
-                                    <textarea
-                                        value={feedbackModal.feedback.dissatisfactions}
-                                        onChange={(e) => setFeedbackModal({...feedbackModal, feedback: {...feedbackModal.feedback, dissatisfactions: e.target.value}})}
-                                        placeholder="Please let us know..."
-                                        style={{
-                                            width: '100%', height: '80px', padding: '12px',
-                                            borderRadius: '8px', border: '1px solid var(--c-border)',
-                                            background: 'rgba(255,255,255,0.03)', color: 'var(--text-dark)',
-                                            resize: 'none', outline: 'none',
-                                            fontSize: '14px', fontFamily: 'inherit'
-                                        }}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-dark)', marginBottom: '6px' }}>How can we improve future events?</label>
-                                    <textarea
-                                        value={feedbackModal.feedback.improvements}
-                                        onChange={(e) => setFeedbackModal({...feedbackModal, feedback: {...feedbackModal.feedback, improvements: e.target.value}})}
-                                        placeholder="Specific suggestions..."
-                                        style={{
-                                            width: '100%', height: '80px', padding: '12px',
-                                            borderRadius: '8px', border: '1px solid var(--c-border)',
-                                            background: 'rgba(255,255,255,0.03)', color: 'var(--text-dark)',
-                                            resize: 'none', outline: 'none',
-                                            fontSize: '14px', fontFamily: 'inherit'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '12px' }}>
-                                <button
-                                    onClick={() => setFeedbackModal({ isOpen: false, regId: null, rating: 5, feedback: { eventExperience: '', dissatisfactions: '', improvements: '' } })}
-                                    style={{
-                                        flex: 1, padding: '10px', background: 'transparent',
-                                        border: '1px solid var(--c-border)', borderRadius: '8px',
-                                        color: 'var(--text-gray)', fontWeight: '600', cursor: 'pointer'
-                                    }}
-                                    disabled={submittingFeedback}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleFeedbackSubmit}
-                                    style={{
-                                        flex: 2, padding: '10px', background: 'var(--primary, #6366f1)',
-                                        border: 'none', borderRadius: '8px', color: 'white', 
-                                        fontWeight: '600', cursor: 'pointer',
-                                        opacity: submittingFeedback ? 0.7 : 1
-                                    }}
-                                    disabled={submittingFeedback}
-                                >
-                                    {submittingFeedback ? 'Submitting...' : 'Submit Feedback'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </main>
         </div>
     );

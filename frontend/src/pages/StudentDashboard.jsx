@@ -120,19 +120,35 @@ export default function StudentDashboard() {
         fetchRegistrations();
     }, [token, profileComplete]);
 
-    // Fetch events
+    // Fetch events for discovery
     useEffect(() => {
         const fetchEvents = async () => {
             if (!token) return;
             try {
                 const response = await fetch(`${API_URL}/api/events/all`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    const transformedEvents = data.slice(0, 3).map(ev => ({
+                    if (!Array.isArray(data)) return;
+
+                    // Filter for discovery: 
+                    // 1. Must be UPCOMING (not yet started)
+                    // 2. Student is NOT already registered for it
+                    const nowDate = new Date();
+                    const registeredIdSet = new Set(studentRegistrations.map(reg => (reg.event?._id || reg.event)));
+                    
+                    const availableEvents = data.filter(ev => {
+                        const eventDate = new Date(ev.eventDate);
+                        const isUpcoming = eventDate > nowDate;
+                        const isNotRegistered = !registeredIdSet.has(ev._id);
+                        return isUpcoming && isNotRegistered;
+                    });
+
+                    // Sort by closest date
+                    availableEvents.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+
+                    const transformedEvents = availableEvents.slice(0, 3).map(ev => ({
                         ...ev,
                         image: getSafeImageUrl(ev.image)
                     }));
@@ -146,7 +162,7 @@ export default function StudentDashboard() {
         };
 
         fetchEvents();
-    }, [token]);
+    }, [token, studentRegistrations]);
 
     const handleProfileComplete = (updatedData) => {
         setProfileComplete(true);

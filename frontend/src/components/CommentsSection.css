@@ -1,0 +1,302 @@
+:root {
+  --yt-bg: transparent;
+  --yt-text: #fff;
+  --yt-text-muted: #94a3b8;
+  --yt-avatar-size: 40px;
+  --yt-reply-avatar-size: 24px;
+}
+
+.yt-comments-container {
+  width: 100%;
+  margin: 32px 0;
+  padding: 0 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+.yt-comments-header {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--yt-text);
+}
+
+.yt-main-form {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.yt-avatar {
+  width: var(--yt-avatar-size);
+  height: var(--yt-avatar-size);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.yt-form-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.yt-input-wrapper {
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.2s;
+}
+
+.yt-input-wrapper:focus-within {
+  border-bottom: 2px solid white;
+}
+
+.yt-form-content textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--yt-text);
+  padding: 8px 0;
+  font-size: 14px;
+  resize: none;
+  min-height: 20px;
+  outline: none;
+}
+
+.yt-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.yt-btn {
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+  border: none;
+}
+
+.yt-btn-cancel {
+  background: transparent;
+  color: var(--yt-text);
+}
+
+.yt-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.yt-btn-post {
+  background: #3ea6ff;
+  color: #0f0f0f;
+}
+
+.yt-btn-post:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+/* Comment List */
+.yt-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.yt-comment-item {
+  display: flex;
+  gap: 16px;
+}
+
+.yt-comment-main {
+  flex: 1;
+}
+
+.yt-comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.yt-author {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--yt-text);
+}
+
+.yt-author.organizer {
+  background: #6366f1;
+  color: white;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.yt-timestamp {
+  font-size: 12px;
+  color: var(--yt-text-muted);
+}
+
+.yt-comment-text {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--yt-text);
+  white-space: pre-wrap;
+  margin: 4px 0 8px 0;
+}
+
+.yt-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.yt-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--yt-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.yt-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--yt-text);
+}
+
+.yt-action-btn.liked {
+  color: #3ea6ff;
+}
+
+/* Replies section */
+.yt-replies-container {
+  margin-top: 12px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.yt-reply-form {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+}
+
+.yt-reply-avatar {
+  width: var(--yt-reply-avatar-size);
+  height: var(--yt-reply-avatar-size);
+  font-size: 12px;
+}
+
+.yt-toggle-replies {
+  margin-top: 4px;
+  color: #3ea6ff;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.yt-toggle-replies:hover {
+  background: rgba(62, 166, 255, 0.1);
+  border-radius: 18px;
+  padding: 4px 12px;
+}
+
+.yt-loading {
+  text-align: center;
+  color: var(--yt-text-muted);
+  padding: 20px;
+}
+
+.yt-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* Emoji Picker Styles */
+.yt-emoji-container {
+    position: relative;
+    margin-right: auto; /* Push buttons to the right */
+}
+
+.yt-emoji-trigger {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    line-height: 1;
+}
+
+.yt-emoji-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.yt-emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #212121;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    z-index: 1000;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+    margin-bottom: 8px;
+}
+
+.yt-emoji-item {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.yt-emoji-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.yt-emoji-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+}
