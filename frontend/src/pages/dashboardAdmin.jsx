@@ -5,6 +5,7 @@ import './AdminDashboard.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Chatbot from '../components/chatbot';
+import CommentsSection from '../components/CommentsSection';
 
 // Map raw DB category values to human-readable labels
 const CATEGORY_LABELS = {
@@ -171,6 +172,9 @@ export default function AdminDashboard() {
         users: registrationUsers,
         recentActivity: []
       });
+
+      // Default feedback filter to ALL analytics if not set
+      setFeedbackEventFilter(prev => prev || 'all');
       setLoading(false);
 
     } catch (err) {
@@ -719,9 +723,13 @@ export default function AdminDashboard() {
         </button>
         <button
           className={`tab-btn ${activeTab === 'feedbacks' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('feedbacks'); setMobileMenuOpen(false); }}
+          onClick={() => {
+            setActiveTab('feedbacks');
+            setFeedbackEventFilter('all');
+            setMobileMenuOpen(false);
+          }}
         >
-          ⭐ Feedbacks
+          ⭐ Feedback & Comments
         </button>
         <button
           className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
@@ -853,7 +861,7 @@ export default function AdminDashboard() {
                       value={eventSearchTerm}
                       onChange={(e) => setEventSearchTerm(e.target.value)}
                     />
-                    <select 
+                    <select
                       className="filter-select"
                       value={eventCategoryFilter}
                       onChange={(e) => setEventCategoryFilter(e.target.value)}
@@ -926,16 +934,18 @@ export default function AdminDashboard() {
                           </td>
                           <td>
                             {new Date(event.eventDate) < new Date() && (
-                              <button
-                                className="action-btn"
-                                onClick={() => {
-                                  setActiveTab('feedbacks');
-                                  setFeedbackEventFilter(event._id);
-                                }}
-                                title="View Feedbacks"
-                              >
-                                ⭐
-                              </button>
+                              <>
+                                <button
+                                  className="action-btn"
+                                  onClick={() => {
+                                    setActiveTab('feedbacks');
+                                    setFeedbackEventFilter(event._id);
+                                  }}
+                                  title="View Feedbacks"
+                                >
+                                  ⭐
+                                </button>
+                              </>
                             )}
                             <button className="action-btn" onClick={() => {
                               const formattedEvent = {
@@ -967,14 +977,14 @@ export default function AdminDashboard() {
                 <div className="tab-header">
                   <h2>User Management</h2>
                   <div className="tab-actions">
-                    <input 
-                      type="text" 
-                      placeholder="Search users..." 
-                      className="search-input" 
+                    <input
+                      type="text"
+                      placeholder="Search users..."
+                      className="search-input"
                       value={userSearchTerm}
                       onChange={(e) => setUserSearchTerm(e.target.value)}
                     />
-                    <select 
+                    <select
                       className="filter-select"
                       value={userRoleFilter}
                       onChange={(e) => setUserRoleFilter(e.target.value)}
@@ -1120,15 +1130,15 @@ export default function AdminDashboard() {
             {activeTab === 'feedbacks' && (
               <div className="feedbacks-tab">
                 <div className="tab-header" style={{ marginBottom: '24px' }}>
-                  <h2>Event Feedbacks</h2>
+                  <h2>Event Feedback and Discussion</h2>
                   <div className="tab-actions">
-                    <select 
+                    <select
                       className="filter-select"
                       value={feedbackEventFilter}
                       onChange={(e) => setFeedbackEventFilter(e.target.value)}
                       style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--c-border)', background: 'var(--c-dark2)', color: 'var(--c-text)' }}
                     >
-                      <option value="all">All Completed Events</option>
+                      <option value="all">📊 All Events Analytics</option>
                       {stats.events?.filter(e => new Date(e.eventDate) < new Date()).map(e => (
                         <option key={e._id} value={e._id}>{e.title}</option>
                       ))}
@@ -1136,72 +1146,228 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="feedbacks-grid" style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                  gap: '24px'
-                }}>
-                  {allRegistrations?.filter(reg => {
-                    // Must have rating and feedback
-                    if (!reg.rating || !reg.feedback) return false;
-                    // Event must be completed
-                    const eventDate = new Date(reg.event?.eventDate || stats.events.find(e => e._id === reg.event)?.eventDate);
-                    if (eventDate >= new Date()) return false;
-                    // Must match filter
-                    const eventId = reg.event?._id || reg.event;
-                    return feedbackEventFilter === 'all' || eventId === feedbackEventFilter;
-                  }).length === 0 ? (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--c-muted)' }}>
-                      <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px', opacity: 0.5 }}>📝</span>
-                      <p>No feedbacks found for the selected filter.</p>
-                    </div>
-                  ) : allRegistrations?.filter(reg => {
-                    if (!reg.rating || !reg.feedback) return false;
-                    const eventDate = new Date(reg.event?.eventDate || stats.events.find(e => e._id === reg.event)?.eventDate);
-                    if (eventDate >= new Date()) return false;
-                    const eventId = reg.event?._id || reg.event;
-                    return feedbackEventFilter === 'all' || eventId === feedbackEventFilter;
-                  }).map((reg, index) => {
-                    const eventTitle = reg.event?.title || stats.events.find(e => e._id === reg.event)?.title || 'Unknown Event';
-                    return (
-                      <div key={index} className="feedback-card" style={{
-                        background: 'var(--c-card)',
-                        padding: '24px',
-                        borderRadius: 'var(--radius-lg)',
-                        boxShadow: 'var(--shadow-md)',
-                        border: '1px solid var(--c-border)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div>
-                            <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#fff' }}>{reg.firstName} {reg.lastName}</h4>
-                            <span style={{ fontSize: '12px', color: 'var(--c-muted)', fontWeight: '500' }}>For: {eventTitle}</span>
+                {feedbackEventFilter && (
+                  <div className="analytics-overview" style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+                    gap: '24px', 
+                    marginBottom: '32px', 
+                    padding: '32px', 
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)', 
+                    borderRadius: '24px', 
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    {(() => {
+                      const filteredRegs = allRegistrations.filter(r => {
+                        const eventId = r.event?._id || r.event;
+                        return (feedbackEventFilter === 'all' || eventId === feedbackEventFilter) && r.rating;
+                      });
+                      const count = filteredRegs.length;
+                      const avg = count > 0 ? (filteredRegs.reduce((s, r) => s + r.rating, 0) / count) : 0;
+                      
+                      return (
+                        <>
+                          <div className="analytics-card" style={{ padding: '12px', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+                            <h4 style={{ opacity: 0.6, marginBottom: '12px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>
+                              {feedbackEventFilter === 'all' ? 'Global Average Rating' : 'Event Average Rating'}
+                            </h4>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <span style={{ fontSize: '56px', fontWeight: '900', background: 'linear-gradient(to bottom, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                {avg.toFixed(1)}
+                              </span>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ display: 'flex', gap: '2px' }}>
+                                  {[1, 2, 3, 4, 5].map(s => {
+                                    const fill = Math.max(0, Math.min(1, avg - (s - 1)));
+                                    return (
+                                      <div key={s} style={{ position: 'relative', fontSize: '28px', width: '28px', height: '32px' }}>
+                                        <span style={{ color: 'rgba(255,255,255,0.1)', position: 'absolute', left: 0 }}>★</span>
+                                        <span style={{ 
+                                          color: '#fbbf24', 
+                                          position: 'absolute', 
+                                          left: 0, 
+                                          width: `${fill * 100}%`, 
+                                          overflow: 'hidden', 
+                                          whiteSpace: 'nowrap',
+                                          filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.4))'
+                                        }}>★</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                <p style={{ opacity: 0.5, fontSize: '0.85rem', marginTop: '4px' }}>Based on {count} verified reviews</p>
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ color: '#fbbf24', letterSpacing: '2px', fontSize: '18px' }}>
-                            {"★".repeat(reg.rating)}{"☆".repeat(5 - reg.rating)}
-                          </div>
-                        </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
-                          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Experience</div>
-                            <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.eventExperience || <span style={{color:'var(--c-muted)', fontStyle:'italic'}}>N/A</span>}</div>
+                          <div className="analytics-card" style={{ padding: '12px' }}>
+                            <h4 style={{ opacity: 0.6, marginBottom: '16px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>Rating Distribution</h4>
+                            {[5, 4, 3, 2, 1].map(stars => {
+                              const total = count || 1;
+                              const sCount = filteredRegs.filter(r => Math.floor(r.rating) === stars).length;
+                              const pct = (sCount / total) * 100;
+                              return (
+                                <div key={stars} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                  <span style={{ minWidth: '35px', fontSize: '12px', color: '#fbbf24', fontWeight: 'bold' }}>{stars} ★</span>
+                                  <div style={{ flex: 1, height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ 
+                                      width: `${pct}%`, 
+                                      height: '100%', 
+                                      background: stars >= 4 ? 'linear-gradient(90deg, #22c55e, #4ade80)' : stars >= 3 ? 'linear-gradient(90deg, #eab308, #facc15)' : 'linear-gradient(90deg, #ef4444, #f87171)',
+                                      borderRadius: '10px',
+                                      boxShadow: stars >= 4 ? '0 0 10px rgba(34, 197, 94, 0.3)' : 'none'
+                                    }} />
+                                  </div>
+                                  <span style={{ minWidth: '30px', fontSize: '11px', opacity: 0.6, textAlign: 'right' }}>{sCount}</span>
+                                </div>
+                              )
+                            })}
                           </div>
-                          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Dissatisfactions</div>
-                            <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.dissatisfactions || <span style={{color:'var(--c-muted)', fontStyle:'italic'}}>N/A</span>}</div>
+
+                          {feedbackEventFilter === 'all' ? (
+                            <div className="analytics-card" style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                              <h4 style={{ opacity: 0.6, marginBottom: '16px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>Engagement Insights</h4>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(129, 140, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, justifyContent: 'center' }}>🏆</div>
+                                  <div>
+                                    <p style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase' }}>Highest Rated Event</p>
+                                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#818cf8' }}>{
+                                      (() => {
+                                        const completed = stats.events?.filter(e => new Date(e.eventDate) < new Date()) || [];
+                                        if (completed.length === 0) return 'None Yet';
+                                        const sorted = [...completed].sort((a, b) => {
+                                          const aRegs = allRegistrations.filter(r => (r.event?._id || r.event) === a._id && r.rating);
+                                          const bRegs = allRegistrations.filter(r => (r.event?._id || r.event) === b._id && r.rating);
+                                          const aAvg = aRegs.reduce((s, r) => s + r.rating, 0) / (aRegs.length || 1);
+                                          const bAvg = bRegs.reduce((s, r) => s + r.rating, 0) / (bRegs.length || 1);
+                                          return bAvg - aAvg;
+                                        });
+                                        return sorted[0]?.title || 'N/A';
+                                      })()
+                                    }</p>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontSize: '20px', flexShrink: 0, justifyContent: 'center' }}>💬</div>
+                                  <div>
+                                    <p style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase' }}>Community Feedback</p>
+                                    <p style={{ fontSize: '15px', fontWeight: '700' }}>{allRegistrations.filter(r => r.feedback).length} Reviews Collected</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="analytics-card" style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                              <h4 style={{ opacity: 0.6, marginBottom: '16px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>Performance Stats</h4>
+                              <div style={{ display: 'flex', gap: '16px' }}>
+                                <div>
+                                  <p style={{ fontSize: '24px', fontWeight: '800', color: '#818cf8' }}>
+                                    {allRegistrations.filter(r => (r.event?._id || r.event) === feedbackEventFilter && (r.status === 'attended' || r.status === 'attended')).length}
+                                  </p>
+                                  <p style={{ fontSize: '11px', opacity: 0.5 }}>Attended</p>
+                                </div>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '16px' }}>
+                                  <p style={{ fontSize: '24px', fontWeight: '800' }}>
+                                    {Math.round((avg / 5) * 100)}%
+                                  </p>
+                                  <p style={{ fontSize: '11px', opacity: 0.5 }}>Satisfaction</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {feedbackEventFilter !== 'all' && (
+                  <div className="feedbacks-grid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    gap: '16px'
+                  }}>
+                    {allRegistrations?.filter(reg => {
+                      // Must have rating and feedback
+                      if (!reg.rating || !reg.feedback) return false;
+                      // Event must be completed
+                      const eventDate = new Date(reg.event?.eventDate || stats.events.find(e => e._id === reg.event)?.eventDate);
+                      if (eventDate >= new Date()) return false;
+                      // Must match filter
+                      const eventId = reg.event?._id || reg.event;
+                      return feedbackEventFilter === 'all' || eventId === feedbackEventFilter;
+                    }).length === 0 ? (
+                      <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--c-muted)' }}>
+                        <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px', opacity: 0.5 }}>📝</span>
+                        <p>No feedbacks found for the selected filter.</p>
+                      </div>
+                    ) : allRegistrations?.filter(reg => {
+                      if (!reg.rating || !reg.feedback) return false;
+                      const eventDate = new Date(reg.event?.eventDate || stats.events.find(e => e._id === reg.event)?.eventDate);
+                      if (eventDate >= new Date()) return false;
+                      const eventId = reg.event?._id || reg.event;
+                      return feedbackEventFilter === 'all' || eventId === feedbackEventFilter;
+                    }).map((reg, index) => {
+                      const eventTitle = reg.event?.title || stats.events.find(e => e._id === reg.event)?.title || 'Unknown Event';
+                      return (
+                        <div key={index} className="feedback-card" style={{
+                          background: 'var(--c-card)',
+                          padding: '24px',
+                          borderRadius: 'var(--radius-lg)',
+                          boxShadow: 'var(--shadow-md)',
+                          border: '1px solid var(--c-border)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '16px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                            <div>
+                              <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#fff' }}>{reg.firstName} {reg.lastName}</h4>
+                              <span style={{ fontSize: '12px', color: 'var(--c-muted)', fontWeight: '500' }}>For: {eventTitle}</span>
+                            </div>
+                            <div style={{ color: '#fbbf24', letterSpacing: '2px', fontSize: '18px' }}>
+                              {"★".repeat(reg.rating)}{"☆".repeat(5 - reg.rating)}
+                            </div>
                           </div>
-                          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Improvements</div>
-                            <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.improvements || <span style={{color:'var(--c-muted)', fontStyle:'italic'}}>N/A</span>}</div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                            <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                              <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Experience</div>
+                              <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.eventExperience || <span style={{ color: 'var(--c-muted)', fontStyle: 'italic' }}>N/A</span>}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                              <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Dissatisfactions</div>
+                              <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.dissatisfactions || <span style={{ color: 'var(--c-muted)', fontStyle: 'italic' }}>N/A</span>}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                              <div style={{ fontSize: '11px', color: 'var(--c-primary)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Improvements</div>
+                              <div style={{ fontSize: '14px', color: 'var(--c-text)', lineHeight: '1.5' }}>{reg.feedback.improvements || <span style={{ color: 'var(--c-muted)', fontStyle: 'italic' }}>N/A</span>}</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* YouTube-style Discussion for Admin */}
+                {feedbackEventFilter !== 'all' && (
+                  <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <div className="section-header" style={{ marginBottom: '12px' }}>
+                      <h2 style={{ fontSize: '20px', fontWeight: '700' }}>Event Community Discussion</h2>
+                      <p style={{ color: 'var(--c-muted)', fontSize: '14px' }}>
+                        Engage with participants who attended this event.
+                      </p>
+                    </div>
+                    <CommentsSection
+                      eventId={feedbackEventFilter}
+                      eventTitle={stats.events.find(e => e._id === feedbackEventFilter)?.title}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

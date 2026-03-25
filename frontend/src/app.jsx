@@ -9,6 +9,7 @@ import Events from "./pages/Events";
 import MyRegistrations from "./pages/MyRegistrations";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/ProfilePage";
+import EventDiscussion from "./pages/EventDiscussion";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -82,6 +83,24 @@ function App() {
             element={
               <ProtectedRoute role={"student"}>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/event-discussion/:registrationId"
+            element={
+              <ProtectedRoute role={"student"}>
+                <EventDiscussion />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/event-discussion/admin/:eventId"
+            element={
+              <ProtectedRoute role={"admin"}>
+                <EventDiscussion />
               </ProtectedRoute>
             }
           />

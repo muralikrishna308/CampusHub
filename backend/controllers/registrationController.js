@@ -403,3 +403,29 @@ exports.submitFeedback = async (req, res) => {
   }
 };
 
+// Get registration by ID
+exports.getRegistrationById = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    const userId = req.user.id;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event", "title eventDate location description image ticketPrice")
+      .populate("admin", "name email");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    // Check if it belongs to the user or if the user is an admin of the event
+    if (registration.user.toString() !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ msg: "Unauthorized" });
+    }
+
+    res.json(registration);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};

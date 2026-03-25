@@ -2,10 +2,10 @@ const express = require("express");
 const router = express.Router();   // ✅ THIS WAS MISSING
 
 const Event = require("../models/Event");
-const { createEvent } = require("../controllers/Eventcontroller");
+const { createEvent, getAllEvents, getEventById } = require("../controllers/Eventcontroller");
 const auth = require("../middleware/auth");
-const { getAllEvents } = require("../controllers/Eventcontroller");
 
+router.get("/:id", auth, getEventById);
 router.get("/events", getAllEvents);
 // Create Event
 router.post("/create", auth, createEvent);

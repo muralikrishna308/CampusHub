@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
+import CommentsSection from "../components/CommentsSection";
 import "./AdminDashboard.css";
 
 const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
@@ -12,7 +13,7 @@ export default function AdminDashboard() {
     const { user, token } = useContext(AuthContext);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    
+
     const toggleSidebar = React.useCallback(() => setSidebarOpen(true), []);
     const closeSidebar = React.useCallback(() => setSidebarOpen(false), []);
 
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
     useEffect(() => {
         const fetchRegistrations = async () => {
             if (!selectedEvent || !token) return;
-            
+
             setLoadingRegistrations(true);
             try {
                 const response = await fetch(
@@ -96,17 +97,17 @@ export default function AdminDashboard() {
         <div className="dashboard-container">
             <Sidebar role="admin" isOpen={sidebarOpen} onClose={closeSidebar} />
             <main className="main-content">
-                <Header 
-                    userName={user?.name || "Admin"} 
-                    userRole="Admin" 
-                    id={user?.id} 
+                <Header
+                    userName={user?.name || "Admin"}
+                    userRole="Admin"
+                    id={user?.id}
                     onToggle={toggleSidebar}
                 />
 
                 <div className="admin-section">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                         <h1 style={{ fontSize: '28px', fontWeight: '700', margin: 0 }}>📊 Event Participants</h1>
-                        <button 
+                        <button
                             onClick={() => navigate('/admin/create-event')}
                             style={{
                                 padding: '10px 20px',
@@ -151,8 +152,8 @@ export default function AdminDashboard() {
                                             }}
                                         >
                                             <div>{event.title}</div>
-                                            <div style={{ 
-                                                fontSize: '12px', 
+                                            <div style={{
+                                                fontSize: '12px',
                                                 opacity: 0.7,
                                                 marginTop: '4px'
                                             }}>
@@ -168,7 +169,7 @@ export default function AdminDashboard() {
                         <div className="participants-section">
                             {selectedEventData ? (
                                 <>
-                                    <div style={{ 
+                                    <div style={{
                                         background: 'linear-gradient(135deg, var(--primary) 0%, #6366f1 100%)',
                                         color: 'white',
                                         padding: '24px',
@@ -207,7 +208,7 @@ export default function AdminDashboard() {
                                             Loading participants...
                                         </div>
                                     ) : registrations.length === 0 ? (
-                                        <div style={{ 
+                                        <div style={{
                                             background: '#f9fafb',
                                             border: '1px solid #EFEFEF',
                                             borderRadius: '12px',
@@ -217,7 +218,7 @@ export default function AdminDashboard() {
                                             <p style={{ color: '#6F767E', margin: 0 }}>No participants registered yet</p>
                                         </div>
                                     ) : (
-                                        <div style={{ 
+                                        <div style={{
                                             background: 'white',
                                             border: '1px solid #EFEFEF',
                                             borderRadius: '12px',
@@ -228,7 +229,7 @@ export default function AdminDashboard() {
                                                 borderCollapse: 'collapse'
                                             }}>
                                                 <thead>
-                                                    <tr style={{ 
+                                                    <tr style={{
                                                         background: '#f9fafb',
                                                         borderBottom: '1px solid #EFEFEF'
                                                     }}>
@@ -245,9 +246,9 @@ export default function AdminDashboard() {
                                                 </thead>
                                                 <tbody>
                                                     {registrations.map((reg, idx) => (
-                                                        <tr 
+                                                        <tr
                                                             key={reg._id}
-                                                            style={{ 
+                                                            style={{
                                                                 borderBottom: '1px solid #EFEFEF',
                                                                 background: idx % 2 === 0 ? 'white' : '#fafafa'
                                                             }}
@@ -285,16 +286,16 @@ export default function AdminDashboard() {
                                                             <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6F767E' }}>
                                                                 {reg.rating ? (
                                                                     <span style={{ color: '#fbbf24', letterSpacing: '1px' }}>
-                                                                        {"★".repeat(reg.rating)}{"☆".repeat(5-reg.rating)}
+                                                                        {"★".repeat(reg.rating)}{"☆".repeat(5 - reg.rating)}
                                                                     </span>
                                                                 ) : '-'}
                                                             </td>
                                                             <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'center' }}>
                                                                 {reg.rating && reg.feedback ? (
-                                                                    <button 
-                                                                        onClick={() => setSelectedFeedback({...reg.feedback, rating: reg.rating, userName: `${reg.firstName} ${reg.lastName}`})}
+                                                                    <button
+                                                                        onClick={() => setSelectedFeedback({ ...reg.feedback, rating: reg.rating, userName: `${reg.firstName} ${reg.lastName}` })}
                                                                         style={{
-                                                                            background: 'var(--primary)', color: 'white', border: 'none', 
+                                                                            background: 'var(--primary)', color: 'white', border: 'none',
                                                                             padding: '6px 12px', borderRadius: '4px', cursor: 'pointer',
                                                                             fontSize: '12px', fontWeight: '600'
                                                                         }}
@@ -309,9 +310,19 @@ export default function AdminDashboard() {
                                             </table>
                                         </div>
                                     )}
+
+                                    {/* YouTube-style Discussion for Admin */}
+                                    {selectedEventData && new Date(selectedEventData.eventDate) < new Date() && (
+                                        <div style={{ marginTop: '40px', padding: '32px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <CommentsSection 
+                                                eventId={selectedEvent} 
+                                                eventTitle={selectedEventData.title} 
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             ) : (
-                                <div style={{ 
+                                <div style={{
                                     background: '#f9fafb',
                                     border: '1px solid #EFEFEF',
                                     borderRadius: '12px',
@@ -328,12 +339,12 @@ export default function AdminDashboard() {
                 {/* Feedback Modal */}
                 {selectedFeedback && (
                     <div className="feedback-modal-overlay" style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-                        background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', 
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex',
                         alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
                     }}>
                         <div className="feedback-modal-content" style={{
-                            background: 'white', width: '90%', maxWidth: '500px', 
+                            background: 'white', width: '90%', maxWidth: '500px',
                             borderRadius: '16px', padding: '32px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
                             maxHeight: '80vh', overflowY: 'auto'
                         }}>
@@ -341,7 +352,7 @@ export default function AdminDashboard() {
                                 <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0, color: '#0f172a' }}>
                                     Feedback from {selectedFeedback.userName}
                                 </h2>
-                                <button 
+                                <button
                                     onClick={() => setSelectedFeedback(null)}
                                     style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}
                                 >
@@ -352,7 +363,7 @@ export default function AdminDashboard() {
                             <div style={{ marginBottom: '24px' }}>
                                 <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>Overall Rating</div>
                                 <div style={{ fontSize: '24px', color: '#fbbf24', letterSpacing: '2px' }}>
-                                    {"★".repeat(selectedFeedback.rating)}{"☆".repeat(5-selectedFeedback.rating)}
+                                    {"★".repeat(selectedFeedback.rating)}{"☆".repeat(5 - selectedFeedback.rating)}
                                 </div>
                             </div>
 
