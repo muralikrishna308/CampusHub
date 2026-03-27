@@ -1129,20 +1129,28 @@ export default function AdminDashboard() {
             {/* Feedbacks Tab */}
             {activeTab === 'feedbacks' && (
               <div className="feedbacks-tab">
-                <div className="tab-header" style={{ marginBottom: '24px' }}>
-                  <h2>Event Feedback and Discussion</h2>
-                  <div className="tab-actions">
-                    <select
-                      className="filter-select"
-                      value={feedbackEventFilter}
-                      onChange={(e) => setFeedbackEventFilter(e.target.value)}
-                      style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--c-border)', background: 'var(--c-dark2)', color: 'var(--c-text)' }}
-                    >
-                      <option value="all">📊 All Events Analytics</option>
-                      {stats.events?.filter(e => new Date(e.eventDate) < new Date()).map(e => (
-                        <option key={e._id} value={e._id}>{e.title}</option>
-                      ))}
-                    </select>
+                <div className="tab-header" style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {feedbackEventFilter !== 'all' && (
+                      <button 
+                        onClick={() => setFeedbackEventFilter('all')}
+                        className="back-arrow-btn"
+                        style={{ width: '42px', height: '42px', borderRadius: '50%', fontSize: '1.25rem' }}
+                        title="Back to Events List"
+                      >
+                        ←
+                      </button>
+                    )}
+                    <div style={{ paddingLeft: feedbackEventFilter !== 'all' ? '8px' : '0' }}>
+                      <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
+                        {feedbackEventFilter === 'all' ? 'Event Feedback & Analytics' : stats.events.find(e => e._id === feedbackEventFilter)?.title}
+                      </h2>
+                      <p style={{ margin: '4px 0 0 0', color: 'var(--c-muted)', fontSize: '14px' }}>
+                        {feedbackEventFilter === 'all' 
+                          ? 'Review performance across all completed events' 
+                          : 'Viewing feedback and community discussion for this event'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -1284,7 +1292,104 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
-                {feedbackEventFilter !== 'all' && (
+                {feedbackEventFilter === 'all' ? (
+                  <div className="completed-events-selection" style={{ marginTop: '40px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                      <div style={{ width: '4px', height: '24px', background: 'var(--grad-main)', borderRadius: '4px' }}></div>
+                      <h3 style={{ fontSize: '20px', fontWeight: '700' }}>Select Event to View Details</h3>
+                    </div>
+                    
+                    <div className="events-grid gall" style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+                      gap: '24px' 
+                    }}>
+                      {stats.events?.filter(e => new Date(e.eventDate) < new Date()).length === 0 ? (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', background: 'var(--c-card)', borderRadius: '24px', border: '1px dashed var(--c-border)' }}>
+                          <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📅</span>
+                          <h4 style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>No Completed Events Yet</h4>
+                          <p style={{ color: 'var(--c-muted)', marginTop: '8px' }}>Events will appear here once their date has passed and feedback can be collected.</p>
+                        </div>
+                      ) : stats.events?.filter(e => new Date(e.eventDate) < new Date()).map(event => {
+                        const eventRegs = allRegistrations.filter(r => (r.event?._id || r.event) === event._id && r.rating);
+                        const avgRating = eventRegs.length > 0 ? (eventRegs.reduce((s, r) => s + r.rating, 0) / eventRegs.length) : 0;
+                        
+                        return (
+                          <div 
+                            key={event._id} 
+                            style={{
+                              background: 'var(--c-card)',
+                              borderRadius: '24px',
+                              border: '1px solid var(--c-border)',
+                              overflow: 'hidden',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                              cursor: 'pointer',
+                              position: 'relative'
+                            }}
+                            className="event-card-interactive"
+                            onClick={() => setFeedbackEventFilter(event._id)}
+                          >
+                            <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
+                              {event.image ? (
+                                <img 
+                                  src={getSafeImageUrl(event.image)} 
+                                  alt={event.title} 
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <div style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  background: 'linear-gradient(135deg, #1e1e3e, #2d2d5d)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '48px'
+                                }}>📅</div>
+                              )}
+                              <div style={{ 
+                                position: 'absolute', 
+                                top: '12px', 
+                                right: '12px', 
+                                background: 'rgba(0,0,0,0.6)', 
+                                backdropFilter: 'blur(8px)',
+                                padding: '6px 12px',
+                                borderRadius: '50px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                color: '#fff',
+                                border: '1px solid rgba(255,255,255,0.1)'
+                              }}>
+                                COMPLETED
+                              </div>
+                            </div>
+                            
+                            <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                              <h4 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px', color: '#fff' }}>{event.title}</h4>
+                              <p style={{ fontSize: '14px', color: 'var(--c-muted)', marginBottom: '16px' }}>
+                                {new Date(event.eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                              </p>
+                              
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ color: '#fbbf24', fontSize: '16px' }}>★</span>
+                                  <span style={{ fontSize: '15px', fontWeight: '700' }}>{avgRating.toFixed(1)}</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--c-muted)' }}>({eventRegs.length})</span>
+                                </div>
+                                
+                                <button className="btn-primary" style={{ padding: '10px 18px', fontSize: '12px', borderRadius: '14px', fontWeight: '700' }}>
+                                  Feedback & Comment
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
                   <div className="feedbacks-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
