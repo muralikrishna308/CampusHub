@@ -8,18 +8,19 @@
   --cb-grad-r: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 
   /* Panel */
-  --cb-panel-bg: #ffffff;
-  --cb-body-bg: #f3f4f8;
-  --cb-border: rgba(0, 0, 0, 0.07);
+  --cb-panel-bg: rgba(255, 255, 255, 0.82);
+  --cb-body-bg: rgba(243, 244, 248, 0.5);
+  --cb-border: rgba(255, 255, 255, 0.2);
 
   /* Text */
   --cb-text: #1c1b2e;
   --cb-muted: #8a93a6;
 
   /* Shadows */
-  --cb-shadow: 0 32px 80px rgba(0, 0, 0, 0.18), 0 6px 20px rgba(102, 126, 234, 0.14);
-  --cb-radius: 22px;
-  --cb-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --cb-shadow: 0 40px 100px rgba(0, 0, 0, 0.25), 0 8px 32px rgba(102, 126, 234, 0.2);
+  --cb-radius: 28px;
+  --cb-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --cb-blur: blur(20px);
 }
 
 /* Wrapper*/
@@ -144,6 +145,8 @@
   width: 390px;
   height: min(620px, calc(100svh - 120px));
   background: var(--cb-panel-bg);
+  backdrop-filter: var(--cb-blur);
+  -webkit-backdrop-filter: var(--cb-blur);
   border: 1px solid var(--cb-border);
   border-radius: var(--cb-radius);
   box-shadow: var(--cb-shadow);
@@ -174,8 +177,8 @@
 
 /* HEADER  */
 .cb-header {
-  background: linear-gradient(160deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
-  padding: 16px 18px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  padding: 18px 20px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -230,17 +233,17 @@
 }
 
 .cb-bot-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.35) 0%, rgba(99, 102, 241, 0.25) 100%);
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  color: #fff;
 }
 
 .cb-online-ring {

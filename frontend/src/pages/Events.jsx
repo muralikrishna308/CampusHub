@@ -427,6 +427,7 @@ import { AuthContext } from '../context/AuthContext';
 import EventRegistrationForm from '../components/EventRegistrationForm';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import EventCard from '../components/EventCard';
 import './Events.css';
 import '../styles/dashboard.css';
 
@@ -458,18 +459,14 @@ const categoryColors = {
     default: '#6b7280',
 };
 
-const isRegistrationClosed = (eventDateStr) => {
-    if (!eventDateStr) return false;
-    const eventDate = new Date(eventDateStr);
-    eventDate.setHours(0, 0, 0, 0);
-    
-    // "Tomorrow" relative to current time
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    
-    // If event is tomorrow or earlier, registration is closed
-    return eventDate <= tomorrow;
+const isRegistrationClosed = (event) => {
+    if (!event.registrationEndDate) return false;
+    return new Date(event.registrationEndDate).getTime() < Date.now();
+};
+
+const isEventCompleted = (event) => {
+    if (!event.eventDate) return false;
+    return (new Date(event.eventDate).getTime() + 86400000) < Date.now();
 };
 
 export default function Events() {
@@ -717,43 +714,15 @@ setRegisteredEvents(registrationsMap);
                     ) : (
                         <div className="events-grid">
                             {filteredEvents.map(event => (
-                                <div key={event._id} className="event-card" onClick={() => openModal(event)}>
-                                    <div
-                                        className="event-card-img"
-                                        style={{ backgroundImage: `url(${event.image})` }}
-                                    >
-                                        <span
-                                            className="event-badge"
-                                            style={{ background: getColor(event.category) }}
-                                        >
-                                            {CATEGORIES.find(c => c.id === event.category)?.emoji}{' '}
-                                            {CATEGORIES.find(c => c.id === event.category)?.name || event.category}
-                                        </span>
-                                     {registeredEvents[event._id] && (
-  <span className="registered-badge">
-    {registeredEvents[event._id] === "pending"
-      ? "⏳ Pending"
-      : registeredEvents[event._id] === "accepted"
-      ? "✔ Registered"
-      : "❌ Rejected"}
-  </span>
-)}
-                                    </div>
-
-                                    <div className="event-card-body">
-                                        <h3 className="event-card-title">{event.title}</h3>
-                                        <p className="event-card-desc">
-                                            {event.description?.length > 90
-                                                ? event.description.substring(0, 90) + '…'
-                                                : event.description}
-                                        </p>
-
-                                        <div className="event-card-meta">
-                                            <span>📅 {new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                            <span>📍 {event.location}</span>
-                                            <span>🎤 {event.speaker || 'TBD'}</span>
-                                        </div>
-
+                                <EventCard 
+                                    key={event._id}
+                                    title={event.title}
+                                    category={event.category}
+                                    location={event.location}
+                                    joined={event.registered || 0}
+                                    image={event.image}
+                                    onClick={() => openModal(event)}
+                                    footer={(
                                         <div className="event-card-footer">
                                             <div className="event-price-ticket">
                                                 <span className="price-tag">{event.price}</span>
@@ -766,23 +735,25 @@ setRegisteredEvents(registrationsMap);
                                             <button
                                                 className={`register-btn ${registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected' ? 'registered' : ''}`}
                                                 onClick={e => { e.stopPropagation(); handleRegister(event._id); }}
-                                                disabled={isRegistrationClosed(event.date) || spotsLeft(event) === 0 || (registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected')}
+                                                disabled={isEventCompleted(event) || isRegistrationClosed(event) || spotsLeft(event) === 0 || (registeredEvents[event._id] && registeredEvents[event._id] !== 'rejected')}
                                             >
-                                                        {isRegistrationClosed(event.date)
-  ? "Event Completed"
-  : registeredEvents[event._id] === "pending"
-  ? "⏳ Pending Approval"
-  : registeredEvents[event._id] === "accepted"
-  ? "✔ Registered"
-  : registeredEvents[event._id] === "rejected"
-  ? "Re-register"
-  : spotsLeft(event) === 0
-  ? "Full"
-  : "Register"}
+                                                {isEventCompleted(event)
+                                                    ? "Completed"
+                                                    : isRegistrationClosed(event)
+                                                    ? "Registrations Closed"
+                                                    : registeredEvents[event._id] === "pending"
+                                                    ? "⏳ Pending Approval"
+                                                    : registeredEvents[event._id] === "accepted"
+                                                    ? "✔ Registered"
+                                                    : registeredEvents[event._id] === "rejected"
+                                                    ? "Re-register"
+                                                    : spotsLeft(event) === 0
+                                                    ? "Full"
+                                                    : "Register"}
                                             </button>
                                         </div>
-                                    </div>
-                                </div>
+                                    )}
+                                />
                             ))}
                         </div>
                     )}

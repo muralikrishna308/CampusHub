@@ -189,17 +189,28 @@ exports.getAdminRegistrations = async (req, res) => {
   try {
 
     const adminId = req.user.id;
+    const isSuperAdmin = req.user.role === 'super_admin' || req.user.role === 'superadmin';
 
-    const events = await Event.find({ admin: adminId });
+    let registrations;
 
-    const eventIds = events.map(e => e._id);
+    if (isSuperAdmin) {
+      // SuperAdmin sees everything
+      registrations = await Registration.find()
+        .populate("event", "title eventDate location")
+        .populate("user", "name email")
+        .sort({ createdAt: -1 });
+    } else {
+      // Regular admin only sees their own events
+      const events = await Event.find({ admin: adminId });
+      const eventIds = events.map(e => e._id);
 
-    const registrations = await Registration.find({
-      event: { $in: eventIds }
-    })
-      .populate("event", "title eventDate location")
-      .populate("user", "name email")
-      .sort({ createdAt: -1 });
+      registrations = await Registration.find({
+        event: { $in: eventIds }
+      })
+        .populate("event", "title eventDate location")
+        .populate("user", "name email")
+        .sort({ createdAt: -1 });
+    }
 
     res.json(registrations);
 
@@ -423,6 +434,46 @@ exports.getRegistrationById = async (req, res) => {
     }
 
     res.json(registration);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Mark as attended (admin)
+exports.markAttended = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    const adminId = req.user.id;
+
+    const registration = await Registration.findById(registrationId)
+      .populate("event");
+
+    if (!registration) {
+      return res.status(404).json({ msg: "Registration not found" });
+    }
+
+    if (registration.event.admin.toString() !== adminId && req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Unauthorized" });
+    }
+
+    registration.status = "attended";
+    await registration.save();
+
+    // Notify the student
+    try {
+      await Notification.create({
+        user: registration.user,
+        type: 'registration',
+        icon: '🏅',
+        message: `Congratulations! You've been marked as attended for "${registration.event.title}". You can now download your certificate!`,
+      });
+    } catch (notifErr) {
+      console.log('Notification creation failed:', notifErr.message);
+    }
+
+    res.json({ msg: "Marked as attended", registration });
 
   } catch (err) {
     console.error(err);

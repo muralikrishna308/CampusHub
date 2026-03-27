@@ -79,6 +79,24 @@ export default function AdminDashboard() {
         fetchRegistrations();
     }, [selectedEvent, token]);
 
+    const handleMarkAttended = async (registrationId) => {
+        try {
+            const response = await fetch(`${API_URL}/api/registrations/attend/${registrationId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                setRegistrations(prev => prev.map(reg => 
+                    reg._id === registrationId ? { ...reg, status: 'attended' } : reg
+                ));
+            }
+        } catch (err) {
+            console.error('Error marking attendance:', err);
+        }
+    };
+
     const selectedEventData = adminEvents.find(e => e._id === selectedEvent);
 
     if (loading) {
@@ -282,6 +300,24 @@ export default function AdminDashboard() {
                                                                 }}>
                                                                     {reg.status?.charAt(0).toUpperCase() + reg.status?.slice(1)}
                                                                 </span>
+                                                                {reg.status === 'accepted' && (
+                                                                    <button
+                                                                        onClick={() => handleMarkAttended(reg._id)}
+                                                                        style={{
+                                                                            marginLeft: '8px',
+                                                                            padding: '2px 6px',
+                                                                            background: '#059669',
+                                                                            color: 'white',
+                                                                            border: 'none',
+                                                                            borderRadius: '4px',
+                                                                            fontSize: '10px',
+                                                                            cursor: 'pointer',
+                                                                            fontWeight: '600'
+                                                                        }}
+                                                                    >
+                                                                        Mark Attended
+                                                                    </button>
+                                                                )}
                                                             </td>
                                                             <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6F767E' }}>
                                                                 {reg.rating ? (
