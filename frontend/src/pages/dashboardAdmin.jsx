@@ -52,6 +52,8 @@ export default function AdminDashboard() {
   const [eventCategoryFilter, setEventCategoryFilter] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('All Roles');
   const [feedbackEventFilter, setFeedbackEventFilter] = useState('all');
+  const [feedbackSearchTerm, setFeedbackSearchTerm] = useState('');
+
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -1135,10 +1137,25 @@ export default function AdminDashboard() {
                       <button 
                         onClick={() => setFeedbackEventFilter('all')}
                         className="back-arrow-btn"
-                        style={{ width: '42px', height: '42px', borderRadius: '50%', fontSize: '1.25rem' }}
+                        style={{ 
+                          padding: '0 20px', 
+                          height: '42px', 
+                          borderRadius: '21px', 
+                          fontSize: '14px', 
+                          fontWeight: '600',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
                         title="Back to Events List"
                       >
-                        ←
+                        <span style={{ fontSize: '1.25rem' }}>←</span>
+                        <span>Back</span>
                       </button>
                     )}
                     <div style={{ paddingLeft: feedbackEventFilter !== 'all' ? '8px' : '0' }}>
@@ -1294,9 +1311,31 @@ export default function AdminDashboard() {
 
                 {feedbackEventFilter === 'all' ? (
                   <div className="completed-events-selection" style={{ marginTop: '40px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                      <div style={{ width: '4px', height: '24px', background: 'var(--grad-main)', borderRadius: '4px' }}></div>
-                      <h3 style={{ fontSize: '20px', fontWeight: '700' }}>Select Event to View Details</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '4px', height: '24px', background: 'var(--grad-main)', borderRadius: '4px' }}></div>
+                        <h3 style={{ fontSize: '20px', fontWeight: '700' }}>Completed Events</h3>
+                      </div>
+                      
+                      <div className="feedback-search-wrapper" style={{ position: 'relative', width: '320px', maxWidth: '100%' }}>
+                        <input
+                          type="text"
+                          placeholder="Search completed events..."
+                          className="search-input"
+                          style={{ 
+                            width: '100%', 
+                            padding: '12px 16px 12px 42px', 
+                            background: 'rgba(255,255,255,0.05)', 
+                            border: '1px solid rgba(255,255,255,0.1)', 
+                            borderRadius: '14px', 
+                            color: '#fff',
+                            fontSize: '14px'
+                          }}
+                          value={feedbackSearchTerm}
+                          onChange={(e) => setFeedbackSearchTerm(e.target.value)}
+                        />
+                        <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '16px' }}>🔍</span>
+                      </div>
                     </div>
                     
                     <div className="events-grid gall" style={{ 
@@ -1304,89 +1343,105 @@ export default function AdminDashboard() {
                       gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
                       gap: '24px' 
                     }}>
-                      {stats.events?.filter(e => new Date(e.eventDate) < new Date()).length === 0 ? (
-                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', background: 'var(--c-card)', borderRadius: '24px', border: '1px dashed var(--c-border)' }}>
-                          <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📅</span>
-                          <h4 style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>No Completed Events Yet</h4>
-                          <p style={{ color: 'var(--c-muted)', marginTop: '8px' }}>Events will appear here once their date has passed and feedback can be collected.</p>
-                        </div>
-                      ) : stats.events?.filter(e => new Date(e.eventDate) < new Date()).map(event => {
-                        const eventRegs = allRegistrations.filter(r => (r.event?._id || r.event) === event._id && r.rating);
-                        const avgRating = eventRegs.length > 0 ? (eventRegs.reduce((s, r) => s + r.rating, 0) / eventRegs.length) : 0;
-                        
-                        return (
-                          <div 
-                            key={event._id} 
-                            style={{
-                              background: 'var(--c-card)',
-                              borderRadius: '24px',
-                              border: '1px solid var(--c-border)',
-                              overflow: 'hidden',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                              cursor: 'pointer',
-                              position: 'relative'
-                            }}
-                            className="event-card-interactive"
-                            onClick={() => setFeedbackEventFilter(event._id)}
-                          >
-                            <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
-                              {event.image ? (
-                                <img 
-                                  src={getSafeImageUrl(event.image)} 
-                                  alt={event.title} 
-                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                />
-                              ) : (
-                                <div style={{ 
-                                  width: '100%', 
-                                  height: '100%', 
-                                  background: 'linear-gradient(135deg, #1e1e3e, #2d2d5d)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '48px'
-                                }}>📅</div>
-                              )}
-                              <div style={{ 
-                                position: 'absolute', 
-                                top: '12px', 
-                                right: '12px', 
-                                background: 'rgba(0,0,0,0.6)', 
-                                backdropFilter: 'blur(8px)',
-                                padding: '6px 12px',
-                                borderRadius: '50px',
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                color: '#fff',
-                                border: '1px solid rgba(255,255,255,0.1)'
-                              }}>
-                                COMPLETED
-                              </div>
-                            </div>
-                            
-                            <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                              <h4 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px', color: '#fff' }}>{event.title}</h4>
-                              <p style={{ fontSize: '14px', color: 'var(--c-muted)', marginBottom: '16px' }}>
-                                {new Date(event.eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      {(() => {
+                        const filtered = stats.events?.filter(e => {
+                          const isCompleted = new Date(e.eventDate) < new Date();
+                          const matchesSearch = e.title?.toLowerCase().includes(feedbackSearchTerm.toLowerCase());
+                          return isCompleted && matchesSearch;
+                        }) || [];
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', background: 'var(--c-card)', borderRadius: '24px', border: '1px dashed var(--c-border)' }}>
+                              <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>📅</span>
+                              <h4 style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>{feedbackSearchTerm ? 'No Events Match Your Search' : 'No Completed Events Yet'}</h4>
+                              <p style={{ color: 'var(--c-muted)', marginTop: '8px' }}>
+                                {feedbackSearchTerm 
+                                  ? `We couldn't find any completed events matching "${feedbackSearchTerm}"`
+                                  : 'Events will appear here once their date has passed and feedback can be collected.'}
                               </p>
-                              
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ color: '#fbbf24', fontSize: '16px' }}>★</span>
-                                  <span style={{ fontSize: '15px', fontWeight: '700' }}>{avgRating.toFixed(1)}</span>
-                                  <span style={{ fontSize: '13px', color: 'var(--c-muted)' }}>({eventRegs.length})</span>
+                            </div>
+                          );
+                        }
+
+                        return filtered.map(event => {
+                          const eventRegs = allRegistrations.filter(r => (r.event?._id || r.event) === event._id && r.rating);
+                          const avgRating = eventRegs.length > 0 ? (eventRegs.reduce((s, r) => s + r.rating, 0) / eventRegs.length) : 0;
+                          
+                          return (
+                            <div 
+                              key={event._id} 
+                              style={{
+                                background: 'var(--c-card)',
+                                borderRadius: '24px',
+                                border: '1px solid var(--c-border)',
+                                overflow: 'hidden',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                cursor: 'pointer',
+                                position: 'relative'
+                              }}
+                              className="event-card-interactive"
+                              onClick={() => setFeedbackEventFilter(event._id)}
+                            >
+                              <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
+                                {event.image ? (
+                                  <img 
+                                    src={getSafeImageUrl(event.image)} 
+                                    alt={event.title} 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                ) : (
+                                  <div style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    background: 'linear-gradient(135deg, #1e1e3e, #2d2d5d)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '48px'
+                                  }}>📅</div>
+                                )}
+                                <div style={{ 
+                                  position: 'absolute', 
+                                  top: '12px', 
+                                  right: '12px', 
+                                  background: 'rgba(0,0,0,0.6)', 
+                                  backdropFilter: 'blur(8px)',
+                                  padding: '6px 12px',
+                                  borderRadius: '50px',
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  color: '#fff',
+                                  border: '1px solid rgba(255,255,255,0.1)'
+                                }}>
+                                  COMPLETED
                                 </div>
+                              </div>
+                              
+                              <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                <h4 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px', color: '#fff' }}>{event.title}</h4>
+                                <p style={{ fontSize: '14px', color: 'var(--c-muted)', marginBottom: '16px' }}>
+                                  {new Date(event.eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                </p>
                                 
-                                <button className="btn-primary" style={{ padding: '10px 18px', fontSize: '12px', borderRadius: '14px', fontWeight: '700' }}>
-                                  Feedback & Comment
-                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ color: '#fbbf24', fontSize: '16px' }}>★</span>
+                                    <span style={{ fontSize: '15px', fontWeight: '700' }}>{avgRating.toFixed(1)}</span>
+                                    <span style={{ fontSize: '13px', color: 'var(--c-muted)' }}>({eventRegs.length})</span>
+                                  </div>
+                                  
+                                  <button className="btn-primary" style={{ padding: '10px 18px', fontSize: '12px', borderRadius: '14px', fontWeight: '700' }}>
+                                    Feedback & Comment
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 ) : (
