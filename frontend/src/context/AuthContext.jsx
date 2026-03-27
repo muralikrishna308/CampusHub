@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('token'));
@@ -12,7 +14,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (token) {
       // fetch current user
-      fetch(`${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/me`, {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => {
@@ -35,7 +37,7 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   const login = async (email, password) => {
-    const res = await fetch(`${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/login`, {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -57,7 +59,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', incomingToken);
     // fetch user so that we can redirect appropriately
     try {
-      const res = await fetch(`${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/me`, {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${incomingToken}` },
       });
       if (!res.ok) throw new Error('Failed to fetch user');
@@ -75,7 +77,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (payload) => {
-    const res = await fetch(`${process.env.REACT_APP_API || 'http://localhost:5000'}/api/auth/register`, {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -97,8 +99,28 @@ export function AuthProvider({ children }) {
     navigate('/');
   };
 
+  const updateUser = async (updatedUser) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/profile/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedUser)
+      });
+      if (!res.ok) throw res;
+      const data = await res.json();
+      setUser(data.user);
+      return data.user;
+    } catch (err) {
+      console.error('Update user error', err);
+      throw err;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, loginWithToken, logout, register, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, loginWithToken, logout, register, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

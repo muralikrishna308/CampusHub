@@ -2,6 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import './ProfileForm.css';
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
 const ProfileForm = ({ onProfileComplete, onClose }) => {
   const { user, token } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -22,23 +24,50 @@ const ProfileForm = ({ onProfileComplete, onClose }) => {
   });
 
   useEffect(() => {
-    // Fetch existing profile data if available
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        name: user.name || '',
-        phone: user.phone || '',
-        department: user.department || '',
-        year: user.year || '',
-        gender: user.gender || '',
-        address: user.address || '',
-        city: user.city || '',
-        state: user.state || '',
-        zipcode: user.zipcode || '',
-        collegeName: user.collegeName || ''
-      }));
-    }
-  }, [user]);
+    // Fetch the latest profile from the server so the form always pre-fills with current saved data
+    if (!token) return;
+    const loadProfile = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setFormData(prev => ({
+            ...prev,
+            name: data.name || user?.name || '',
+            phone: data.phone || '',
+            department: data.department || '',
+            year: data.year || '',
+            gender: data.gender || '',
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            zipcode: data.zipcode || '',
+            collegeName: data.collegeName || data.college || '',
+          }));
+        }
+      } catch (err) {
+        // fallback to user context if fetch fails
+        if (user) {
+          setFormData(prev => ({
+            ...prev,
+            name: user.name || '',
+            phone: user.phone || '',
+            department: user.department || '',
+            year: user.year || '',
+            gender: user.gender || '',
+            address: user.address || '',
+            city: user.city || '',
+            state: user.state || '',
+            zipcode: user.zipcode || '',
+            collegeName: user.collegeName || '',
+          }));
+        }
+      }
+    };
+    loadProfile();
+  }, [token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,7 +85,7 @@ const ProfileForm = ({ onProfileComplete, onClose }) => {
     setSuccess('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/profile/update', {
+      const response = await fetch(`${API_URL}/api/auth/profile/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -74,10 +103,10 @@ const ProfileForm = ({ onProfileComplete, onClose }) => {
 
       setSuccess('Profile updated successfully! ✅');
       
-      // Call the callback to notify parent component
+      // Call the callback with updated profile data so parent can update displayed info immediately
       if (onProfileComplete) {
         setTimeout(() => {
-          onProfileComplete();
+          onProfileComplete({ ...formData });
         }, 1500);
       }
     } catch (err) {

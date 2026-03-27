@@ -2,6 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import './EventRegistrationForm.css';
 
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
 const EventRegistrationForm = ({ event, onClose, onSuccess }) => {
   const { user, token } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ const EventRegistrationForm = ({ event, onClose, onSuccess }) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/profile', {
+        const response = await fetch(`${API_URL}/api/auth/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -81,7 +83,7 @@ const EventRegistrationForm = ({ event, onClose, onSuccess }) => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/registrations/register-event', {
+      const response = await fetch(`${API_URL}/api/registrations/register-event`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

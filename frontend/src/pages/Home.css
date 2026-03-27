@@ -1,4 +1,3 @@
-
 :root {
   --c-primary: #667eea;
   --c-secondary: #764ba2;
@@ -40,8 +39,8 @@
   font-family: var(--font);
   background: var(--c-dark);
   color: var(--c-text);
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
 
@@ -341,12 +340,10 @@
 .lp-nav {
   position: fixed;
   inset: 0 0 auto;
-  z-index: 1000;
+  z-index: 20000;
+  /* Higher than chatbot (9999) */
   padding: 0;
   transition: var(--transition);
-}
-
-.lp-nav--scrolled {
   background: rgba(15, 15, 26, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -375,7 +372,8 @@
   align-items: center;
   gap: 0.6rem;
   white-space: nowrap;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
   transition: var(--transition);
 }
 
@@ -414,6 +412,14 @@
   display: flex;
   gap: 0.25rem;
   margin-left: auto;
+}
+
+.lp-nav__mobile-close {
+  display: none;
+}
+
+.lp-nav__mobile-cta {
+  display: none;
 }
 
 .lp-nav__link {
@@ -474,10 +480,10 @@
 
 .lp-nav__burger span {
   display: block;
-  width: 22px;
-  height: 2px;
+  width: 26px;
+  height: 3px;
   background: var(--c-text);
-  border-radius: 2px;
+  border-radius: 3px;
   transition: var(--transition);
 }
 
@@ -496,11 +502,11 @@
 /*HERO*/
 .lp-hero {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--c-dark);
   position: relative;
-  overflow: hidden;
   padding: 0 2rem;
 }
 
@@ -636,7 +642,6 @@
 .lp-badge__dot {
   width: 7px;
   height: 7px;
-  background: var(--c-primary);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--c-primary);
   animation: pulse-dot 2s infinite;
@@ -1105,7 +1110,6 @@
 /*EVENTS */
 .lp-events {
   background: var(--c-dark2);
-  overflow: hidden;
 }
 
 .lp-events__track-wrap {
@@ -1376,7 +1380,6 @@
 /*TESTIMONIALS*/
 .lp-testimonials {
   background: var(--c-dark3);
-  overflow: hidden;
 }
 
 .lp-testi__stage {
@@ -1503,7 +1506,6 @@
   padding: 6rem 2rem;
   text-align: center;
   position: relative;
-  overflow: hidden;
 }
 
 .lp-cta-banner__orb {
@@ -1966,19 +1968,73 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
 
   /* nav */
+  .lp-nav__inner {
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+    justify-content: space-between;
+    overflow: visible;
+  }
+
+  .lp-nav__logo {
+    font-size: 1.3rem;
+  }
+
+  .lp-nav__logomark {
+    width: 38px;
+    height: 38px;
+    font-size: 1.3rem;
+  }
+
   .lp-nav__links {
     position: fixed;
-    inset: 70px 0 0;
-    background: rgba(15, 15, 26, 0.97);
+    inset: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(15, 15, 26, 0.98);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    /* Move options up */
+    padding: 120px 1.5rem 3rem;
+    /* More top padding to move them down slightly from the very top */
     gap: 1.5rem;
     transform: translateX(100%);
-    transition: transform 0.35s ease;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 20001;
+    /* Layer over chatbot */
+    overflow-y: auto;
+  }
+
+  .lp-nav__mobile-close {
+    display: flex;
+    position: fixed;
+    /* Fixed relative to screen */
+    top: 2rem;
+    right: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    z-index: 20005;
+    /* Above everything */
+    backdrop-filter: blur(5px);
+  }
+
+  .lp-nav__mobile-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
   }
 
   .lp-nav__links--open {
@@ -1986,16 +2042,43 @@
   }
 
   .lp-nav__link {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .lp-nav__mobile-cta {
+    display: none;
   }
 
   .lp-nav__cta {
-    display: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+    /* Push CTA and burger to the right */
+    margin-right: 1.5rem;
+    /* Consistent gap between buttons and burger */
+    order: 2;
   }
 
   .lp-nav__burger {
     display: flex;
-    margin-left: auto;
+    z-index: 20002;
+    /* Higher than nav links */
+    order: 3;
+    margin-left: 0;
+  }
+
+  .lp-nav__burger.is-open {
+    display: none !important;
+    /* Hide burger when menu is open to avoid double close buttons */
+  }
+
+  .lp-nav__burger.is-open span {
+    background: #fff;
+    height: 4px;
+    /* Thicker "X" when open */
+    width: 30px;
   }
 
   /* hero */
@@ -2053,6 +2136,10 @@
   }
 
   /* footer */
+  .lp-footer {
+    margin-bottom: 80px;
+  }
+
   .lp-footer__inner {
     flex-direction: column;
     gap: 2rem;
@@ -2079,7 +2166,47 @@
   }
 }
 
+@media (max-width: 650px) {
+  .lp-nav__cta {
+    display: none;
+  }
+
+  .lp-nav__mobile-cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    width: 100%;
+    padding-top: 2rem;
+    border-top: 1px solid var(--c-border);
+  }
+
+  .lp-nav__mobile-cta .lp-btn {
+    width: 100%;
+    max-width: 280px;
+    padding: 0.85rem 1.5rem;
+  }
+}
+
 @media (max-width: 480px) {
+  .lp-nav__logo {
+    font-size: 1.15rem;
+    gap: 0.4rem;
+  }
+
+  .lp-nav__logomark {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+    border-radius: 6px;
+  }
+
+  .lp-nav__burger {
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
   .lp-hero__actions {
     flex-direction: column;
     align-items: stretch;
@@ -2121,6 +2248,29 @@
 
   .lp-mosaic-card--stat {
     grid-column: 1;
+  }
+}
+
+/* Specific fix for the smallest phones (e.g. 320px) */
+@media (max-width: 360px) {
+  .lp-nav__inner {
+    padding: 0.8rem 0.65rem;
+    gap: 0.3rem;
+  }
+
+  .lp-nav__logo {
+    font-size: 1rem;
+  }
+
+  .lp-nav__logomark {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+
+  .lp-nav__burger span {
+    width: 22px;
+    height: 2.5px;
   }
 }
 

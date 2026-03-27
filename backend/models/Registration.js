@@ -59,9 +59,19 @@ const RegistrationSchema = new mongoose.Schema({
   },
   status: {
   type: String,
-  enum: ["pending", "accepted", "rejected"],
+  enum: ["pending", "accepted", "rejected", "attended"],
   default: "pending"
 },
+  feedback: {
+    eventExperience: { type: String, trim: true },
+    dissatisfactions: { type: String, trim: true },
+    improvements: { type: String, trim: true }
+  },
+  rating: {
+    type: Number,
+    min: 1,
+    max: 5
+  },
   createdAt: { 
     type: Date, 
     default: Date.now 

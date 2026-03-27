@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Sidebar from "../components/Sidebar";
@@ -6,13 +6,26 @@ import Header from "../components/Header";
 import EventCard from "../components/EventCard";
 import ProfileForm from "../components/ProfileForm";
 import "../styles/dashboard.css";
-import Chatbot from "../components/chatbot";
+import Calendar from "../components/Calendar";
+import Chatbot from '../components/chatbot';
+
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
+const getSafeImageUrl = (image) => {
+    const FALLBACK = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><rect fill="url(#g)" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="48">📅</text></svg>');
+    if (!image) return FALLBACK;
+    if (image.startsWith('http')) return image;
+    return `${API_URL}/uploads/${encodeURIComponent(image)}`;
+};
 
 export default function StudentDashboard() {
     const navigate = useNavigate();
     const { user, token } = useContext(AuthContext);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showProfileForm, setShowProfileForm] = useState(false);
+
+    const toggleSidebar = useCallback(() => setSidebarOpen(true), []);
+    const closeSidebar = useCallback(() => setSidebarOpen(false), []);
     const [profileComplete, setProfileComplete] = useState(false);
     const [loading, setLoading] = useState(true);
     const [studentRegistrations, setStudentRegistrations] = useState([]);
@@ -29,7 +42,7 @@ export default function StudentDashboard() {
         const checkProfileStatus = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/auth/profile/check', {
+                const response = await fetch(`${API_URL}/api/auth/profile/check`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -55,7 +68,7 @@ export default function StudentDashboard() {
         const fetchProfile = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/auth/profile', {
+                const response = await fetch(`${API_URL}/api/auth/profile`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -77,7 +90,7 @@ export default function StudentDashboard() {
         const fetchRegistrations = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/registrations/my-registrations', {
+                const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -107,23 +120,37 @@ export default function StudentDashboard() {
         fetchRegistrations();
     }, [token, profileComplete]);
 
-    // Fetch events
+    // Fetch events for discovery
     useEffect(() => {
         const fetchEvents = async () => {
             if (!token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/events/all', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                const response = await fetch(`${API_URL}/api/events/all`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    const transformedEvents = data.slice(0, 3).map(ev => ({
+                    if (!Array.isArray(data)) return;
+
+                    // Filter for discovery: 
+                    // 1. Must be UPCOMING (not yet started)
+                    // 2. Student is NOT already registered for it
+                    const nowDate = new Date();
+                    const registeredIdSet = new Set(studentRegistrations.map(reg => (reg.event?._id || reg.event)));
+                    
+                    const availableEvents = data.filter(ev => {
+                        const eventDate = new Date(ev.eventDate);
+                        const isUpcoming = eventDate > nowDate;
+                        const isNotRegistered = !registeredIdSet.has(ev._id);
+                        return isUpcoming && isNotRegistered;
+                    });
+
+                    // Sort by closest date
+                    availableEvents.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+
+                    const transformedEvents = availableEvents.slice(0, 3).map(ev => ({
                         ...ev,
-                        image: ev.image ?
-                            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${ev.image}`) :
-                            'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80'
+                        image: getSafeImageUrl(ev.image)
                     }));
                     setFeaturedEvents(transformedEvents);
                 }
@@ -135,26 +162,28 @@ export default function StudentDashboard() {
         };
 
         fetchEvents();
-    }, [token]);
+    }, [token, studentRegistrations]);
 
-    const handleProfileComplete = () => {
+    const handleProfileComplete = (updatedData) => {
         setProfileComplete(true);
         setShowProfileForm(false);
+        // Immediately update the displayed profile data so the dashboard reflects the new values
+        if (updatedData) {
+            setStudentProfile(prev => ({
+                ...prev,
+                ...updatedData,
+                // collegeName can come back as 'collegeName' from the form
+                college: updatedData.collegeName || updatedData.college || prev?.college,
+            }));
+        }
     };
 
     if (loading) {
         return (
             <div className="dashboard-container">
-                {/* Mobile sidebar toggle */}
-                <button
-                    className="sidebar-toggle"
-                    onClick={() => setSidebarOpen(o => !o)}
-                    aria-label="Toggle navigation"
-                >
-                    ☰
-                </button>
-                <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
                 <main className="main-content">
+                    <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" onToggle={toggleSidebar} />
                     <div style={{ padding: '40px', textAlign: 'center' }}>
                         <div style={{ fontSize: '18px', color: '#6F767E' }}>Loading your dashboard...</div>
                     </div>
@@ -172,28 +201,18 @@ export default function StudentDashboard() {
                 />
             )}
 
-            {/* Mobile sidebar toggle */}
-            <button
-                className="sidebar-toggle"
-                onClick={() => setSidebarOpen(o => !o)}
-                aria-label="Toggle navigation"
-            >
-                ☰
-            </button>
-
-            <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
             <main className="main-content">
-                <Header userName={studentProfile?.name || user?.name || "Student"} userRole="Student" id={user?.id} />
+                <Header
+                    userName={studentProfile?.name || user?.name || "Student"}
+                    userRole="Student"
+                    id={user?.id}
+                    registrations={studentRegistrations}
+                    onToggle={toggleSidebar}
+                />
 
                 <div className="welcome-section">
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'start',
-                        marginBottom: '20px',
-                        flexWrap: 'wrap',
-                        gap: '12px'
-                    }}>
+                    <div className="welcome-header">
                         <div>
                             <h1>Welcome back, {(studentProfile?.name?.split(' ')[0]) || (user?.name?.split(' ')[0]) || 'Student'}! 👋</h1>
                             <p>
@@ -204,33 +223,14 @@ export default function StudentDashboard() {
                         </div>
                         <button
                             onClick={() => setShowProfileForm(true)}
-                            style={{
-                                padding: '10px 16px',
-                                backgroundColor: 'var(--primary)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: '600',
-                                fontSize: '14px',
-                                transition: 'all 0.2s ease',
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0
-                            }}
-                            onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-                            onMouseLeave={(e) => e.target.style.opacity = '1'}
+                            className="update-profile-btn"
                         >
                             ✏️ Update Profile
                         </button>
                     </div>
 
                     {/* Stats Cards */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                        gap: '20px',
-                        marginBottom: '40px'
-                    }}>
+                    <div className="stats-grid">
                         {/* Total Registrations Card */}
                         <div style={{
                             background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
@@ -300,8 +300,8 @@ export default function StudentDashboard() {
                 </div>
 
                 <section>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2 style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, #667eea, #a855f7)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>🎯 Featured Events</h2>
+                    <div className="section-header">
+                        <h2 className="section-title">🎯 Featured Events</h2>
                         <button
                             style={{
                                 color: 'var(--primary)',
@@ -346,11 +346,12 @@ export default function StudentDashboard() {
                                         backgroundImage: `url(${event.image})`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
-                                        backgroundColor: 'rgba(102,126,234,0.1)',
+                                        backgroundColor: 'rgba(102,126,234,0.15)',
+                                        backgroundRepeat: 'no-repeat',
                                         position: 'relative'
                                     }}>
                                         <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(102,126,234,0.9)', color: '#fff', fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '50px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            {event.category || 'Tech'}
+                                            {({ 'tech': '💻 Technology', 'music': '🎵 Music', 'workshop': '🛠️ Workshop', 'cultural': '🎭 Cultural', 'sports': '⚽ Sports', 'other': '🌟 Other' })[event.category] || event.category || 'Tech'}
                                         </div>
                                     </div>
                                     <div style={{ padding: '16px' }}>
@@ -432,19 +433,34 @@ export default function StudentDashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <span style={{
-                                                background: isUpcoming ? 'rgba(16, 185, 129, 0.12)' : 'rgba(102,126,234,0.12)',
-                                                color: isUpcoming ? '#10b981' : '#667eea',
-                                                border: isUpcoming ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(102,126,234,0.25)',
-                                                padding: '6px 14px',
-                                                borderRadius: '50px',
-                                                fontSize: '12px',
-                                                fontWeight: '700',
-                                                whiteSpace: 'nowrap',
-                                                marginLeft: '16px'
-                                            }}>
-                                                {isUpcoming ? '🚀 Upcoming' : '✅ Completed'}
-                                            </span>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', marginLeft: '16px' }}>
+                                                <span style={{
+                                                    background: registration.status === 'accepted' ? 'rgba(34, 197, 94, 0.12)' : registration.status === 'rejected' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 171, 0, 0.12)',
+                                                    color: registration.status === 'accepted' ? '#22c55e' : registration.status === 'rejected' ? '#ef4444' : '#ffab00',
+                                                    border: registration.status === 'accepted' ? '1px solid rgba(34, 197, 94, 0.25)' : registration.status === 'rejected' ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(255, 171, 0, 0.25)',
+                                                    padding: '4px 12px',
+                                                    borderRadius: '50px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '800',
+                                                    whiteSpace: 'nowrap',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.02em'
+                                                }}>
+                                                    {registration.status === 'accepted' ? '● Accepted' : registration.status === 'rejected' ? '● Rejected' : '● Pending'}
+                                                </span>
+                                                <span style={{
+                                                    background: isUpcoming ? 'rgba(16, 185, 129, 0.12)' : 'rgba(102,126,234,0.12)',
+                                                    color: isUpcoming ? '#10b981' : '#667eea',
+                                                    border: isUpcoming ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(102,126,234,0.25)',
+                                                    padding: '4px 12px',
+                                                    borderRadius: '50px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '700',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {isUpcoming ? '🚀 Upcoming' : '✅ Completed'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 );

@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState, useCallback, useRef } from 'rea
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SuperAdminDashboard.css';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Chatbot from '../components/chatbot';
 
 /* Dummy event images*/
@@ -11,6 +13,14 @@ const eventImages = {
   workshop: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80',
   networking: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=800&q=80',
   charity: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80',
+};
+
+const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
+const getSafeImageUrl = (image, category = 'tech') => {
+  if (!image) return eventImages[category.toLowerCase()] || eventImages.tech;
+  if (image.startsWith('http')) return image;
+  return `${API_URL}/uploads/${encodeURIComponent(image)}`;
 };
 
 const trendData = []; // Unused, kept as empty for potential future local use
@@ -29,10 +39,98 @@ export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [reportFilters, setReportFilters] = useState({
     startDate: '2024-03-01',
-    endDate: '2024-03-31',
+    endDate: '2027-03-31',
     eventType: 'all',
     format: 'pdf',
   });
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [eventSearchTerm, setEventSearchTerm] = useState('');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [eventCategoryFilter, setEventCategoryFilter] = useState('All Categories');
+
+  const handleGenerateReport = () => {
+    if (!stats || !stats.events) return;
+
+    const filteredEvents = stats.events.filter(ev => {
+      const evDate = new Date(ev.date);
+      const start = new Date(reportFilters.startDate);
+      const end = new Date(reportFilters.endDate);
+      const matchesDate = evDate >= start && evDate <= end;
+      const matchesType = reportFilters.eventType === 'all' || ev.category.toLowerCase() === reportFilters.eventType.toLowerCase();
+      return matchesDate && matchesType;
+    });
+
+    if (filteredEvents.length === 0) {
+      alert('No data found for the selected filters.');
+      return;
+    }
+
+    if (reportFilters.format === 'excel') {
+      // CSV/Excel Export
+      const headers = ["Event Title", "Category", "Date", "Location", "Registrations", "Capacity", "Revenue", "Status"];
+      const rows = filteredEvents.map(ev => [
+        ev.title,
+        ev.category,
+        new Date(ev.date).toLocaleDateString(),
+        ev.location,
+        ev.registered,
+        ev.capacity,
+        `${ev.revenue} Rs`,
+        ev.status
+      ]);
+
+      let csvContent = "data:text/csv;charset=utf-8,"
+        + "Event Analytics Report\n"
+        + `Generated on: ${new Date().toLocaleString()}\n`
+        + `Filters: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}\n\n`
+        + headers.join(",") + "\n"
+        + rows.map(e => e.join(",")).join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `campus_hub_report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // PDF Export
+      const doc = new jsPDF();
+
+      doc.setFontSize(20);
+      doc.setTextColor(102, 126, 234);
+      doc.text('CampusHub Analytics Report', 14, 22);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+      doc.text(`Range: ${reportFilters.startDate} to ${reportFilters.endDate} | Category: ${reportFilters.eventType}`, 14, 35);
+
+      doc.setDrawColor(200);
+      doc.line(14, 40, 196, 40);
+
+      const tableColumn = ["Event", "Category", "Date", "Reg/Cap", "Revenue", "Status"];
+      const tableRows = filteredEvents.map(ev => [
+        ev.title,
+        ev.category,
+        new Date(ev.date).toLocaleDateString(),
+        `${ev.registered}/${ev.capacity}`,
+        `${ev.revenue.toLocaleString()} Rs`,
+        ev.status
+      ]);
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 45,
+        theme: 'grid',
+        headStyles: { fillColor: [102, 126, 234] },
+        styles: { fontSize: 9 }
+      });
+
+      doc.save(`campus_hub_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  };
 
   /*Data fetch*/
   const fetchDashboardData = useCallback(async () => {
@@ -40,7 +138,7 @@ export default function SuperAdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/dashboard/admin', {
+      const response = await fetch(`${API_URL}/api/dashboard/admin`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -63,9 +161,7 @@ export default function SuperAdminDashboard() {
         trends: data.trends || [],
         events: data.events.map(ev => ({
           ...ev,
-          image: ev.image ?
-            (ev.image.startsWith('http') ? ev.image : `http://localhost:5000/uploads/${ev.image}`) :
-            eventImages.tech,
+          image: getSafeImageUrl(ev.image, ev.category),
           date: ev.eventDate,
           registered: ev.registered || 0,
           capacity: ev.capacity || 100,
@@ -111,14 +207,34 @@ export default function SuperAdminDashboard() {
     return Math.floor(seconds) + " seconds ago";
   };
 
-  const fetchNotifications = useCallback(() => {
-    setNotifications([
-      { id: 1, message: 'Tech Conference starts in 2 days', read: false, time: '5 min ago' },
-      { id: 2, message: 'New user registered: Sarah Johnson', read: false, time: '1 hr ago' },
-      { id: 3, message: 'Payment received: $500 from Event Corp', read: false, time: '3 hrs ago' },
-      { id: 4, message: 'Event capacity reached: Music Festival', read: true, time: '1 day ago' },
-    ]);
-  }, []);
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const formatTimeAgo = (date) => {
+          const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+          if (seconds < 60) return 'just now';
+          const minutes = Math.floor(seconds / 60);
+          if (minutes < 60) return `${minutes}m ago`;
+          const hours = Math.floor(minutes / 60);
+          if (hours < 24) return `${hours}h ago`;
+          return `${Math.floor(hours / 24)}d ago`;
+        };
+        setNotifications(data.map(n => ({
+          id: n._id,
+          message: n.message,
+          read: n.isRead,
+          time: formatTimeAgo(n.createdAt),
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }, [token]);
 
   useEffect(() => { fetchDashboardData(); fetchNotifications(); }, [fetchDashboardData, fetchNotifications]);
 
@@ -135,7 +251,17 @@ export default function SuperAdminDashboard() {
   }, []);
 
   const handleLogout = () => { logout(); navigate('/login'); };
-  const markRead = id => setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+  const markRead = async (id) => {
+    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+    try {
+      await fetch(`${API_URL}/api/notifications/read/${id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  };
   const unreadCount = notifications.filter(n => !n.read).length;
 
   if (error) return (
@@ -173,7 +299,7 @@ export default function SuperAdminDashboard() {
             </div>
           </div>
 
-          {/* Right controls */}
+          {/* Right controls - Desktop */}
           <div className="sa-header-controls">
             {/* Notifications */}
             <div className="sa-notif-wrap" ref={notifRef}>
@@ -220,8 +346,98 @@ export default function SuperAdminDashboard() {
 
             <button className="sa-logout-btn" onClick={handleLogout}>Sign out →</button>
           </div>
+
+          {/* MOBILE HEADER ACTIONS */}
+          <div className="sa-mobile-header-actions">
+            <div className="sa-mobile-profile">
+              <div className="sa-mobile-avatar">{user?.name?.[0] || user?.email?.[0] || 'A'}</div>
+              <div className="sa-mobile-user-info">
+                <span className="sa-mobile-user-name">{user?.name || user?.email || 'Administrator'}</span>
+                <span className="sa-mobile-user-role">Super Admin</span>
+              </div>
+            </div>
+
+            <div className="sa-mobile-action-stack">
+              {/* Notification Bell Symbol */}
+              <div className="sa-notif-wrap --mobile" ref={notifRef}>
+                <button className="sa-icon-btn --mobile" onClick={() => setShowNotifications(v => !v)}>
+                  🔔
+                  {unreadCount > 0 && <span className="sa-badge-dot">{unreadCount}</span>}
+                </button>
+                {showNotifications && (
+                  <div className="sa-notif-panel --mobile">
+                    <div className="sa-notif-head">
+                      <span className="sa-notif-title">Notifications</span>
+                      <span className="sa-notif-new">{unreadCount} new</span>
+                    </div>
+                    <div className="sa-notif-list">
+                      {notifications.map(n => (
+                        <div key={n.id} className={`sa-notif-item ${n.read ? '--read' : '--unread'}`} onClick={() => markRead(n.id)}>
+                          <span className="sa-notif-dot-ind" />
+                          <div>
+                            <p className="sa-notif-msg">{n.message}</p>
+                            <small className="sa-notif-time">{n.time}</small>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className={`sa-mobile-toggle ${showMobileMenu ? '--open' : ''}`}
+            onClick={() => setShowMobileMenu(v => !v)}
+            aria-label="Toggle menu"
+          >
+            <span className="sa-burger-line" />
+            <span className="sa-burger-line" />
+            <span className="sa-burger-line" />
+          </button>
         </div>
       </header>
+
+      {/* MOBILE NAV OVERLAY */}
+      <div className={`sa-mobile-nav ${showMobileMenu ? '--visible' : ''}`}>
+        <div className="sa-mobile-nav-inner">
+          <button className="sa-mobile-nav-close" onClick={() => setShowMobileMenu(false)} aria-label="Close menu">✕</button>
+
+          <div className="sa-mobile-nav-group">
+            <p className="sa-mobile-nav-label">Dashboard Navigation</p>
+            {[
+              { id: 'overview', icon: '📊', label: 'Overview' },
+              { id: 'events', icon: '📅', label: 'Events' },
+              { id: 'users', icon: '👥', label: 'Users' },
+              { id: 'reports', icon: '📈', label: 'Analytics' },
+            ].map(t => (
+              <button
+                key={t.id}
+                className={`sa-mobile-nav-item ${activeTab === t.id ? '--active' : ''}`}
+                onClick={() => { setActiveTab(t.id); setShowMobileMenu(false); }}
+              >
+                <span className="sa-nav-icon">{t.icon}</span>
+                <span className="sa-nav-label">{t.label}</span>
+                {activeTab === t.id && <span className="sa-nav-active-ind">●</span>}
+              </button>
+            ))}
+          </div>
+
+          <div className="sa-mobile-nav-group">
+            <p className="sa-mobile-nav-label">Account</p>
+            <button className="sa-mobile-nav-item" onClick={() => { setShowSettings(true); setShowMobileMenu(false); }}>
+              <span className="sa-nav-icon">⚙️</span>
+              <span className="sa-nav-label">Settings</span>
+            </button>
+            <button className="sa-mobile-nav-item --logout" onClick={handleLogout}>
+              <span className="sa-nav-icon">🚪</span>
+              <span className="sa-nav-label">Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* TAB BAR */}
       <div className="sa-tabbar">
@@ -295,8 +511,18 @@ export default function SuperAdminDashboard() {
                 <div className="sa-tabhead">
                   <SectionHead title="Event Registry" pill={`${stats.events.length} events`} />
                   <div className="sa-filter-bar">
-                    <input className="sa-search" type="text" placeholder="🔍  Search events…" />
-                    <select className="sa-select">
+                    <input 
+                      className="sa-search" 
+                      type="text" 
+                      placeholder="🔍  Search events…" 
+                      value={eventSearchTerm}
+                      onChange={(e) => setEventSearchTerm(e.target.value)}
+                    />
+                    <select 
+                      className="sa-select"
+                      value={eventCategoryFilter}
+                      onChange={(e) => setEventCategoryFilter(e.target.value)}
+                    >
                       <option>All Categories</option>
                       <option>Technology</option>
                       <option>Music</option>
@@ -314,7 +540,13 @@ export default function SuperAdminDashboard() {
                       <th>Registrations</th><th>Revenue</th><th>Status</th><th>Details</th>
                     </tr></thead>
                     <tbody>
-                      {stats.events.map(ev => (
+                      {stats.events.filter(ev => {
+                        const matchesSearch = ev.title?.toLowerCase().includes(eventSearchTerm.toLowerCase()) ||
+                          ev.location?.toLowerCase().includes(eventSearchTerm.toLowerCase());
+                        const matchesCategory = eventCategoryFilter === 'All Categories' || 
+                          ev.category?.toLowerCase() === eventCategoryFilter.toLowerCase();
+                        return matchesSearch && matchesCategory;
+                      }).map(ev => (
                         <tr key={ev._id}>
                           <td>
                             <div className="sa-cell-event">
@@ -349,7 +581,14 @@ export default function SuperAdminDashboard() {
               <>
                 <div className="sa-tabhead">
                   <SectionHead title="User Directory" pill={`${stats.users.length} users`} />
-                  <input className="sa-search" style={{ maxWidth: '360px' }} type="text" placeholder="🔍  Search by name or email…" />
+                  <input 
+                    className="sa-search" 
+                    style={{ maxWidth: '360px' }} 
+                    type="text" 
+                    placeholder="🔍  Search by name or email…" 
+                    value={userSearchTerm}
+                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                  />
                 </div>
 
                 <div className="sa-table-box">
@@ -358,7 +597,10 @@ export default function SuperAdminDashboard() {
                       <th>User</th><th>Email</th><th>Role</th><th>Events</th><th>Joined</th>
                     </tr></thead>
                     <tbody>
-                      {stats.users.map(u => (
+                      {stats.users.filter(u => 
+                        u.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                        u.email?.toLowerCase().includes(userSearchTerm.toLowerCase())
+                      ).map(u => (
                         <tr key={u.id}>
                           <td>
                             <div className="sa-cell-event">
@@ -473,8 +715,7 @@ export default function SuperAdminDashboard() {
                   </table>
                 </div>
 
-                <button className="sa-btn-primary sa-generate-btn"
-                  onClick={() => alert(`Generating ${reportFilters.format.toUpperCase()} report…`)}>
+                <button className="sa-btn-primary sa-generate-btn" onClick={handleGenerateReport}>
                   Generate Report ↓
                 </button>
               </>

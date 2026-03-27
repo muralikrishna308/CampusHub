@@ -11,12 +11,16 @@ const {
   cancelRegistration,
   acceptRegistration,
   rejectRegistration,
+  submitFeedback,
+  getRegistrationById
 } = require('../controllers/registrationController');
 
 // Student routes
 router.post('/register-event', auth, registerForEvent);
 router.get('/my-registrations', auth, getMyRegistrations);
 router.delete('/cancel/:registrationId', auth, cancelRegistration);
+router.post('/:registrationId/feedback', auth, submitFeedback);
+router.get('/:registrationId', auth, getRegistrationById);
 
 // Admin routes
 router.get('/event/:eventId', auth, requireRole('admin'), getEventRegistrations);

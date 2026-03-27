@@ -90,10 +90,21 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Bio cannot exceed 500 characters"],
+    },
+    interests: {
+      type: [String],
+      default: [],
+    },
     profileComplete: {
       type: Boolean,
       default: false,
     },
+    resetPasswordOTP: String,
+    resetPasswordOTPExpire: Date,
    
   },
   {

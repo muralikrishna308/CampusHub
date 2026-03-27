@@ -72,6 +72,7 @@ const Home = () => {
   const [testiRef, testiInView] = useInView(0.15);
   const [ctaRef, ctaInView] = useInView(0.2);
   const [contactRef, contactInView] = useInView(0.1);
+  const [footerRef, footerInView] = useInView(0.05);
 
   /* animated counters (fire once statsInView) */
   const students = useCounter(50000, 2200, statsInView);
@@ -118,11 +119,19 @@ const Home = () => {
           </button>
 
           <nav className={`lp-nav__links ${menuOpen ? 'lp-nav__links--open' : ''}`}>
+            {/* Dedicated close button for mobile only */}
+            <button className="lp-nav__mobile-close" onClick={() => setMenuOpen(false)}>✕</button>
+
             {['features', 'events', 'testimonials', 'contact'].map(s => (
               <button key={s} className="lp-nav__link" onClick={() => scrollTo(s)}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
+
+            <div className="lp-nav__mobile-cta">
+              <button className="lp-btn lp-btn--ghost" onClick={() => navigate('/login')}>Sign In</button>
+              <button className="lp-btn lp-btn--primary" onClick={() => navigate('/register')}>Get Started →</button>
+            </div>
           </nav>
 
           <div className="lp-nav__cta">
@@ -465,7 +474,10 @@ const Home = () => {
       </section>
 
       {/*FOOTER */}
-      <footer className="lp-footer lp-footer--reveal">
+      <footer
+        className={`lp-footer lp-reveal ${footerInView ? 'lp-reveal--visible' : ''}`}
+        ref={footerRef}
+      >
         <div className="lp-footer__inner">
           <div className="lp-footer__brand">
             <p className="lp-footer__logo">

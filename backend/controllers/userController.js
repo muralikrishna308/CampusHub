@@ -7,6 +7,7 @@ exports.updateProfile = async (req, res) => {
     const {
       name,
       phone,
+      college,
       department,
       year,
       gender,
@@ -14,7 +15,9 @@ exports.updateProfile = async (req, res) => {
       city,
       state,
       zipcode,
-      collegeName
+      collegeName,
+      bio,
+      interests
     } = req.body;
 
     // Find and update user
@@ -23,6 +26,7 @@ exports.updateProfile = async (req, res) => {
       {
         name: name || undefined,
         phone: phone || undefined,
+        college: college || collegeName || undefined,
         department: department || undefined,
         year: year || undefined,
         gender: gender || undefined,
@@ -30,7 +34,9 @@ exports.updateProfile = async (req, res) => {
         city: city || undefined,
         state: state || undefined,
         zipcode: zipcode || undefined,
-        collegeName: collegeName || undefined,
+        collegeName: college || collegeName || undefined,
+        bio: bio || undefined,
+        interests: interests || undefined,
         profileComplete: true,
       },
       { new: true, runValidators: true }
