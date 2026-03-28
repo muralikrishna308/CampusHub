@@ -253,50 +253,58 @@ const MyRegistrations = () => {
                                                 </div>
                                             </div>
 
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                                                 <button
                                                     className="myreg-card__btn"
-                                                    style={{ width: '100%' }}
+                                                    style={{ width: '100%', margin: 0, padding: '10px' }}
                                                     onClick={() => navigate('/events')}
                                                 >
                                                     View Details →
                                                 </button>
-                                                {!isUpcoming && (reg.status === 'accepted' || reg.status === 'attended') && (
-                                                    <button
-                                                        className="myreg-card__btn"
-                                                        style={{ 
-                                                            width: '100%', 
-                                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
-                                                            color: 'white', 
-                                                            border: 'none' 
-                                                        }}
-                                                        onClick={() => navigate(`/event-discussion/${reg._id}`)}
-                                                    >
-                                                        ⭐ Feedback & Discussion
-                                                    </button>
-                                                )}
-                                                {reg.status === 'attended' && (
-                                                    <button
-                                                        className="myreg-card__btn"
-                                                        style={{ 
-                                                            width: '100%', 
-                                                            background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', 
-                                                            color: 'white', 
-                                                            border: 'none',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            gap: '4px'
-                                                        }}
-                                                        onClick={() => setActiveCertificate({
-                                                            studentName: studentProfile?.name || user?.name || "Student",
-                                                            eventTitle: event.title,
-                                                            eventDate: event.eventDate
-                                                        })}
-                                                    >
-                                                        🏅 Certificate
-                                                    </button>
-                                                )}
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    {!isUpcoming && (reg.status === 'accepted' || reg.status === 'attended') && (
+                                                        <button
+                                                            className="myreg-card__btn"
+                                                            style={{ 
+                                                                flex: 1, 
+                                                                margin: 0,
+                                                                padding: '10px',
+                                                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                                                                color: 'white', 
+                                                                border: 'none',
+                                                                fontSize: '0.82rem'
+                                                            }}
+                                                            onClick={() => navigate(`/event-discussion/${reg._id}`)}
+                                                        >
+                                                            ⭐ Feedback
+                                                        </button>
+                                                    )}
+                                                    {reg.status === 'attended' && (
+                                                        <button
+                                                            className="myreg-card__btn"
+                                                            style={{ 
+                                                                flex: 1, 
+                                                                margin: 0,
+                                                                padding: '10px',
+                                                                background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', 
+                                                                color: 'white', 
+                                                                border: 'none',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                gap: '4px',
+                                                                fontSize: '0.82rem'
+                                                            }}
+                                                            onClick={() => setActiveCertificate({
+                                                                studentName: studentProfile?.name || user?.name || "Student",
+                                                                eventTitle: event.title,
+                                                                eventDate: event.eventDate
+                                                            })}
+                                                        >
+                                                            🏅 Certificate
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                             {!isUpcoming && reg.rating && (
                                                 <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid var(--c-border)' }}>
