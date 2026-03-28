@@ -1,10 +1,14 @@
 import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './SuperAdminDashboard.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Chatbot from '../components/chatbot';
+import CommentsSection from '../components/CommentsSection';
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+import '../styles/dashboard.css';
 
 /* Dummy event images*/
 const eventImages = {
@@ -28,6 +32,7 @@ const trendData = []; // Unused, kept as empty for potential future local use
 export default function SuperAdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,8 +40,10 @@ export default function SuperAdminDashboard() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'overview');
+  const [allRegistrations, setAllRegistrations] = useState([]);
+  const [feedbackEventFilter, setFeedbackEventFilter] = useState('all');
+  const [feedbackSearchTerm, setFeedbackSearchTerm] = useState('');
   const [reportFilters, setReportFilters] = useState({
     startDate: '2024-03-01',
     endDate: '2027-03-31',
@@ -166,7 +173,7 @@ export default function SuperAdminDashboard() {
           registered: ev.registered || 0,
           capacity: ev.capacity || 100,
           revenue: ev.revenue || 0,
-          status: ev.status,
+          status: (new Date(ev.eventDate).getTime() + 86400000) < Date.now() ? 'completed' : (ev.status || 'active'),
           time: ev.eventDate ? new Date(ev.eventDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD',
           speaker: ev.speaker || 'TBD'
         })),
@@ -183,6 +190,25 @@ export default function SuperAdminDashboard() {
           time: formatTimeAgo(new Date(a.time))
         }))
       });
+
+      // Fetch participants/registrations (SuperAdmin sees all)
+      try {
+        const registrationsResponse = await fetch(
+          `${API_URL}/api/registrations/admin/all`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        if (registrationsResponse.ok) {
+          const participants = await registrationsResponse.json();
+          setAllRegistrations(participants);
+        }
+      } catch (regErr) {
+        console.log('Could not fetch registrations:', regErr);
+      }
+
     } catch (err) {
       console.error('Dashboard fetch error:', err);
       setError(err.message);
@@ -238,6 +264,12 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => { fetchDashboardData(); fetchNotifications(); }, [fetchDashboardData, fetchNotifications]);
 
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
+
   /*Click-outside: close notification dropdown */
   const notifRef = useRef(null);
   useEffect(() => {
@@ -277,190 +309,21 @@ export default function SuperAdminDashboard() {
   );
 
   return (
-    <div className="sa-root">
-      {/* Ambient background */}
-      <div className="sa-bg-layer" aria-hidden="true">
-        <div className="sa-orb sa-orb--a" />
-        <div className="sa-orb sa-orb--b" />
-        <div className="sa-grid-lines" />
-      </div>
+    <div className="dashboard-container">
+      <Sidebar 
+        role="superadmin" 
+        isOpen={showMobileMenu} 
+        onClose={() => setShowMobileMenu(false)} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
 
-      {/*HEADER*/}
-      <header className="sa-header">
-        <div className="sa-header-inner">
-          {/* Brand */}
-          <div className="sa-brand">
-            <div className="sa-brand-icon">
-              <span className="sa-logomark">🎓</span>
-            </div>
-            <div>
-              <div className="sa-brand-name">CampusHub <span className="sa-brand-tag">Super Admin</span></div>
-              <div className="sa-brand-sub">Management Console</div>
-            </div>
-          </div>
-
-          {/* Right controls - Desktop */}
-          <div className="sa-header-controls">
-            {/* Notifications */}
-            <div className="sa-notif-wrap" ref={notifRef}>
-              <button className="sa-icon-btn" onClick={() => setShowNotifications(v => !v)}>
-                🔔
-                {unreadCount > 0 && <span className="sa-badge-dot">{unreadCount}</span>}
-              </button>
-              {showNotifications && (
-                <div className="sa-notif-panel">
-                  <div className="sa-notif-head">
-                    <span className="sa-notif-title">Notifications</span>
-                    <span className="sa-notif-new">{unreadCount} new</span>
-                  </div>
-                  {notifications.map(n => (
-                    <div key={n.id} className={`sa-notif-item ${n.read ? '--read' : '--unread'}`} onClick={() => markRead(n.id)}>
-                      <span className="sa-notif-dot-ind" />
-                      <div>
-                        <p className="sa-notif-msg">{n.message}</p>
-                        <small className="sa-notif-time">{n.time}</small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* User pill */}
-            <div className="sa-user-pill">
-              <div className="sa-avatar">{user?.name?.[0] || user?.email?.[0] || 'A'}</div>
-              <div className="sa-user-text">
-                <span className="sa-user-name">{user?.name || user?.email || 'Administrator'}</span>
-                <span className="sa-user-role">Super Admin</span>
-              </div>
-            </div>
-
-            {/* Settings button */}
-            <button
-              className="sa-icon-btn"
-              onClick={() => setShowSettings(true)}
-              aria-label="Settings"
-            >
-              ⚙️
-            </button>
-
-            <button className="sa-logout-btn" onClick={handleLogout}>Sign out →</button>
-          </div>
-
-          {/* MOBILE HEADER ACTIONS */}
-          <div className="sa-mobile-header-actions">
-            <div className="sa-mobile-profile">
-              <div className="sa-mobile-avatar">{user?.name?.[0] || user?.email?.[0] || 'A'}</div>
-              <div className="sa-mobile-user-info">
-                <span className="sa-mobile-user-name">{user?.name || user?.email || 'Administrator'}</span>
-                <span className="sa-mobile-user-role">Super Admin</span>
-              </div>
-            </div>
-
-            <div className="sa-mobile-action-stack">
-              {/* Notification Bell Symbol */}
-              <div className="sa-notif-wrap --mobile" ref={notifRef}>
-                <button className="sa-icon-btn --mobile" onClick={() => setShowNotifications(v => !v)}>
-                  🔔
-                  {unreadCount > 0 && <span className="sa-badge-dot">{unreadCount}</span>}
-                </button>
-                {showNotifications && (
-                  <div className="sa-notif-panel --mobile">
-                    <div className="sa-notif-head">
-                      <span className="sa-notif-title">Notifications</span>
-                      <span className="sa-notif-new">{unreadCount} new</span>
-                    </div>
-                    <div className="sa-notif-list">
-                      {notifications.map(n => (
-                        <div key={n.id} className={`sa-notif-item ${n.read ? '--read' : '--unread'}`} onClick={() => markRead(n.id)}>
-                          <span className="sa-notif-dot-ind" />
-                          <div>
-                            <p className="sa-notif-msg">{n.message}</p>
-                            <small className="sa-notif-time">{n.time}</small>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            className={`sa-mobile-toggle ${showMobileMenu ? '--open' : ''}`}
-            onClick={() => setShowMobileMenu(v => !v)}
-            aria-label="Toggle menu"
-          >
-            <span className="sa-burger-line" />
-            <span className="sa-burger-line" />
-            <span className="sa-burger-line" />
-          </button>
-        </div>
-      </header>
-
-      {/* MOBILE NAV OVERLAY */}
-      <div className={`sa-mobile-nav ${showMobileMenu ? '--visible' : ''}`}>
-        <div className="sa-mobile-nav-inner">
-          <button className="sa-mobile-nav-close" onClick={() => setShowMobileMenu(false)} aria-label="Close menu">✕</button>
-
-          <div className="sa-mobile-nav-group">
-            <p className="sa-mobile-nav-label">Dashboard Navigation</p>
-            {[
-              { id: 'overview', icon: '📊', label: 'Overview' },
-              { id: 'events', icon: '📅', label: 'Events' },
-              { id: 'users', icon: '👥', label: 'Users' },
-              { id: 'reports', icon: '📈', label: 'Analytics' },
-            ].map(t => (
-              <button
-                key={t.id}
-                className={`sa-mobile-nav-item ${activeTab === t.id ? '--active' : ''}`}
-                onClick={() => { setActiveTab(t.id); setShowMobileMenu(false); }}
-              >
-                <span className="sa-nav-icon">{t.icon}</span>
-                <span className="sa-nav-label">{t.label}</span>
-                {activeTab === t.id && <span className="sa-nav-active-ind">●</span>}
-              </button>
-            ))}
-          </div>
-
-          <div className="sa-mobile-nav-group">
-            <p className="sa-mobile-nav-label">Account</p>
-            <button className="sa-mobile-nav-item" onClick={() => { setShowSettings(true); setShowMobileMenu(false); }}>
-              <span className="sa-nav-icon">⚙️</span>
-              <span className="sa-nav-label">Settings</span>
-            </button>
-            <button className="sa-mobile-nav-item --logout" onClick={handleLogout}>
-              <span className="sa-nav-icon">🚪</span>
-              <span className="sa-nav-label">Sign Out</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* TAB BAR */}
-      <div className="sa-tabbar">
-        <div className="sa-tabbar-inner">
-          {[
-            { id: 'overview', icon: '📊', label: 'Overview' },
-            { id: 'events', icon: '📅', label: 'Events' },
-            { id: 'users', icon: '👥', label: 'Users' },
-            { id: 'reports', icon: '📈', label: 'Analytics' },
-          ].map(t => (
-            <button
-              key={t.id}
-              className={`sa-tab ${activeTab === t.id ? 'sa-tab--active' : ''}`}
-              onClick={() => setActiveTab(t.id)}
-            >
-              <span>{t.icon}</span> {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* MAIN */}
-      <main className="sa-main">
+      <main className="main-content">
+        <Header 
+          userName={user?.name || "Super Admin"} 
+          userRole="Super Administrator" 
+          onToggle={() => setShowMobileMenu(true)} 
+        />
         {loading ? (
           <div className="sa-loading">
             <div className="sa-spinner" />
@@ -720,6 +583,128 @@ export default function SuperAdminDashboard() {
                 </button>
               </>
             )}
+
+            {/* FEEDBACKS TAB */}
+            {activeTab === 'feedbacks' && (
+              <div className="sa-feedbacks-tab">
+                <div className="sa-tabhead">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {feedbackEventFilter !== 'all' && (
+                      <button 
+                        onClick={() => setFeedbackEventFilter('all')}
+                        className="sa-btn-secondary"
+                        style={{ padding: '0 15px', height: '36px', borderRadius: '18px' }}
+                      >
+                        ← Back
+                      </button>
+                    )}
+                    <SectionHead 
+                      title={feedbackEventFilter === 'all' ? 'Universal Feedback' : stats.events.find(e => e._id === feedbackEventFilter)?.title} 
+                      pill={feedbackEventFilter === 'all' ? 'All Events' : 'Event Specific'} 
+                    />
+                  </div>
+                </div>
+
+                {/* Feedback Analytics Overview */}
+                <div className="sa-stat-grid" style={{ marginBottom: '2rem' }}>
+                  {(() => {
+                    const filteredRegs = allRegistrations.filter(r => {
+                      const eventId = r.event?._id || r.event;
+                      return (feedbackEventFilter === 'all' || eventId === feedbackEventFilter) && r.rating;
+                    });
+                    const count = filteredRegs.length;
+                    const avg = count > 0 ? (filteredRegs.reduce((s, r) => s + r.rating, 0) / count) : 0;
+                    
+                    return (
+                      <>
+                        <StatCard icon="⭐" label="Average Rating" value={avg.toFixed(1)} accent="purple" trend={`${count} reviews`} />
+                        <StatCard icon="📊" label="Satisfaction" value={`${Math.round((avg / 5) * 100)}%`} accent="blue" trend="Based on Rating" />
+                        <StatCard icon="👥" label="Total Feedback" value={count} accent="violet" trend="Verified" />
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {feedbackEventFilter === 'all' ? (
+                  <div className="sa-completed-grid">
+                    <SectionHead title="Completed Events" pill="Select to view details" />
+                    <div className="sa-event-grid">
+                      {stats.events?.filter(e => new Date(e.date) < new Date()).map(event => {
+                        const eventRegs = allRegistrations.filter(r => (r.event?._id || r.event) === event._id && r.rating);
+                        const avgRating = eventRegs.length > 0 ? (eventRegs.reduce((s, r) => s + r.rating, 0) / eventRegs.length) : 0;
+                        
+                        return (
+                          <div key={event._id} className="sa-event-card" onClick={() => setFeedbackEventFilter(event._id)}>
+                            <div className="sa-event-img-wrap">
+                              <img src={event.image} alt={event.title} className="sa-event-img" />
+                              <div className="sa-event-img-fade" />
+                              <span className="sa-event-cat" style={{ bottom: '12px', right: '12px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', padding: '4px 8px', borderRadius: '8px' }}>
+                                ★ {avgRating.toFixed(1)} ({eventRegs.length})
+                              </span>
+                            </div>
+                            <div className="sa-event-body">
+                              <h3 className="sa-event-title">{event.title}</h3>
+                              <p className="sa-event-meta">📅 {new Date(event.date).toLocaleDateString()}</p>
+                              <button className="sa-inspect-btn">Review Feedback ↗</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="sa-detailed-feedback">
+                    <div className="sa-feedback-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                      {allRegistrations?.filter(reg => {
+                        if (!reg.rating || !reg.feedback) return false;
+                        const eventId = reg.event?._id || reg.event;
+                        return eventId === feedbackEventFilter;
+                      }).length === 0 ? (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '100px 0', opacity: 0.5 }}>
+                           <span style={{ fontSize: '3rem' }}>📝</span>
+                           <p>No written feedback yet for this event.</p>
+                        </div>
+                      ) : allRegistrations?.filter(reg => {
+                        if (!reg.rating || !reg.feedback) return false;
+                        const eventId = reg.event?._id || reg.event;
+                        return eventId === feedbackEventFilter;
+                      }).map((reg, index) => (
+                        <div key={index} className="sa-activity-card" style={{ padding: '24px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                            <div>
+                              <div className="sa-cell-title" style={{ fontSize: '1.1rem' }}>{reg.firstName} {reg.lastName}</div>
+                              <div className="sa-cell-sub">{new Date(reg.createdAt).toLocaleDateString()}</div>
+                            </div>
+                            <div style={{ color: '#fbbf24', fontSize: '1.2rem', textShadow: '0 0 10px rgba(251, 191, 36, 0.4)' }}>
+                              {"★".repeat(reg.rating)}{"☆".repeat(5 - reg.rating)}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px' }}>
+                              <strong style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Experience</strong>
+                              <p style={{ fontSize: '0.95rem', color: '#e2e8f0', lineHeight: 1.5 }}>{reg.feedback.eventExperience || 'N/A'}</p>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px' }}>
+                              <strong style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Improvements</strong>
+                              <p style={{ fontSize: '0.95rem', color: '#e2e8f0', lineHeight: 1.5 }}>{reg.feedback.improvements || 'N/A'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Community Discussion Integration */}
+                    <div style={{ marginTop: '4rem', padding: '40px', background: 'rgba(255,255,255,0.01)', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
+                      <SectionHead title="Universal Moderation Discussion" pill="Real-time Platform-wide" />
+                      <CommentsSection
+                        eventId={feedbackEventFilter}
+                        eventTitle={stats.events.find(e => e._id === feedbackEventFilter)?.title}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -758,53 +743,6 @@ export default function SuperAdminDashboard() {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/*SETTINGS MODAL*/}
-      {showSettings && (
-        <div className="sa-overlay" onClick={() => setShowSettings(false)}>
-          <div className="sa-modal sa-settings-modal" onClick={e => e.stopPropagation()}>
-            <button className="sa-modal-close" onClick={() => setShowSettings(false)}>✕</button>
-
-            <div className="sa-settings-body">
-              <div className="sa-settings-head">
-                <div className="sa-settings-icon">⚙️</div>
-                <div>
-                  <h2 className="sa-settings-title">Dashboard Settings</h2>
-                  <p className="sa-settings-sub">Manage your console preferences</p>
-                </div>
-              </div>
-
-              <div className="sa-settings-section">
-                <p className="sa-settings-label">Appearance</p>
-                <div className="sa-settings-list">
-                  <SettingToggle label="Dark Mode" sub="Use dark theme across the dashboard" defaultChecked={true} />
-                  <SettingToggle label="Compact View" sub="Reduce spacing in tables and cards" defaultChecked={false} />
-                </div>
-              </div>
-
-              <div className="sa-settings-section">
-                <p className="sa-settings-label">Notifications</p>
-                <div className="sa-settings-list">
-                  <SettingToggle label="Push Notifications" sub="Receive real-time alerts" defaultChecked={true} />
-                  <SettingToggle label="Email Digest" sub="Weekly summary sent to your email" defaultChecked={false} />
-                </div>
-              </div>
-
-              <div className="sa-settings-section">
-                <p className="sa-settings-label">Data</p>
-                <div className="sa-settings-list">
-                  <SettingToggle label="Auto-refresh Stats" sub="Refresh dashboard data every 5 minutes" defaultChecked={true} />
-                  <SettingToggle label="Debug Analytics" sub="Show raw data in reports tab" defaultChecked={false} />
-                </div>
-              </div>
-
-              <button className="sa-btn-primary sa-settings-save" onClick={() => setShowSettings(false)}>
-                Save Preferences
-              </button>
             </div>
           </div>
         </div>

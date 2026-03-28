@@ -341,15 +341,15 @@
   position: fixed;
   inset: 0 0 auto;
   z-index: 20000;
-  /* Higher than chatbot (9999) */
   padding: 0;
   transition: var(--transition);
-  background: rgba(15, 15, 26, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--c-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  background: rgba(15, 15, 26, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
 }
+
 
 .lp-nav__inner {
   max-width: 1300px;
@@ -505,42 +505,21 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--c-dark);
   position: relative;
   padding: 0 2rem;
+  background: transparent; /* Use global background */
 }
 
-/* background mesh */
-.lp-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 10% 50%, rgba(102, 126, 234, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 30%, rgba(118, 75, 162, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 90%, rgba(168, 85, 247, 0.10) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-/* grid lines */
-.lp-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-}
 
 /* orbs */
 .lp-hero__orb {
-  position: absolute;
+  position: fixed;
   border-radius: 50%;
   pointer-events: none;
   filter: blur(60px);
+  z-index: 0;
 }
+
 
 .lp-hero__orb--1 {
   width: 500px;
@@ -607,16 +586,17 @@
 
 .lp-hero__inner {
   flex: 1;
-  max-width: 1300px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 4rem;
-  padding: 9rem 0 5rem;
+  gap: 3rem;
+  padding: 8rem 0 3rem;
   position: relative;
   z-index: 2;
 }
+
 
 /* LEFT col */
 .lp-hero__left {
@@ -953,13 +933,15 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 0;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
   border-top: 1px solid var(--c-border);
   border-bottom: 1px solid var(--c-border);
   padding: 2.5rem 2rem;
   position: relative;
   z-index: 2;
 }
+
 
 .lp-stat-item {
   flex: 1 1 180px;
@@ -1002,10 +984,9 @@
 
 /*FEATURES */
 .lp-features {
-  background:
-    radial-gradient(ellipse 60% 50% at 80% 30%, rgba(118, 75, 162, 0.12) 0%, transparent 60%),
-    var(--c-dark);
+  background: transparent;
 }
+
 
 .lp-bento {
   display: grid;

@@ -206,9 +206,11 @@ function EditModal({ user, onClose, onSave }) {
             ["Name", "name"],
             ["Phone", "phone"],
             ["Location", "location"],
-            ["College", "college"],
-            ["Department", "department"],
-            ["Year", "year"]
+            ...(user.role === "SUPERADMIN" || user.role === "SUPER_ADMIN" ? [] : [
+              [user.role === "ADMIN" ? "Organization" : "College", "college"],
+              [user.role === "ADMIN" ? "Department/Unit" : "Department", "department"],
+              [user.role === "ADMIN" ? "Years of Experience" : "Year", "year"]
+            ])
           ].map(([lbl, key]) => (
             <div key={key}>
               <label style={labelStyle}>{lbl}</label>
@@ -222,14 +224,17 @@ function EditModal({ user, onClose, onSave }) {
           ))}
         </div>
 
+        {!(user.role === "SUPERADMIN" || user.role === "SUPER_ADMIN") && (
         <div>
           <label style={labelStyle}>Bio</label>
           <textarea style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }} value={form.bio || ""} onChange={e => set("bio", e.target.value)} />
         </div>
+        )}
 
         {/* ── Interests & Skills with suggestions ── */}
+        {!(user.role === "SUPERADMIN" || user.role === "SUPER_ADMIN") && (
         <div>
-          <label style={labelStyle}>Interests & Skills</label>
+          <label style={labelStyle}>{user.role === "ADMIN" ? "Expertise and Skills" : "Interests & Skills"}</label>
 
           {/* Search input + dropdown */}
           <div style={{ position: "relative" }}>
@@ -324,6 +329,7 @@ function EditModal({ user, onClose, onSave }) {
             </div>
           )}
         </div>
+        )}
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ padding: "10px 22px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "#9ca3af", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
@@ -349,33 +355,48 @@ function ProfilePage() {
     if (auth?.user) setProfile(normalizeUser(auth.user));
   }, [auth?.user]);
 
+  // Determine sidebar role and dashboard path
+  const userRole = auth?.user?.role?.toLowerCase() || 'student';
+  const sidebarRole = userRole === 'super_admin' ? 'superadmin' : userRole;
+  const isAdminOrSuperAdmin = userRole === 'admin' || userRole === 'super_admin';
+
   React.useEffect(() => {
     const fetchStats = async () => {
       if (!auth?.token) return;
       try {
-        const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
-          headers: { 'Authorization': `Bearer ${auth.token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const validRegs = data.filter(reg => reg.event && reg.event._id);
-          const totalRegistrations = validRegs.length;
-          
-          // events with dates in the past and accepted
-          const now = new Date();
-          const attendedEvents = validRegs.filter(reg => {
-            const isPastEvent = new Date(reg.event.eventDate) < now;
-            return isPastEvent && reg.status === 'accepted';
-          }).length;
-          
-          setProfileStats({ registrations: totalRegistrations, eventsAttended: attendedEvents });
+        if (isAdminOrSuperAdmin) {
+          // For admin/superadmin, fetch admin-level stats
+          const response = await fetch(`${API_URL}/api/dashboard/admin/events`, {
+            headers: { 'Authorization': `Bearer ${auth.token}` }
+          });
+          if (response.ok) {
+            const events = await response.json();
+            const activeEvents = events.filter(e => (new Date(e.eventDate).getTime() + 86400000) >= Date.now()).length;
+            setProfileStats({ registrations: events.length, eventsAttended: activeEvents });
+          }
+        } else {
+          // For students, fetch registration stats
+          const response = await fetch(`${API_URL}/api/registrations/my-registrations`, {
+            headers: { 'Authorization': `Bearer ${auth.token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const validRegs = data.filter(reg => reg.event && reg.event._id);
+            const totalRegistrations = validRegs.length;
+            const now = new Date();
+            const attendedEvents = validRegs.filter(reg => {
+              const isPastEvent = new Date(reg.event.eventDate) < now;
+              return isPastEvent && reg.status === 'accepted';
+            }).length;
+            setProfileStats({ registrations: totalRegistrations, eventsAttended: attendedEvents });
+          }
         }
       } catch (err) {
         console.error('Error fetching stats:', err);
       }
     };
     fetchStats();
-  }, [auth?.token]);
+  }, [auth?.token, isAdminOrSuperAdmin]);
 
   const [editing, setEditing] = useState(false);
 
@@ -409,7 +430,24 @@ function ProfilePage() {
     }
   };
 
+  // Role flags for easier conditional rendering
+  const isSuperAdmin = profile.role === "SUPERADMIN" || profile.role === "SUPER_ADMIN";
+  const isAdmin = profile.role === "ADMIN";
+  const isStudent = !isAdmin && !isSuperAdmin;
+
   const initials = profile.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+
+  // Role-specific labels
+  const academicSectionTitle = isAdmin ? "Professional Information" : "Academic Information";
+  const collegeLabel = isAdmin ? "Organization" : "College";
+  const yearLabel = isAdmin ? "Years of Experience" : "Year";
+  const departmentLabel = isAdmin ? "Department/Unit" : "Department";
+  const skillsSectionTitle = isAdmin ? "Expertise and Skills" : "Interests & Skills";
+
+  // Role-specific stat labels
+  const statLabels = isAdminOrSuperAdmin
+    ? { stat1Label: "Total Events Created", stat2Label: "Active Events" }
+    : { stat1Label: "Registered Events", stat2Label: "Events Attended" };
 
   return (
     <>
@@ -422,7 +460,7 @@ function ProfilePage() {
       `}</style>
 
       <div className="dashboard-container">
-        <Sidebar role="student" isOpen={sidebarOpen} onClose={closeSidebar} />
+        <Sidebar role={sidebarRole} isOpen={sidebarOpen} onClose={closeSidebar} />
 
         <main className="main-content" style={{ fontFamily: "'DM Sans', sans-serif", color: "#e5e7eb" }}>
           <Header
@@ -457,11 +495,13 @@ function ProfilePage() {
                 }}>
                   {initials}
                 </div>
-                <div style={{
-                  position: "absolute", bottom: "2px", right: "2px",
-                  width: "12px", height: "12px", borderRadius: "50%",
-                  background: "#10b981", border: "2px solid #131825",
-                }} />
+                {!isSuperAdmin && (
+                  <div style={{
+                    position: "absolute", bottom: "2px", right: "2px",
+                    width: "12px", height: "12px", borderRadius: "50%",
+                    background: "#10b981", border: "2px solid #131825",
+                  }} />
+                )}
               </div>
 
               {/* Info */}
@@ -470,9 +510,13 @@ function ProfilePage() {
                   {profile.name}
                 </h1>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "13px", color: "#9ca3af" }}>{profile.department} • Year {profile.year}</span>
-                  <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "#4b5563" }} />
-                  <span style={{ fontSize: "13px", color: "#7c3aed", fontWeight: "600" }}>{profile.college}</span>
+                  {!isSuperAdmin && (
+                    <>
+                      <span style={{ fontSize: "13px", color: "#9ca3af" }}>{profile.department} • {yearLabel} {profile.year}</span>
+                      <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "#4b5563" }} />
+                      <span style={{ fontSize: "13px", color: "#7c3aed", fontWeight: "600" }}>{profile.college}</span>
+                    </>
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "999px", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", letterSpacing: "0.05em", fontWeight: "500" }}>
@@ -513,17 +557,19 @@ function ProfilePage() {
             </div>
 
             {/* Stats row */}
-            <div className="profile-stats-grid">
-              <StatCard label="Member Since" value={profile.joinedDate} icon={
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              } />
-              <StatCard label="Registered Events" value={profileStats.registrations} icon={
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
-              } />
-              <StatCard label="Events Attended" value={profileStats.eventsAttended} icon={
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4"/></svg>
-              } />
-            </div>
+            {!isSuperAdmin && (
+              <div className="profile-stats-grid">
+                <StatCard label="Member Since" value={profile.joinedDate} icon={
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                } />
+                <StatCard label={statLabels.stat1Label} value={profileStats.registrations} icon={
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                } />
+                <StatCard label={statLabels.stat2Label} value={profileStats.eventsAttended} icon={
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4"/></svg>
+                } />
+              </div>
+            )}
           </div>
 
           {/* ── Two column grid ── */}
@@ -543,45 +589,49 @@ function ProfilePage() {
               </div>
             </Section>
 
-            {/* Academic Info */}
-            <Section title="Academic Information">
-              <div className="profile-info-grid">
-                <InfoField label="College" value={profile.college} icon={
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-                } />
-                <InfoField label="Department" value={profile.department} icon={
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>
-                } />
-                <InfoField label="Year" value={profile.year ? `Year ${profile.year}` : null} icon={
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                } />
-                <InfoField label="Role" value={profile.role} icon={
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                } />
-              </div>
-            </Section>
+            {/* Academic / Professional Info */}
+            {!isSuperAdmin && (
+              <Section title={academicSectionTitle}>
+                <div className="profile-info-grid">
+                  <InfoField label={collegeLabel} value={profile.college} icon={
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                  } />
+                  <InfoField label={departmentLabel} value={profile.department} icon={
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>
+                  } />
+                  <InfoField label={yearLabel} value={profile.year ? (isAdmin ? `${profile.year} Years` : `Year ${profile.year}`) : null} icon={
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  } />
+                  <InfoField label="Role" value={profile.role} icon={
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  } />
+                </div>
+              </Section>
+            )}
           </div>
 
           {/* ── About + Interests ── */}
-          <div className="profile-section-grid">
-            <Section title="About Me">
-              {profile.bio ? (
-                <p style={{ fontSize: "14px", color: "#9ca3af", lineHeight: "1.7", margin: 0 }}>{profile.bio}</p>
-              ) : (
-                <p style={{ fontSize: "14px", color: "#4b5563", fontStyle: "italic", margin: 0 }}>No bio added yet. Tell others about yourself!</p>
-              )}
-            </Section>
+          {!isSuperAdmin && (
+            <div className="profile-section-grid">
+              <Section title="About Me">
+                {profile.bio ? (
+                  <p style={{ fontSize: "14px", color: "#9ca3af", lineHeight: "1.7", margin: 0 }}>{profile.bio}</p>
+                ) : (
+                  <p style={{ fontSize: "14px", color: "#4b5563", fontStyle: "italic", margin: 0 }}>No bio added yet. Tell others about yourself!</p>
+                )}
+              </Section>
 
-            <Section title="Interests & Skills">
-              {profile.interests?.length > 0 ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                  {profile.interests.map((t, i) => <Tag key={i} label={t} />)}
-                </div>
-              ) : (
-                <p style={{ fontSize: "14px", color: "#4b5563", fontStyle: "italic", margin: 0 }}>No interests added yet.</p>
-              )}
-            </Section>
-          </div>
+              <Section title={skillsSectionTitle}>
+                {profile.interests?.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {profile.interests.map((t, i) => <Tag key={i} label={t} />)}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "14px", color: "#4b5563", fontStyle: "italic", margin: 0 }}>No {isAdmin ? "expertise" : "interests"} added yet.</p>
+                )}
+              </Section>
+            </div>
+          )}
 
         </main>
       </div>

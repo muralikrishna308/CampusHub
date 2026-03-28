@@ -329,40 +329,15 @@ export default function StudentDashboard() {
                     ) : (
                         <div className="grid-layout">
                             {featuredEvents.map((event, idx) => (
-                                <div key={idx} style={{
-                                    background: 'rgba(255, 255, 255, 0.04)',
-                                    borderRadius: '16px',
-                                    overflow: 'hidden',
-                                    border: '1px solid rgba(255,255,255,0.08)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s ease'
-                                }}
+                                <EventCard 
+                                    key={idx}
+                                    title={event.title}
+                                    category={event.category}
+                                    location={event.location}
+                                    joined={event.registered || 0}
+                                    image={event.image}
                                     onClick={() => navigate('/events')}
-                                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = 'rgba(102,126,234,0.35)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.3)'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'none'; }}
-                                >
-                                    <div style={{
-                                        height: '160px',
-                                        backgroundImage: `url(${event.image})`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                        backgroundColor: 'rgba(102,126,234,0.15)',
-                                        backgroundRepeat: 'no-repeat',
-                                        position: 'relative'
-                                    }}>
-                                        <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(102,126,234,0.9)', color: '#fff', fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '50px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            {({ 'tech': '💻 Technology', 'music': '🎵 Music', 'workshop': '🛠️ Workshop', 'cultural': '🎭 Cultural', 'sports': '⚽ Sports', 'other': '🌟 Other' })[event.category] || event.category || 'Tech'}
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: '16px' }}>
-                                        <h3 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 8px 0', color: '#fff' }}>{event.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 12px 0' }}>{event.description?.substring(0, 70)}...</p>
-                                        <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', gap: '12px' }}>
-                                            <span>📅 {new Date(event.eventDate).toLocaleDateString()}</span>
-                                            <span>📍 {event.location}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                                />
                             ))}
                         </div>
                     )}

@@ -2,27 +2,51 @@ import React, { useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
-const Sidebar = ({ role, isOpen, onClose }) => {
+const Sidebar = ({ role, isOpen, onClose, activeTab, onTabChange }) => {
     const location = useLocation();
     const { logout } = useContext(AuthContext);
+
+    // Dashboard base path for the current role
+    const dashboardPath = role === "super_admin" || role === "superadmin" 
+        ? "/super-admin" 
+        : role === "admin" 
+            ? "/admin" 
+            : "/student";
 
     const studentMenuItems = [
         { name: "Dashboard", path: "/student", icon: "📊" },
         { name: "All Events", path: "/events", icon: "📅" },
         { name: "My Registrations", path: "/registrations", icon: "📝" },
+        { name: "Certifications", path: "/certificates", icon: "🏅" },
         { name: "Profile", path: "/profile", icon: "👤" },
         { name: "Settings", path: "/settings", icon: "⚙️" },
     ];
 
     const adminMenuItems = [
-        { name: "Dashboard", path: "/admin", icon: "📊" },
-        { name: "Participants", path: "/admin/participants", icon: "👥" },
-        { name: "Create Event", path: "/admin/create-event", icon: "➕" },
-        { name: "My Events", path: "/admin/events", icon: "📅" },
+        { name: "Overview", tab: "overview", icon: "📊" },
+        { name: "My Events", tab: "events", icon: "📅" },
+        { name: "Participants", tab: "users", icon: "👥" },
+        { name: "Feedbacks", tab: "feedbacks", icon: "💬" },
+        { name: "Reports", tab: "reports", icon: "📈" },
+        { name: "Profile", path: "/admin/profile", icon: "👤" },
         { name: "Settings", path: "/settings", icon: "⚙️" },
     ];
 
-    const menuItems = role === "admin" ? adminMenuItems : studentMenuItems;
+    const superAdminMenuItems = [
+        { name: "Overview", tab: "overview", icon: "🏛️" },
+        { name: "Events", tab: "events", icon: "📅" },
+        { name: "Users", tab: "users", icon: "👥" },
+        { name: "Feedbacks", tab: "feedbacks", icon: "💬" },
+        { name: "Reports", tab: "reports", icon: "📈" },
+        { name: "Profile", path: "/super-admin/profile", icon: "👤" },
+        { name: "Settings", path: "/settings", icon: "⚙️" },
+    ];
+
+    const menuItems = role === "super_admin" || role === "superadmin" 
+        ? superAdminMenuItems 
+        : role === "admin" 
+            ? adminMenuItems 
+            : studentMenuItems;
 
     // Close sidebar on route change (mobile)
     useEffect(() => {
@@ -57,17 +81,48 @@ const Sidebar = ({ role, isOpen, onClose }) => {
 
                 <nav>
                     <ul className="sidebar-menu">
-                        {menuItems.map((item, index) => (
-                            <li key={index}>
-                                <Link
-                                    to={item.path}
-                                    className={`menu-item ${location.pathname === item.path ? 'active' : ''}`}
-                                >
-                                    <span className="menu-icon">{item.icon}</span>
-                                    <span>{item.name}</span>
-                                </Link>
-                            </li>
-                        ))}
+                        {menuItems.map((item, index) => {
+                            const isActive = item.path 
+                                ? location.pathname === item.path
+                                : onTabChange 
+                                    ? activeTab === item.tab 
+                                    : (location.pathname === dashboardPath && (location.state?.activeTab === item.tab || (!location.state?.activeTab && item.tab === 'overview')));
+                            
+                            return (
+                                <li key={index}>
+                                    {item.path ? (
+                                        <Link
+                                            to={item.path}
+                                            className={`menu-item ${isActive ? 'active' : ''}`}
+                                        >
+                                            <span className="menu-icon">{item.icon}</span>
+                                            <span>{item.name}</span>
+                                        </Link>
+                                    ) : onTabChange ? (
+                                        <div
+                                            className={`menu-item ${isActive ? 'active' : ''}`}
+                                            onClick={() => {
+                                                onTabChange(item.tab);
+                                                if (onClose) onClose();
+                                            }}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <span className="menu-icon">{item.icon}</span>
+                                            <span>{item.name}</span>
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            to={item.path || (item.tab ? dashboardPath : '#')}
+                                            state={item.tab ? { activeTab: item.tab } : null}
+                                            className={`menu-item ${isActive ? 'active' : ''}`}
+                                        >
+                                            <span className="menu-icon">{item.icon}</span>
+                                            <span>{item.name}</span>
+                                        </Link>
+                                    )}
+                                </li>
+                            );
+                        })}
                     </ul>
                 </nav>
 

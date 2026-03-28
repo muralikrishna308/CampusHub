@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import CertificateGenerator from '../components/CertificateGenerator';
 import './MyRegistrations.css';
 
 const API_URL = process.env.REACT_APP_API || 'http://localhost:5000';
@@ -31,6 +32,7 @@ const MyRegistrations = () => {
     const [studentProfile, setStudentProfile] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeCertificate, setActiveCertificate] = useState(null);
 
     const toggleSidebar = useCallback(() => setSidebarOpen(true), []);
     const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -251,10 +253,10 @@ const MyRegistrations = () => {
                                                 </div>
                                             </div>
 
-                                            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
                                                 <button
                                                     className="myreg-card__btn"
-                                                    style={{ flex: 1 }}
+                                                    style={{ width: '100%' }}
                                                     onClick={() => navigate('/events')}
                                                 >
                                                     View Details →
@@ -262,10 +264,37 @@ const MyRegistrations = () => {
                                                 {!isUpcoming && (reg.status === 'accepted' || reg.status === 'attended') && (
                                                     <button
                                                         className="myreg-card__btn"
-                                                        style={{ flex: 1, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none' }}
+                                                        style={{ 
+                                                            width: '100%', 
+                                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                                                            color: 'white', 
+                                                            border: 'none' 
+                                                        }}
                                                         onClick={() => navigate(`/event-discussion/${reg._id}`)}
                                                     >
                                                         ⭐ Feedback & Discussion
+                                                    </button>
+                                                )}
+                                                {reg.status === 'attended' && (
+                                                    <button
+                                                        className="myreg-card__btn"
+                                                        style={{ 
+                                                            width: '100%', 
+                                                            background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', 
+                                                            color: 'white', 
+                                                            border: 'none',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            gap: '4px'
+                                                        }}
+                                                        onClick={() => setActiveCertificate({
+                                                            studentName: studentProfile?.name || user?.name || "Student",
+                                                            eventTitle: event.title,
+                                                            eventDate: event.eventDate
+                                                        })}
+                                                    >
+                                                        🏅 Certificate
                                                     </button>
                                                 )}
                                             </div>
@@ -284,6 +313,12 @@ const MyRegistrations = () => {
                         </div>
                     )}
                 </div>
+                {activeCertificate && (
+                    <CertificateGenerator 
+                        {...activeCertificate} 
+                        onClose={() => setActiveCertificate(null)} 
+                    />
+                )}
             </main>
         </div>
     );

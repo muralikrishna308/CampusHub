@@ -63,7 +63,7 @@ const CommentItem = ({ comment, replies, onReply, onLike, onDelete, currentUser 
                     <button className="yt-action-btn" onClick={() => setIsReplying(!isReplying)}>
                         REPLY
                     </button>
-                    {(currentUserId === comment.user || currentUser.role === 'admin') && (
+                    {(currentUserId === comment.user || currentUser.role === 'admin' || currentUser.role === 'super_admin' || currentUser.role === 'superadmin') && (
                         <button className="yt-action-btn" onClick={() => onDelete(comment._id)}>
                             DELETE
                         </button>
@@ -126,7 +126,7 @@ const CommentItem = ({ comment, replies, onReply, onLike, onDelete, currentUser 
                                                     >
                                                         👍 {reply.likes?.length || ''}
                                                     </button>
-                                                    {(currentUserId === reply.user || currentUser.role === 'admin') && (
+                                                    {(currentUserId === reply.user || currentUser.role === 'admin' || currentUser.role === 'super_admin' || currentUser.role === 'superadmin') && (
                                                         <button className="yt-action-btn" onClick={() => onDelete(reply._id)}>
                                                             DELETE
                                                         </button>

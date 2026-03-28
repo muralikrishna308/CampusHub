@@ -11,6 +11,7 @@ const {
   cancelRegistration,
   acceptRegistration,
   rejectRegistration,
+  markAttended,
   submitFeedback,
   getRegistrationById
 } = require('../controllers/registrationController');
@@ -27,4 +28,5 @@ router.get('/event/:eventId', auth, requireRole('admin'), getEventRegistrations)
 router.get('/admin/all', auth, requireRole('admin'), getAdminRegistrations);
 router.put("/accept/:registrationId", auth, requireRole("admin"), acceptRegistration);
 router.put("/reject/:registrationId", auth, requireRole("admin"), rejectRegistration);
+router.put("/attend/:registrationId", auth, requireRole("admin"), markAttended);
 module.exports = router;

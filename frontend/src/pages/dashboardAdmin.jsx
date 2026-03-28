@@ -1,11 +1,18 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './AdminDashboard.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Chatbot from '../components/chatbot';
 import CommentsSection from '../components/CommentsSection';
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell 
+} from 'recharts';
+import '../styles/dashboard.css';
 
 // Map raw DB category values to human-readable labels
 const CATEGORY_LABELS = {
@@ -30,6 +37,7 @@ const getSafeImageUrl = (image) => {
 export default function AdminDashboard() {
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,11 +46,10 @@ export default function AdminDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'overview');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allRegistrations, setAllRegistrations] = useState([]);
   const [newImagePreview, setNewImagePreview] = useState(null);
@@ -153,11 +160,15 @@ export default function AdminDashboard() {
         );
         const registeredCount = eventRegistrations.length;
         const revenueAmount = registeredCount * (event.ticketPrice || 0);
+        const isCompleted = (new Date(event.eventDate).getTime() + 86400000) < Date.now();
+        const eventStatus = isCompleted ? 'completed' : (event.status || 'active');
+
         return {
           ...event,
           category: (event.category || 'other').toLowerCase(),
           registered: registeredCount,
-          revenue: revenueAmount
+          revenue: revenueAmount,
+          status: eventStatus
         };
       });
 
@@ -247,6 +258,12 @@ export default function AdminDashboard() {
     fetchDashboardData();
     fetchNotifications();
   }, [fetchDashboardData, fetchNotifications]);
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   // Handle event creation
   const handleCreateEvent = async (e) => {
@@ -618,138 +635,22 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="admin-dashboard">
-      {/* Header */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <button
-            className="mobile-menu-toggle"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation"
-          >
-            <svg width="22" height="15" viewBox="0 0 22 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1.5 1.5H20.5M1.5 7.5H20.5M1.5 13.5H20.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <h1>Admin Dashboard</h1>
-        </div>
+    <div className="dashboard-container">
+      <Sidebar 
+        role="admin" 
+        isOpen={mobileMenuOpen} 
+        onClose={() => setMobileMenuOpen(false)} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
 
-        <div className="header-right">
-          {/* User Badge - compact pill */}
-          <div className="user-badge header-user-pill">
-            <span className="user-avatar">
-              {user?.name?.[0] || user?.email?.[0] || 'A'}
-            </span>
-            <span className="user-info">
-              <span className="user-name">{user?.name || user?.email}</span>
-              <span className="user-role">{user?.role || 'Administrator'}</span>
-            </span>
-          </div>
+      <main className="main-content">
+        <Header 
+          userName={user?.name || "Admin"} 
+          userRole="Administrator" 
+          onToggle={() => setMobileMenuOpen(true)} 
+        />
 
-          <div className="notification-wrapper">
-            <button
-              className="btn-icon"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              🔔
-              {notifications.filter(n => !n.read).length > 0 && (
-                <span className="notification-badge">
-                  {notifications.filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
-
-            {showNotifications && (
-              <div className="notification-dropdown">
-                <div className="notification-dropdown-header">
-                  <h4>Notifications</h4>
-                  <button className="mark-read-btn" onClick={markAllAsRead}>Mark all read</button>
-                </div>
-                <div className="notification-list">
-                  {notifications.length === 0 ? (
-                    <p className="no-notifications">No new notifications</p>
-                  ) : (
-                    notifications.map(notification => (
-                      <div
-                        key={notification.id}
-                        className={`notification-item ${notification.read ? 'read' : 'unread'}`}
-                        onClick={() => markNotificationAsRead(notification.id)}
-                      >
-                        <p>{notification.message}</p>
-                        <small>{notification.time}</small>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Settings & Sign out - visible on tablet/desktop */}
-          <button className="btn-icon header-settings-btn" onClick={() => setShowSettingsModal(true)}>⚙️</button>
-          <button onClick={handleLogout} className="btn-logout">
-            <span>🚪</span>
-            <span className="logout-text">Sign out</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="admin-menu-overlay" onClick={() => setMobileMenuOpen(false)}></div>
-      )}
-
-      {/* Tab Navigation / Drawer on mobile */}
-      <div className={`admin-tabs ${mobileMenuOpen ? 'open' : ''}`}>
-        <div className="admin-menu-header">
-          <h3>Menu</h3>
-          <button className="menu-close-btn" onClick={() => setMobileMenuOpen(false)}>✕</button>
-        </div>
-        <button
-          className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
-        >
-          📊 Overview
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'events' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('events'); setMobileMenuOpen(false); }}
-        >
-          📅 Events
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('users'); setMobileMenuOpen(false); }}
-        >
-          👥 Users
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'feedbacks' ? 'active' : ''}`}
-          onClick={() => {
-            setActiveTab('feedbacks');
-            setFeedbackEventFilter('all');
-            setMobileMenuOpen(false);
-          }}
-        >
-          ⭐ Feedback & Comments
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
-        >
-          📈 Reports
-        </button>
-        {/* Mobile-only additional nav buttons */}
-        <button className="tab-btn tab-mobile-only" onClick={() => { setShowSettingsModal(true); setMobileMenuOpen(false); }}>
-          ⚙️ Settings
-        </button>
-        <button className="tab-btn tab-mobile-only logout-tab-btn" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
-          🚪 Sign out
-        </button>
-      </div>
-
-      {/* Main Content */}
-      <main className="dashboard-main">
         {loading ? (
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -949,6 +850,7 @@ export default function AdminDashboard() {
                                 </button>
                               </>
                             )}
+                            {event.status !== 'active' && event.status !== 'completed' && (
                             <button className="action-btn" onClick={() => {
                               const formattedEvent = {
                                 ...event,
@@ -958,6 +860,7 @@ export default function AdminDashboard() {
                               setEventForm(formattedEvent);
                               setShowEditModal(true);
                             }}>✏️</button>
+                            )}
                             <button
                               className="action-btn"
                               onClick={() => handleDeleteEvent(event._id)}
@@ -1647,33 +1550,59 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Charts - Dynamic */}
-                <div className="report-charts">
-                  <div className="chart-card">
-                    <h3>Registration Trends</h3>
-                    <div className="chart-placeholder">
-                      <div style={{ padding: '20px', textAlign: 'center' }}>
-                        <p style={{ marginBottom: '10px', color: '#94a3b8' }}>📊 Total Registrations</p>
-                        <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#667eea' }}>
-                          {stats.totalRegistrations}
-                        </p>
-                        <p style={{ fontSize: '12px', color: '#94a3b8' }}>
-                          Across {stats.totalEvents} events
-                        </p>
-                      </div>
+                <div className="report-charts" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+                  <div className="chart-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <h3 style={{ fontSize: '16px', marginBottom: '20px', color: '#fff' }}>Revenue per Event ($)</h3>
+                    <div style={{ width: '100%', height: 250 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={stats.events?.slice(0, 6)}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                          <XAxis dataKey="title" stroke="#94a3b8" fontSize={10} tickFormatter={(val) => val.length > 10 ? val.substring(0, 10) + '...' : val} />
+                          <YAxis stroke="#94a3b8" fontSize={10} />
+                          <Tooltip 
+                            contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                            itemStyle={{ color: '#fff' }}
+                          />
+                          <Bar dataKey="revenue" fill="url(#colorRev)" radius={[4, 4, 0, 0]} />
+                          <defs>
+                            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="#6366f1" stopOpacity={0.2}/>
+                            </linearGradient>
+                          </defs>
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
-                  <div className="chart-card">
-                    <h3>Revenue Overview</h3>
-                    <div className="chart-placeholder">
-                      <div style={{ padding: '20px', textAlign: 'center' }}>
-                        <p style={{ marginBottom: '10px', color: '#94a3b8' }}>💰 Total Revenue</p>
-                        <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#10b981' }}>
-                          ${stats.totalRevenue?.toLocaleString() || 0}
-                        </p>
-                        <p style={{ fontSize: '12px', color: '#94a3b8' }}>
-                          Avg: ${stats.totalEvents > 0 ? Math.round(stats.totalRevenue / stats.totalEvents) : 0} per event
-                        </p>
-                      </div>
+
+                  <div className="chart-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <h3 style={{ fontSize: '16px', marginBottom: '20px', color: '#fff' }}>Events by Category</h3>
+                    <div style={{ width: '100%', height: 250 }}>
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={Object.keys(CATEGORY_LABELS).map(cat => ({
+                              name: CATEGORY_LABELS[cat].split(' ')[1] || CATEGORY_LABELS[cat],
+                              value: stats.events?.filter(e => e.category === cat).length || 0
+                            })).filter(d => d.value > 0)}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            {[ '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899' ].map((color, index) => (
+                              <Cell key={`cell-${index}`} fill={color} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                            itemStyle={{ color: '#fff' }}
+                          />
+                          <Legend verticalAlign="bottom" height={36}/>
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </div>
@@ -1755,7 +1684,6 @@ export default function AdminDashboard() {
             )}
           </>
         )}
-      </main>
 
       {/* Create Event Modal */}
       {showCreateModal && (
@@ -2122,6 +2050,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="modal-actions">
+                {selectedEvent.status !== 'active' && selectedEvent.status !== 'completed' && (
                 <button className="btn-primary" onClick={() => {
                   const formattedEvent = {
                     ...selectedEvent,
@@ -2134,7 +2063,11 @@ export default function AdminDashboard() {
                 }}>
                   Edit Event
                 </button>
-                <button className="btn-secondary">View Registrations</button>
+                )}
+                <button className="btn-secondary" onClick={() => {
+                  setSelectedEvent(null);
+                  setActiveTab('users');
+                }}>View Registrations</button>
               </div>
             </div>
           </div>
@@ -2220,44 +2153,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
-          <div className="modal-content settings-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowSettingsModal(false)}>×</button>
-            <h2>Settings</h2>
-
-            <div className="settings-tabs">
-              <button className="settings-tab active">General</button>
-              <button className="settings-tab">Notifications</button>
-              <button className="settings-tab">Security</button>
-              <button className="settings-tab">API</button>
-            </div>
-
-            <div className="settings-content">
-              <div className="setting-item">
-                <label>
-                  <input type="checkbox" /> Enable email notifications
-                </label>
-              </div>
-              <div className="setting-item">
-                <label>
-                  <input type="checkbox" /> Auto-approve events
-                </label>
-              </div>
-              <div className="setting-item">
-                <label>Default event capacity</label>
-                <input type="number" defaultValue="100" />
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button className="btn-primary">Save Settings</button>
-              <button className="btn-secondary" onClick={() => setShowSettingsModal(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+      </main>
       <Chatbot />
     </div>
   );
@@ -2325,10 +2221,12 @@ function EventCard({ event, onClick, onEdit }) {
         </div>
 
         <div className="event-actions">
+          {event.status !== 'active' && event.status !== 'completed' && (
           <button className="btn-edit" onClick={(e) => {
             e.stopPropagation();
             onEdit();
           }}>✏️ Edit</button>
+          )}
           <button className="btn-view" onClick={(e) => {
             e.stopPropagation();
             onClick();

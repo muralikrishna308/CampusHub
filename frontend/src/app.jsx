@@ -10,6 +10,8 @@ import MyRegistrations from "./pages/MyRegistrations";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/ProfilePage";
 import EventDiscussion from "./pages/EventDiscussion";
+import SettingsPage from "./pages/SettingsPage";
+import CertificatesPage from "./pages/CertificatesPage";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -17,8 +19,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+        <AuthProvider>
+          <Routes>
 
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Auth />} />
@@ -79,6 +81,15 @@ function App() {
           />
 
           <Route
+            path="/certificates"
+            element={
+              <ProtectedRoute role={"student"}>
+                <CertificatesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/profile"
             element={
               <ProtectedRoute role={"student"}>
@@ -105,9 +116,36 @@ function App() {
             }
           />
 
+          <Route
+            path="/admin/profile"
+            element={
+              <ProtectedRoute role={"admin"}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/super-admin/profile"
+            element={
+              <ProtectedRoute role={"super_admin"}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </AuthProvider>
-    </BrowserRouter>
+  </BrowserRouter>
   );
 }
 

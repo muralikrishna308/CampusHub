@@ -12,6 +12,25 @@ const todayLabel = () => {
 };
 
 
+const ScoutIcon = ({ size = 24, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill={color} opacity="0.4"/>
+    <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill={color}/>
+    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" fill="white"/>
+    <circle cx="12" cy="12" r="1.5" fill={color}/>
+    <path d="M12 5V7" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <path d="M12 17V19" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <path d="M19 12H17" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <path d="M7 12H5" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const UserIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+  </svg>
+);
+
 const RichText = ({ text }) => {
   const lines = text.split("\n");
   return (
@@ -23,10 +42,9 @@ const RichText = ({ text }) => {
             : p
         );
         return (
-          <span key={li}>
+          <p key={li} style={{ margin: '4px 0' }}>
             {parts}
-            {li < lines.length - 1 && <br />}
-          </span>
+          </p>
         );
       })}
     </>
@@ -91,6 +109,7 @@ const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimised, setMinimised] = useState(false);
   const [userInput, setUserInput] = useState("");
+  const [imgError, setImgError] = useState(false);
   const [showBadge, setShowBadge] = useState(true);
   const [messages, setMessages] = useState([
     {
@@ -155,7 +174,9 @@ const Chatbot = () => {
         onClick={isOpen ? () => setIsOpen(false) : openChat}
         aria-label="Toggle chatbot"
       >
-        <span className="cb-fab__icon">{isOpen ? "✕" : "💬"}</span>
+        <span className="cb-fab__icon">
+          {isOpen ? "✕" : (imgError ? "🤖" : <img src="/bot-logo.png" alt="Bot Logo" style={{ width: '38px', height: '38px', borderRadius: '50%' }} onError={() => setImgError(true)} />)}
+        </span>
         {showBadge && !isOpen && <span className="cb-fab__badge">1</span>}
       </button>
 
@@ -166,7 +187,9 @@ const Chatbot = () => {
         <div className="cb-header">
           <div className="cb-header__glow" />
           <div className="cb-avatar-wrap">
-            <div className="cb-bot-avatar">🤖</div>
+            <div className="cb-bot-avatar">
+              {imgError ? "🤖" : <img src="/bot-logo.png" alt="Bot" style={{ width: '40px', height: '40px', objectFit: 'contain' }} onError={() => setImgError(true)} />}
+            </div>
             <span className="cb-online-ring" />
           </div>
           <div className="cb-header__info">
@@ -206,8 +229,11 @@ const Chatbot = () => {
 
               {messages.map((msg) => (
                 <div key={msg.id} className={`cb-row cb-row--${msg.sender}`}>
-                  {msg.sender === "bot" &&
-                    <div className="cb-mini-avatar cb-mini-avatar--bot">🤖</div>}
+                  {msg.sender === "bot" && (
+                    <div className="cb-mini-avatar cb-mini-avatar--bot">
+                      {imgError ? "🤖" : <img src="/bot-logo.png" alt="Bot" style={{ width: '22px', height: '22px', objectFit: 'contain' }} onError={() => setImgError(true)} />}
+                    </div>
+                  )}
 
                   <div className="cb-msg-group">
                     <div className={`cb-bubble cb-bubble--${msg.sender}`}>
@@ -217,14 +243,18 @@ const Chatbot = () => {
                   </div>
 
                   {msg.sender === "user" &&
-                    <div className="cb-mini-avatar cb-mini-avatar--user">👤</div>}
+                    <div className="cb-mini-avatar cb-mini-avatar--user">
+                      <UserIcon size={16} />
+                    </div>}
                 </div>
               ))}
 
               {/* Typing indicator */}
               {isTyping && (
                 <div className="cb-row cb-row--bot">
-                  <div className="cb-mini-avatar cb-mini-avatar--bot">🤖</div>
+                  <div className="cb-mini-avatar cb-mini-avatar--bot">
+                    {imgError ? "🤖" : <img src="/bot-logo.png" alt="Bot" style={{ width: '22px', height: '22px', objectFit: 'contain' }} onError={() => setImgError(true)} />}
+                  </div>
                   <div className="cb-bubble cb-bubble--bot cb-typing">
                     <span /><span /><span />
                   </div>
