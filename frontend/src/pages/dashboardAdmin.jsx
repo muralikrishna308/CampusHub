@@ -850,7 +850,7 @@ export default function AdminDashboard() {
                                 </button>
                               </>
                             )}
-                            {event.status !== 'active' && event.status !== 'completed' && (
+                            {event.status !== 'completed' && (
                             <button className="action-btn" onClick={() => {
                               const formattedEvent = {
                                 ...event,
@@ -859,7 +859,7 @@ export default function AdminDashboard() {
                               };
                               setEventForm(formattedEvent);
                               setShowEditModal(true);
-                            }}>✏️</button>
+                            }} title="Edit Event">✏️</button>
                             )}
                             <button
                               className="action-btn"
@@ -2221,7 +2221,7 @@ function EventCard({ event, onClick, onEdit }) {
         </div>
 
         <div className="event-actions">
-          {event.status !== 'active' && event.status !== 'completed' && (
+          {event.status !== 'completed' && (
           <button className="btn-edit" onClick={(e) => {
             e.stopPropagation();
             onEdit();
